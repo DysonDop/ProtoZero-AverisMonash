@@ -1,7 +1,4 @@
-# ── Organiser-only package. Contains ground_truth.json (the answer key) and the
-# generator source. Received in error; never goes in the public repo. See
-# docs/prd.md §Non-goals and docs/eval_plan.md §Held-out discipline.
-sdoc-hackathon-docker/
+
 
 # Dataset bundle is vendored for the live deploy; keep the attachments, not the noise
 .DS_Store
