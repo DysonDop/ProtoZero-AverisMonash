@@ -109,7 +109,7 @@ That is the whole game; everything else is rounding.
 | --- | --- | --- |
 | Working Core Prototype | 25 | Live link, judge pastes/opens an email, sees the full flow |
 | System Design & Architecture | 15 | `docs/architecture.md` + the diagram |
-| Technology Integration | 15 | Cloud Run + Firestore + Cloud Storage + Vision + Secret Manager + Cloud Build, each doing real work |
+| Technology Integration | 15 | Container Apps + Cosmos DB + Blob + Document Intelligence + Azure OpenAI + Key Vault + GitHub Actions, each doing real work |
 | Technical Feasibility & Validation | 15 | `eval/results.csv` score-over-time chart + documented limitations |
 | Problem Statement Understanding | 10 | The asymmetric-cost framing in §1 |
 | Innovation & Solution Approach | 10 | Deterministic-comparison-with-AI-at-the-edges; learning from corrections |
@@ -146,7 +146,7 @@ implementation details, challenges faced, future roadmap · project description.
 
 ## 8. Open questions
 
-- Firestore in Native mode, region `asia-southeast1` — confirm with Gene.
+- Azure region `southeastasia`, and **confirm Azure OpenAI is enabled on the subscription** — some need an approval step, and it is the one thing that can block the build outright.
 - Does the live demo let judges upload **their own** SI/BL pair, or only browse
   the bundled inbox? (Upload is a stronger demo and a bigger attack surface.)
   → leaning: bundled inbox by default, upload behind a clearly-labelled tab.

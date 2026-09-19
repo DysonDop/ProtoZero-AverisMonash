@@ -89,11 +89,11 @@ Behaviour:
 `eval/results.csv` columns:
 
 ```
-timestamp, git_sha, dirty, prompt_version, model_classify, model_extract,
+timestamp, git_sha, dirty, prompt_version, deploy_classify, deploy_extract,
 final_score, stage1_macro_f1, stage1_accuracy, stage3_defect_f1,
 stage3_defect_precision, stage3_defect_recall, stage3_field_f1,
 end_to_end_rate, escalation_recall, escalation_precision,
-rule_pct, llm_calls, tokens_in, tokens_out, wall_clock_s, notes
+rule_pct, parser_pct, llm_calls, doc_intel_pages, tokens_in, tokens_out, wall_clock_s, notes
 ```
 
 **Never hand-edit this file.** It is the evidence for *Technical Feasibility &
@@ -105,8 +105,8 @@ fine for iteration but cannot be cited in the deck.
 
 ## 4. Caching
 
-Gemini responses cached by `(prompt_version, model, sha256(input))` in
-`.cache/gemini/`. Changing a prompt changes `prompt_version`, which invalidates
+Azure OpenAI and Document Intelligence responses cached by
+`(prompt_version, deployment, sha256(input))` in `.cache/azure/`. Changing a prompt changes `prompt_version`, which invalidates
 exactly the affected entries and nothing else. Without this the eval loop is too
 slow and too expensive to run often enough to be useful, and an eval loop you
 don't run is not an eval loop.

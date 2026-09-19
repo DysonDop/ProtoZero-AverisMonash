@@ -18,9 +18,10 @@ can't.
 
 1. **The LLM never decides whether two fields match.** Extraction and
    classification may be probabilistic. Comparison is code, and it is exact.
-2. **Deterministic first, AI on fallback.** If a parser can read it, parse it.
-   Reach for Gemini when the parser fails, not before. Every LLM call must be
-   able to justify why the deterministic path couldn't do it.
+2. **Deterministic first, structured service second, model last.** If a parser
+   can read it, parse it. If it can't, Document Intelligence reads it — it
+   returns fields, tables and boxes, not prose. The model is the last resort and
+   every call must justify why the two cheaper paths couldn't do it.
 3. **Refuse rather than guess.** A case we cannot decide goes to a human with
    its evidence and a reason. `NEEDS_REVIEW` is a first-class outcome, not a
    failure path.
@@ -42,29 +43,43 @@ can't.
   anything fitted to this one is a validation number that lies.
 - **No new frameworks or paid services without asking Dylan.** Explicitly out:
   LangChain, LangGraph, vector DBs, Kubernetes, microservices.
-- **Secrets never enter the repo.** Gemini key via Secret Manager; local dev via
-  `.env` (gitignored).
+- **Secrets never enter the repo.** Azure keys via Key Vault; local dev via
+  `.env` (gitignored). Prefer managed identity over keys where the service supports it.
 - **Interface changes get written down before they get coded.** Anything in
   `docs/contracts.md` is load-bearing for Christabel, Gene and seunniee.
 
 ## Stack
 
+Everything runs on **Microsoft Azure**. Region: `southeastasia` unless a service
+isn't offered there — check before assuming.
+
 | Layer | Choice |
 | --- | --- |
 | Language | Python 3.11, Pydantic v2 for every schema |
-| Classification | Rules first; `gemini-3.1-flash-lite` fallback |
-| Extraction | Deterministic parsers first; `gemini-3.5-flash` fallback |
+| Classification | Rules first; Azure OpenAI fallback (small deployment) |
+| Extraction | Deterministic parsers first; **Azure AI Document Intelligence**; Azure OpenAI last |
 | Parsers | PyMuPDF (`fitz`), `python-docx`, `openpyxl` |
-| OCR / scans | Google Cloud Vision OCR → Gemini vision |
+| Scans / hard layouts | Azure AI Document Intelligence — key-value pairs, tables, bounding boxes, per-field confidence |
 | Fuzzy | `rapidfuzz` — for *routing to review*, never for declaring a match |
-| API | FastAPI, one Cloud Run service (serves API **and** the built SPA) |
-| Storage | Firestore (cases, review queue, corrections), Cloud Storage (attachments) |
-| Secrets / logs | Secret Manager, Cloud Logging (structured JSON) |
-| CI/CD | Cloud Build, auto-deploy from GitHub `main` |
+| API | FastAPI, one **Azure Container App** (serves API **and** the built SPA) |
+| Storage | **Cosmos DB** (cases, review queue, corrections), **Blob Storage** (attachments) |
+| Secrets / logs | **Key Vault**, **Application Insights** (structured JSON) |
+| CI/CD | **GitHub Actions**, auto-deploy from `main` |
+| Edge / DNS | **Cloudflare** — custom domain, TLS, static caching in front of the Container App |
 | Frontend | React + Vite + Tailwind, react-pdf, Recharts |
 
-Model IDs and every threshold live in `pipeline/config.py`. One-line swap.
-`temperature=0` everywhere, always.
+**Azure OpenAI is called by _deployment name_, not model id** — you create a
+deployment of a model in your resource and call that name. So
+`config.py` holds `AZURE_OPENAI_DEPLOYMENT_CLASSIFY` and
+`..._EXTRACT`, and the underlying model is a portal decision, not a code one.
+Confirm which models your resource can actually deploy before wiring anything.
+
+Deployment names, endpoints and every threshold live in `pipeline/config.py`.
+One-line swap. `temperature=0` everywhere, always.
+
+**The raw `*.azurecontainerapps.io` URL stays documented in the README as the
+fallback.** The custom domain is a convenience; the entry must survive a DNS or
+certificate problem on submission day.
 
 ## Layout
 

@@ -8,46 +8,51 @@ before changing anything they cover.
 
 ## 1. Shape of the thing
 
-One Cloud Run service. FastAPI serves the JSON API and the built React SPA from
-the same origin, so judges get one URL and we get no CORS, no second deploy, no
-second cold start.
+One Azure Container App, behind Cloudflare. FastAPI serves the JSON API and the
+built React SPA from the same origin, so judges get one URL and we get no CORS,
+no second deploy, no second cold start. Region `southeastasia`. Cloudflare adds
+the custom domain, TLS and static caching without changing any of that.
 
 ```
-                    GitHub main ──push──▶ Cloud Build ──▶ Artifact Registry ──▶ Cloud Run
-                                                                                   │
-  Browser (judge)                                                                  │
-      │  GET /                    ┌────────────────── Cloud Run service ───────────┴──┐
-      ├─────────────────────────▶ │  React SPA (static, built into the image)         │
-      │  GET/POST /api/*          │                                                   │
-      └─────────────────────────▶ │  FastAPI                                          │
-                                  │    ├── /api/cases          case list + detail     │
-                                  │    ├── /api/review         queue, resolve, retry  │
-                                  │    ├── /api/metrics        dashboard              │
-                                  │    └── /api/ingest         run the pipeline       │
-                                  │              │                                    │
-                                  │              ▼                                    │
-                                  │   ┌───────── pipeline ──────────┐                 │
-                                  │   │ classify → gate → extract   │                 │
-                                  │   │ → normalize → compare       │                 │
-                                  │   │ → confidence → escalate     │                 │
-                                  │   └──────┬───────────┬──────────┘                 │
-                                  │          │           │                            │
-                                  │  bundled dataset     │                            │
-                                  │  (in image, read-only)                            │
-                                  └──────────┼───────────┼────────────────────────────┘
+                 GitHub main ──push──▶ GitHub Actions ──▶ Container Registry ──▶ Container Apps
+                                                                                      │
+  Browser (judge)                                                                     │
+      │                                                                                  │
+      ▼                                                                                  │
+  Cloudflare — custom domain · TLS · caches the SPA bundle · never caches /api/*          │
+      │                                                                                  │
+      │  GET /                    ┌────────────────── Container App ──────────────────┴──┐
+      ├─────────────────────────▶ │  React SPA (static, built into the image)            │
+      │  GET/POST /api/*          │                                                      │
+      └─────────────────────────▶ │  FastAPI                                             │
+                                  │    ├── /api/cases          case list + detail        │
+                                  │    ├── /api/review         queue, resolve, retry     │
+                                  │    ├── /api/metrics        dashboard                 │
+                                  │    └── /api/ingest         run the pipeline          │
+                                  │              │                                       │
+                                  │              ▼                                       │
+                                  │   ┌───────── pipeline ──────────┐                    │
+                                  │   │ classify → gate → extract   │                    │
+                                  │   │ → normalize → compare       │                    │
+                                  │   │ → confidence → escalate     │                    │
+                                  │   └──────┬───────────┬──────────┘                    │
+                                  │          │           │                               │
+                                  │  bundled dataset     │                               │
+                                  │  (in image, read-only)                               │
+                                  └──────────┼───────────┼───────────────────────────────┘
                                              │           │
-              ┌──────────────┬───────────────┼───────────┴────────┬─────────────────┐
-              ▼              ▼               ▼                    ▼                 ▼
-         Firestore      Cloud Storage   Gemini API          Cloud Vision      Secret Manager
-      cases · queue ·   attachments +   flash-lite / flash   OCR (scans)      GEMINI_API_KEY
-      corrections       render cache    (structured output)
+              ┌──────────────┬───────────────┼───────────┴────────┬──────────────────┐
+              ▼              ▼               ▼                    ▼                  ▼
+          Cosmos DB     Blob Storage   Document Intelligence  Azure OpenAI       Key Vault
+      cases · queue ·   attachments +  fields · tables ·      classify + extract  keys, or
+      corrections       render cache   boxes · confidence     fallback            managed identity
                                              │
-                                             └──▶ Cloud Logging (structured JSON, one record per LLM call)
+                                             └──▶ Application Insights (one record per service call)
 ```
 
 **The dataset is baked into the image.** Judges cannot reach localhost and the
 organisers' server is not public, so `data/` (520 emails + 250 attachments,
-~3 MB) ships inside the container, read-only. Cloud Storage holds anything
+~3 MB) ships inside the container, read-only. Blob Storage holds anything
 uploaded at demo time plus cached page renders for the highlighting view.
 
 ## 2. The pipeline
@@ -59,7 +64,7 @@ Deterministic spine, AI at two edges. Full step-by-step contract in
 email record
   │
   ├─▶ [1] CLASSIFY ─── rules (sender domain + subject grammar) ──┐
-  │                    └─ no rule matched ─▶ Gemini Flash-Lite ──┤
+  │                    └─ no rule matched ─▶ Azure OpenAI ───────┤
   │                                                              ▼
   │                                             category + decided_by: rule|llm
   │
@@ -71,8 +76,9 @@ email record
   │                                                    | unreadable)
   │
   ├─▶ [3] EXTRACT ── per-format deterministic parser (txt/pdf/docx/xlsx)
-  │                  └─ parser returns < 7 fields, or doc is image-only
-  │                     ─▶ Gemini Flash (native PDF / Vision OCR + image)
+  │                  └─ short or image-only ─▶ Document Intelligence
+  │                        (fields, tables, boxes, per-field confidence)
+  │                        └─ labels still unmapped ─▶ Azure OpenAI
   │                  every field carries: value · evidence · label_seen · locator
   │
   ├─▶ [4] NORMALIZE ── three rules, nothing more (see ADR-002)
@@ -100,10 +106,18 @@ Extraction is the reverse case. Four file formats with four different physical
 shapes — key-value lines, PDF text blocks with a container table, a bilingual
 Word table, a three-column spreadsheet — parse deterministically and cheaply,
 and a parser gives us an exact character offset for highlighting that an LLM
-does not. So parsers run first. Gemini takes the cases parsers genuinely cannot
-do: image-only scanned PDFs, and any layout the parser comes back short on. That
-is a defensible answer to "where is the AI?" — it is at the edge where the
-deterministic path ends, which is the only place it earns its cost.
+does not. So parsers run first.
+
+What takes over when they fail is **Document Intelligence**, not a language
+model — and that ordering is the point. It returns key-value pairs, tables,
+bounding polygons and a per-field confidence, which is structured output we can
+check, not prose we have to trust. It also reads the PDF container table
+natively, which is the exact case that defeats a naive block parser. The
+language model is the third resort, and its only extraction job is mapping an
+unfamiliar label onto one of our seven fields when the synonym map misses.
+
+That is a defensible answer to "where is the AI?" — each layer hands on only
+what it genuinely cannot do, and we can show the per-stage counts to prove it.
 
 Comparison is never AI. See ADR-001.
 
@@ -111,9 +125,10 @@ Comparison is never AI. See ADR-001.
 
 1. `POST /api/ingest` (or startup batch) reads an email record from the bundled
    dataset.
-2. Pipeline runs; every LLM call is logged to Cloud Logging with prompt version,
-   model ID, token counts, latency, and the parsed response.
-3. A `Case` document is written to Firestore, with the seven
+2. Pipeline runs; every service call is logged to Application Insights with
+   prompt version, deployment name, token or page counts, latency, and the
+   parsed response.
+3. A `Case` document is written to Cosmos DB, with the seven
    `FieldComparison` records embedded.
 4. If any field escalates, a `ReviewItem` is written to the queue collection with
    the reason and both evidence snippets.
@@ -127,30 +142,66 @@ Comparison is never AI. See ADR-001.
 | Considered | Rejected because |
 | --- | --- |
 | **LLM does extract *and* compare in one call** | No reproducibility, no per-field confidence, no evidence offsets for highlighting, and a model that decides equality will happily call two different consignees "the same company." |
-| **Two Cloud Run services (API + web) or Firebase Hosting for the SPA** | Two deploys, two cold starts, CORS config, two URLs to keep alive for judges. One image is smaller in every dimension that matters here. |
-| **Cloud SQL / Postgres instead of Firestore** | Needs a VPC connector or a public IP to reach from Cloud Run, plus schema migrations, for data that is a handful of documents. Firestore's real-time listeners also give the review queue live updates for free. |
-| **Pub/Sub + worker for pipeline runs** | 520 emails processed in a batch. Queueing infrastructure for a workload that finishes in minutes is cost without a benefit. Seam left: `/api/ingest` is already one-email-at-a-time. |
-| **Vector DB / RAG over past corrections** | Corrections are looked up by exact field + document pair, not by semantic similarity. A Firestore query is the right tool. |
-| **Fine-tuning an extraction model** | No time, no labelled training set we're willing to use (see held-out discipline in `docs/eval_plan.md`), and structured output on Flash already clears the bar. |
-| **Cloud Document AI instead of Vision + Gemini** | Heavier setup, processor provisioning, and it overlaps what Gemini already does natively on PDFs. Vision covers the one case Gemini needs help with (image-only scans). |
+| **Skip the parsers, send everything to Document Intelligence** | It bills per page and adds latency for documents a 40-line parser reads exactly. Parsers also give exact character offsets; the service gives polygons. Keep it for what parsers can't do. |
+| **Google Cloud (Cloud Run, Firestore, Vision, Gemini)** | Viable, and where this design started. Switched for team access and expertise (ADR-008), and because Document Intelligence is a better fit than raw OCR. |
+| **Two services (API + web) or Static Web Apps for the SPA** | Two deploys, two cold starts, CORS config, two URLs to keep alive for judges. One image is smaller in every dimension that matters here. |
+| **Azure SQL / Postgres instead of Cosmos DB** | Schema migrations and a connection story for data that is a handful of JSON documents. Cosmos takes our Pydantic models as-is. |
+| **Table Storage instead of Cosmos DB** | Cheaper, but no rich querying and no change feed. We want `(category, status)` filters and, later, reacting to corrections. |
+| **Service Bus + worker for pipeline runs** | 520 emails processed in a batch that finishes in minutes. Queueing infrastructure without a benefit. Seam left: `/api/ingest` is already one-email-at-a-time. |
+| **Vector DB / RAG over past corrections** | Corrections are looked up by exact field + document pair, not by semantic similarity. A Cosmos query is the right tool. |
+| **Fine-tuning an extraction model** | No time, no labelled training set we're willing to use (see held-out discipline in `docs/eval_plan.md`), and structured outputs already clear the bar. |
 
 ## 5. Risks
 
 | Risk | Likelihood | Impact | Mitigation |
 | --- | --- | --- | --- |
+| **Azure OpenAI is not enabled on the subscription, or the model isn't deployable in region.** | Medium | Critical | Verify in the portal *before* the build starts — it is the one blocker with no workaround inside the weekend. Fallback: keep the model layer on Gemini and everything else on Azure. |
 | **We overfit to this data draw.** The final round is a fresh seed or the real APRIL inbox. | High | High | Rules keyed on *grammar* (sender domain, subject verb) not on literal strings; LLM fallback for anything unmatched; no tuning against per-email labels; document every threshold's provenance. |
 | **A false-positive field kills end-to-end.** `defect_fields` must match exactly; a spurious field scores zero on 50% of the weight. | Medium | High | Exact comparison, minimal normalisation, near-match → review not mismatch. Precision gate ≥ 0.95 in the eval. |
-| **Gemini rate limits or an outage during judging.** | Medium | High | Deterministic path covers ~95% of the corpus with no LLM at all. Results are precomputed into Firestore before submission, so the live link never depends on a live model call. Response cache keyed by (prompt version, model, input hash). |
-| **Cloud Run cold start makes the demo look broken.** | Medium | Medium | `min-instances=1` for the judging window; precomputed results mean first paint is a Firestore read. |
-| **Scanned-PDF path (Vision) is the least-tested code.** Only 3 documents exercise it. | Medium | Low | It is 3 of 520 emails and all 3 are gold `NEEDS_REVIEW` anyway — so failing *safe* (escalate) already scores the same as succeeding. Build it for the demo, not for the score. |
-| **Secret leakage.** | Low | High | Secret Manager in prod, gitignored `.env` locally, no key in any log line. |
+| **Azure OpenAI quota or an outage during judging.** | Medium | High | The deterministic path covers ~95% of the corpus with no model call at all. Results are precomputed into Cosmos DB before submission, so the live link never depends on a live model call. Response cache keyed by (prompt version, deployment, input hash). |
+| **Container Apps scales to zero and the first hit looks broken.** | Medium | Medium | Set min replicas to 1 for the judging window; precomputed results mean first paint is a Cosmos read. |
+| **Scanned-PDF path (Document Intelligence) is the least-tested code.** Only 3 documents exercise it. | Medium | Low | It is 3 of 520 emails and all 3 are gold `NEEDS_REVIEW` anyway — so failing *safe* (escalate) already scores the same as succeeding. Build it for the demo, not for the score. |
+| **DNS or certificate trouble on submission day.** | Medium | Critical | Set the domain up the night before, not on the day. The raw `*.azurecontainerapps.io` URL stays in the README as a documented fallback, so a broken custom domain degrades the link, never loses it. |
+| **Cloudflare caches an API response.** | Medium | Medium | Cache rule bypassing `/api/*` from the start. Symptom is stale review-queue data, which reads as a product bug rather than a config one. |
+| **Secret leakage.** | Low | High | Key Vault in prod (managed identity where the service supports it), gitignored `.env` locally, no key in any log line. |
 | **Answer key in the public repo.** | Low | Critical | `sdoc-hackathon-docker/` gitignored; verified with `git check-ignore`. |
 
-## 6. Open questions
+## 6. Deployment runbook — the custom domain
 
-- Firestore region and mode — Gene to confirm `asia-southeast1`, Native mode.
-- Does Cloud Build deploy on every push to `main`, or on tag? (Leaning: every
-  push, with the judging build pinned by revision tag on Sunday night.)
+Do this **the night before submission, not on the day**. Certificate issuance and
+DNS propagation are the two things that cannot be hurried, and the live link is a
+hard gate.
+
+1. **Azure** — add the custom domain to the Container App. Azure returns a TXT
+   record (`asuid.<subdomain>`) and a CNAME target.
+2. **Cloudflare DNS** — add the TXT record, and the CNAME pointing at
+   `<app>.<region>.azurecontainerapps.io`, with the **proxy OFF (grey cloud)**.
+3. **Azure** — validate the domain, then add the free managed certificate and
+   wait for issuance.
+4. **Cloudflare SSL/TLS** — set the mode to **Full (strict)**.
+5. **Cloudflare DNS** — now turn the **proxy ON (orange cloud)**.
+6. **Cache rule** — cache static assets; **bypass cache for `/api/*`**. A cached
+   API response makes the review queue show stale data to the next viewer, which
+   looks exactly like a bug in the product.
+7. Verify in a private window **and** on a phone on mobile data.
+8. Put **both** URLs in the README: the custom domain first, the raw
+   `*.azurecontainerapps.io` URL underneath as the fallback.
+
+> **The order in steps 2–5 is the whole trick.** With the proxy on during
+> validation, the CNAME resolves to Cloudflare rather than the app and Azure
+> cannot issue the certificate. And leaving SSL/TLS on *Flexible* once the proxy
+> is on gives an infinite redirect loop — the page just never loads.
+
+## 7. Open questions
+
+- **Confirm Azure OpenAI is enabled on the subscription and the chosen models
+  deploy in `southeastasia`.** Blocking; check first.
+- Which Azure OpenAI deployments for classify and extract — a small one and a
+  capable one. Portal decision, recorded in `pipeline/config.py`.
+- Does GitHub Actions deploy on every push to `main`, or on tag? (Leaning: every
+  push, with the judging build pinned to a revision on Sunday night.)
+- Managed identity or Key Vault keys for Cosmos and Document Intelligence?
+  Managed identity is cleaner; keys are faster to get working.
 - Judge-uploaded documents: in scope for prelim, or final round? (PRD §8.)
 
 ---
@@ -236,7 +287,7 @@ categories, partitioning all 520 emails with no leftovers.
 **Decision.** A rule layer runs first: sender-domain allowlist for SPAM, then
 subject-grammar patterns keyed on the *verb* ("compare/confirm these docs" vs
 "send me a draft BL" vs "send me an SI"). Anything unmatched — or matched with
-low specificity — goes to Gemini Flash-Lite with the body included. Each result
+low specificity — goes to Azure OpenAI with the body included. Each result
 records `decided_by: "rule" | "llm"`, which the organisers' scorer surfaces as
 `rule_pct`.
 
@@ -284,17 +335,82 @@ submission boundary only. Mapping table lives in `pipeline/report.py`.
 consignee differ only by a legal suffix") while the submission stays schema-valid.
 One mapping function to keep correct, covered by a unit test.
 
-### ADR-007 — One Cloud Run service serving both API and SPA
+### ADR-007 — One Container App serving both API and SPA
 **19 Sep 2026 · Accepted**
 
 **Context.** Judges need one public URL that works, unattended, during a judging
 window we won't be present for.
 
 **Decision.** FastAPI mounts the Vite build as static files at `/` and the API at
-`/api/*`. One Dockerfile, one Cloud Build trigger, one revision. Dataset baked
-into the image. `min-instances=1` during judging.
+`/api/*`. One Dockerfile, one GitHub Actions workflow, one revision. Dataset
+baked into the image. Minimum replicas set to 1 during judging.
 
 **Consequences.** No CORS, no split deploy, no second thing to keep warm, and the
 link is trivially shareable. Costs us independent scaling of frontend and API —
-irrelevant at this size. Seam left for the final round: the SPA mount is one
-line to remove if we later split it behind a load balancer.
+irrelevant at this size. Seam left for the final round: the SPA mount is one line
+to remove if we later split it behind Front Door.
+
+### ADR-008 — Microsoft Azure, and Document Intelligence over raw OCR
+**19 Sep 2026 · Accepted · supersedes the Google Cloud choice in ADR-007 v1**
+
+**Context.** The design was first drafted against Google Cloud. Two facts changed
+it: the team has Azure credits and a member who has deployed there before, and
+**no pipeline code existed yet** — the cost of switching was seven documents,
+not a rewrite. A cloud migration after tonight's build would have been a
+different conversation.
+
+**Decision.** Everything on Azure: Container Apps, Cosmos DB, Blob Storage,
+Key Vault, Application Insights, GitHub Actions, Azure OpenAI. Crucially, the
+scan/hard-layout reader is **AI Document Intelligence**, not raw OCR.
+
+**Consequences.** Document Intelligence is a genuine upgrade rather than
+parity: it returns key-value pairs, tables, bounding polygons and per-field
+confidence, where Cloud Vision returns OCR text we would have had to
+re-structure ourselves. That maps almost one-to-one onto `ExtractedField`
+(`value`, `evidence`, `locator`, `service_confidence`), it reads the PDF
+container table natively — the case that defeats a naive block parser — and it
+gives the confidence score a real signal instead of a model's self-rating.
+
+It also *demotes* the language model: extraction is now parser → structured
+service → model, so the model does strictly less than it did under the previous
+design. That strengthens principle 2 rather than bending it.
+
+Two costs, both accepted. Azure OpenAI is addressed by **deployment name**, not
+model id, so the model behind a call is a portal decision and `config.py` holds
+names — recorded so nobody hunts for a model string that isn't in the code. And
+Azure OpenAI can require an approval step on a subscription; that check is the
+first item on the build, because it is the only blocker with no same-weekend
+workaround (fallback: keep the model layer on Gemini, everything else on Azure).
+
+That the architecture ported between clouds in an afternoon, untouched — the
+same five stages, the same contracts, comparison still plain code — is itself
+evidence the design is sound, and it is worth saying on the architecture slide.
+
+### ADR-009 — Cloudflare at the edge, Azure underneath
+**19 Sep 2026 · Accepted**
+
+**Context.** The live public link is a hard gate and 25 marks. The default
+`*.azurecontainerapps.io` hostname is long and forgettable, and we own a domain.
+The options were: use the Azure hostname as-is; put Cloudflare in front for DNS,
+TLS and caching; split the SPA onto Cloudflare Pages; or move hosting to
+Cloudflare entirely.
+
+**Decision.** Cloudflare handles DNS, the custom domain, TLS and static caching.
+Azure Container Apps keeps serving the whole application. Nothing about the
+architecture, the deploy, or the request path inside the app changes.
+
+**Consequences.** A short memorable URL for judges, TLS, and the SPA bundle
+served from an edge cache, for roughly twenty minutes of DNS work and no code.
+ADR-007 survives intact — still one origin, one deploy, no CORS.
+
+Rejected with it: **Cloudflare Pages for the SPA**, which would reverse ADR-007
+for no scored benefit — two deploys, two things to keep warm, CORS config, two
+URLs; and **Workers or Cloudflare Containers as the host**, because the parsers
+depend on PyMuPDF, python-docx and openpyxl, which are native dependencies
+Workers cannot run, and adopting a new platform a day before freeze is the kind
+of risk this project has otherwise avoided.
+
+Worth being honest in the deck: this is polish, not integration. Cloudflare is
+not doing core work here, and claiming it under Technology Integration alongside
+services that genuinely carry the pipeline would weaken the argument rather than
+strengthen it. It earns a clause, not a card.

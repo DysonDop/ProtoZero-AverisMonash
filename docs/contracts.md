@@ -20,7 +20,7 @@ FieldName     = Literal["shipper", "consignee", "notify_party", "port_of_loading
                         "port_of_discharge", "container_count", "gross_weight_kg"]
 MatchVerdict  = Literal["MATCH", "MISMATCH", "REVIEW", "ABSENT"]
 DecidedBy     = Literal["rule", "llm"]
-ExtractedBy   = Literal["parser", "llm", "ocr_llm", "human"]
+ExtractedBy   = Literal["parser", "doc_intelligence", "llm", "human"]
 
 # internal, richer than the wire enum — see ADR-006
 EscalationReason = Literal[
@@ -62,6 +62,7 @@ class ExtractedField(BaseModel):
     label_seen: str | None           # e.g. "Load Port" — what the document called it
     locator: Locator | None = None
     extracted_by: ExtractedBy = "parser"
+    service_confidence: float | None = None # Document Intelligence per-field confidence, 0..1. Real signal.
     model_confidence: float | None = None   # LLM self-rating, 0..1. Low weight. None for parser.
 
 class ShipmentFields(BaseModel):
@@ -119,7 +120,7 @@ class FieldComparison(BaseModel):
 
 ## 4. The Case — the central document
 
-Firestore collection **`cases`**, document id = `email_id`.
+Cosmos DB container **`cases`**, partition key `/email_id`, document id = `email_id`.
 
 ```python
 class Case(BaseModel):
@@ -163,7 +164,7 @@ class Case(BaseModel):
 
 ## 5. Review queue and corrections
 
-Firestore **`review_queue`**, document id auto:
+Cosmos DB **`review_queue`**, partition key `/email_id`, id auto:
 
 ```python
 class ReviewItem(BaseModel):
@@ -183,7 +184,7 @@ class ReviewItem(BaseModel):
     resolved_by: str | None = None
 ```
 
-Firestore **`corrections`** — the learning-from-corrections store:
+Cosmos DB **`corrections`** — the learning-from-corrections store:
 
 ```python
 class Correction(BaseModel):
@@ -214,7 +215,7 @@ Base `/api`. All responses JSON. Errors are
 | `GET` | `/cases` | `?category=&status=&lifecycle=&limit=50&cursor=` | `{"items":[CaseSummary],"next_cursor":str\|null}` |
 | `GET` | `/cases/{email_id}` | — | `Case` (full, with `comparisons`) |
 | `POST` | `/cases/{email_id}/rerun` | `{"force_llm": bool}` | `Case` |
-| `GET` | `/cases/{email_id}/document/{role}` | `role=SI\|BL` | `{"fmt":DocFormat,"text":str,"page_urls":[str]}` — signed Cloud Storage URLs for rendered pages |
+| `GET` | `/cases/{email_id}/document/{role}` | `role=SI\|BL` | `{"fmt":DocFormat,"text":str,"page_urls":[str]}` — SAS URLs for rendered pages |
 | `GET` | `/review` | `?state=open&limit=50` | `{"items":[ReviewItem],"open_count":int}` |
 | `POST` | `/review/{id}/resolve` | `{"action":"confirm"\|"correct","field":FieldName\|null,"correct_value":str\|null,"reviewer_id":str}` | `{"review_item":ReviewItem,"case":Case}` |
 | `POST` | `/review/{id}/retry` | `{"force_llm": bool}` | `{"review_item":ReviewItem,"case":Case}` |
@@ -242,6 +243,7 @@ class Metrics(BaseModel):
     review_queue_open: int
     avg_fields_flagged: float
     rule_pct: float                   # share classified without an LLM call
+    parser_pct: float                 # share extracted without touching a cloud service
     llm_calls: int
     est_minutes_saved: float          # cases auto-cleared × 4 min manual check
 ```
@@ -266,7 +268,7 @@ class Metrics(BaseModel):
 `decided_by` is optional and unscored; the organisers' scorer reports it as
 `rule_pct`. We send it — free evidence for the deck.
 
-## 8. Firestore layout
+## 8. Cosmos DB layout
 
 ```
 cases/{email_id}                      Case
@@ -275,18 +277,20 @@ corrections/{auto_id}                 Correction
 runs/{run_id}                         eval run metadata (mirrors eval/results.csv)
 ```
 
-Indexes needed: `cases` on `(category, status)` and `(lifecycle, updated_at desc)`;
-`review_queue` on `(state, created_at desc)`.
+Cosmos indexes everything by default — exclude the big nested paths
+(`/documents/*`, `/comparisons/*`) from the indexing policy so writes stay cheap,
+and add composite indexes for `(category, status)` and `(lifecycle, updated_at desc)`.
+Partitioning by `email_id` keeps every case a single-partition read.
 
-## 9. Cloud Storage layout
+## 9. Blob Storage layout
 
 ```
-gs://<bucket>/attachments/{email_id}/{filename}       uploaded or copied source docs
-gs://<bucket>/renders/{email_id}/{role}/page-{n}.png  rendered pages for highlighting
+<account>/sdoc/attachments/{email_id}/{filename}       uploaded or copied source docs
+<account>/sdoc/renders/{email_id}/{role}/page-{n}.png  rendered pages for highlighting
 ```
 
-Read access via V4 signed URLs, 1-hour expiry. The bundled dataset is served from
-inside the container, not from Cloud Storage; this bucket is for demo uploads and
+Read access via user-delegation SAS URLs, 1-hour expiry. The bundled dataset is served from
+inside the container, not from Blob Storage; this container is for demo uploads and
 render caching.
 
 ## Changelog

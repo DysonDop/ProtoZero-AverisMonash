@@ -56,7 +56,8 @@ survives a new subject template; one that keys on `TO CONFIRM DOCS` does not.
 
 ### 1.3 LLM fallback
 
-`gemini-3.1-flash-lite`, `temperature=0`, structured output, returns
+Azure OpenAI, the small deployment (`AZURE_OPENAI_DEPLOYMENT_CLASSIFY`),
+`temperature=0`, structured output against a Pydantic schema, returns
 `{category, confidence, reason}`. Prompt gets: cleaned subject, cleaned body
 (first 800 chars), sender domain, and **the number of attachments** — not their
 contents. Return `decided_by="llm"`.
@@ -146,25 +147,45 @@ Then look up in `data_refs/synonyms.yaml` (first draft in
 Each reader returns `(fields, full_text, locators)`. `full_text` is cached by
 sha256 so re-runs don't re-parse.
 
-### 3.2 LLM fallback
+### 3.2 Document Intelligence fallback
 
 Trigger when the parser located `< 7` fields, or the document is `scan_pdf`.
-`gemini-3.5-flash`, `temperature=0`, structured output against `ShipmentFields`.
-Send the document natively (Gemini reads PDFs) plus the parser's partial result
-as context. **The prompt asks only for values + evidence snippets — never for a
-comparison, never for a judgement about correctness.** Set
+Send the file to **Azure AI Document Intelligence** (layout/general document
+model — confirm the current model name in the portal). It returns key-value
+pairs, tables, bounding polygons and a **per-field confidence**.
+
+- Map returned keys through the same synonym map as §3.0. A key that maps is a
+  field; a key that doesn't is ignored, not guessed.
+- `evidence` is the returned value's own text span; `locator.bbox` is its
+  polygon, so **highlighting works on a scan exactly as it does on text**.
+- `service_confidence` is the real signal here — it is a measured value, not a
+  self-rating. Weight it accordingly in §6.
+- Tables come back as tables, so the PDF container table is read as rows rather
+  than as a column header followed by loose text. Row weights summing to the
+  stated total is still a cross-check, not a source of truth.
+- Set `extracted_by="doc_intelligence"`, `doc_quality` 0.9 for a digital file
+  and 0.5 for a scan.
+
+### 3.3 Model fallback — last resort
+
+Trigger only when §3.2 still leaves a field unmapped: the document produced a
+label the synonym map has never seen. Azure OpenAI, the capable deployment
+(`AZURE_OPENAI_DEPLOYMENT_EXTRACT`), `temperature=0`, structured output against
+`ShipmentFields`.
+
+Send the parser's and the service's partial results as context, plus the
+document text (Azure OpenAI takes images, **not PDFs** — render a page to PNG
+first if a visual read is needed; Document Intelligence should have made that
+unnecessary). **The prompt asks only for values and evidence snippets — never
+for a comparison, never for a judgement about correctness.** Set
 `extracted_by="llm"`.
 
-### 3.3 Scans
-
-`Cloud Vision` OCR → word-level text with bounding boxes and confidence → feed
-OCR text **and** the page image to Gemini. Set `extracted_by="ocr_llm"`,
-`doc_quality=0.5`. Bounding boxes populate `Locator.bbox` so highlighting still
-works on a scan.
+A field the model resolves is a synonym-map gap: log the `label_seen` so it can
+be added, and the next run does it without a model call.
 
 ### 3.4 Grounding check
 
-For every LLM-extracted field, assert the `evidence` snippet appears in the
+For every field not extracted by a parser, assert the `evidence` snippet appears in the
 document's `full_text` (exact, or `rapidfuzz.partial_ratio ≥ 90`). On failure:
 **one** retry with the failure stated in the prompt, then
 `GROUNDING_FAILED` → review. Parser-extracted fields are grounded by
@@ -241,7 +262,8 @@ Per field, all components in 0..1, weighted sum into `score`:
 | `parse_valid` | hard gate | number parsed / port resolved / name non-empty. 0 ⇒ `hard_fail=FIELD_NOT_FOUND` |
 | `cross_check` | 0.35 | the signals above; 0.5 when not applicable |
 | `doc_quality` | 0.30 | txt 1.0 · digital pdf/docx/xlsx 0.9 · scan 0.5 |
-| `model_selfrating` | 0.10 | LLM 0..1; **0.5 when extracted by parser** (neutral, not 1.0) |
+| `service_confidence` | 0.20 | Document Intelligence per-field confidence — measured, so it outweighs a self-rating. 0.5 when not applicable |
+| `model_selfrating` | 0.05 | LLM 0..1; **0.5 when extracted by parser** (neutral, not 1.0) |
 | `label_directness` | 0.25 | exact synonym hit 1.0 · fuzzy label hit 0.6 · inferred 0.3 |
 
 Any `hard_fail` sends the field to review regardless of `score`.
@@ -249,8 +271,8 @@ Any `hard_fail` sends the field to review regardless of `score`.
 `LOW_CONFIDENCE`.
 
 The research basis for the weighting: LLM self-reported confidence is a weak
-routing signal (~0.70 AUC), so it carries the least weight; grounding and
-cross-checks carry the most. Tune `REVIEW_THRESHOLD` from eval results, never by
+routing signal (~0.70 AUC), so it carries the least weight; grounding,
+cross-checks and the service's own measured confidence carry the most. Tune `REVIEW_THRESHOLD` from eval results, never by
 feel, and log the change.
 
 ---
@@ -281,20 +303,22 @@ problem, and emit the submission record via
 
 ## Observability
 
-One structured Cloud Logging record per LLM call:
-`{email_id, stage, prompt_version, model, temperature, input_hash, tokens_in,
-tokens_out, latency_ms, parsed_ok, retry_of}`. Never log the API key. Never log a
-full document body — log the input hash.
+One structured Application Insights record per service call:
+`{email_id, stage, service, prompt_version, deployment, temperature, input_hash,
+tokens_in, tokens_out, pages, latency_ms, parsed_ok, retry_of}` — `service` is
+`doc_intelligence` or `azure_openai`. Never log a key. Never log a full document
+body — log the input hash.
 
 ## Caching
 
-Key every LLM response by `(prompt_version, model, sha256(input))` into
-`.cache/gemini/`. Re-runs must be free; the eval loop depends on it.
+Key every service response by `(prompt_version, deployment_or_model, sha256(input))`
+into `.cache/azure/`. Re-runs must be free; the eval loop depends on it.
 
 ## Definition of done
 
 - [ ] 520/520 emails produce a schema-valid submission entry
 - [ ] Every invariant in `docs/contracts.md` §4 asserted, with tests
 - [ ] Every normalisation rule has a unit test including its trap case
-- [ ] Zero LLM calls required for `.txt`-only cases (deterministic path proven)
+- [ ] Zero cloud calls required for `.txt`-only cases (deterministic path proven)
+- [ ] Every Document Intelligence field carries a real `service_confidence` and a bbox
 - [ ] `eval/results.csv` has a row for this build
