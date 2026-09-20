@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 import fitz
+from datetime import datetime, timezone
 from io import BytesIO
 from openpyxl import load_workbook
 
@@ -43,7 +44,30 @@ def test_live_frontend_contract() -> None:
         ]
         assert workbook["All Cases"].max_row == 521
         assert workbook["All Cases"]["A2"].value == "email_001"
-        assert workbook["Summary"]["A11"].value.startswith("=COUNTA")
+        assert workbook["Summary"]["A12"].value.startswith("=COUNTA")
+        assert workbook["Summary"]["B4"].value.startswith("All cases;")
+
+        now = datetime.now(timezone.utc)
+        monthly_excel = client.get(
+            f"/api/cases/export.xlsx?period=month&year={now.year}&month={now.month}"
+        )
+        assert monthly_excel.status_code == 200
+        assert f"protozero-cases-{now:%Y-%m}.xlsx" in monthly_excel.headers["content-disposition"]
+        monthly_workbook = load_workbook(
+            BytesIO(monthly_excel.content), read_only=True, data_only=False
+        )
+        assert monthly_workbook["Summary"]["B4"].value.startswith(f"{now:%B %Y};")
+        assert monthly_workbook["All Cases"].max_row <= 521
+
+        annual_excel = client.get(f"/api/cases/export.xlsx?period=year&year={now.year}")
+        assert annual_excel.status_code == 200
+        annual_workbook = load_workbook(
+            BytesIO(annual_excel.content), read_only=True, data_only=False
+        )
+        assert annual_workbook["Summary"]["B4"].value.startswith(f"Year {now.year};")
+
+        invalid_month = client.get("/api/cases/export.xlsx?period=month&month=13")
+        assert invalid_month.status_code == 422
 
         case = client.get("/api/cases/email_004")
         assert case.status_code == 200

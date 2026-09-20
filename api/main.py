@@ -262,12 +262,16 @@ def list_cases(
 @app.get("/api/cases/export.xlsx")
 def export_all_cases_excel(
     period: Literal["all", "month", "year", "last_30_days"] = Query("all"),
+    year: int | None = Query(None, ge=2000, le=2100),
+    month: int | None = Query(None, ge=1, le=12),
 ) -> Response:
     """Download a dated case register and its related operational records."""
     ensure_loaded()
     cases, _ = STORE.list_cases(limit=max(len(STORE.cases), 1), offset=0)
     now = datetime.now(timezone.utc)
-    cases, scope_label, date_range_label, filename_suffix = _export_period(cases, period, now)
+    cases, scope_label, date_range_label, filename_suffix = _export_period(
+        cases, period, now, year=year, month=month
+    )
     case_ids = {case.email_id for case in cases}
     content = build_all_cases_workbook(
         cases,
@@ -299,36 +303,52 @@ def _export_period(
     cases: list[Case],
     period: Literal["all", "month", "year", "last_30_days"],
     now: datetime,
+    *,
+    year: int | None = None,
+    month: int | None = None,
 ) -> tuple[list[Case], str, str, str]:
     """Apply a UTC reporting window and return labels used by the workbook."""
     if period == "all":
         return cases, "All cases", "All available dates", "all"
 
     if period == "month":
-        start = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
-        label = "This month"
-        date_range = f"{start:%Y-%m-%d} to {now:%Y-%m-%d} (UTC)"
-        suffix = f"{now:%Y-%m}"
+        selected_year = year or now.year
+        selected_month = month or now.month
+        start = datetime(selected_year, selected_month, 1, tzinfo=timezone.utc)
+        if selected_month == 12:
+            window_end = datetime(selected_year + 1, 1, 1, tzinfo=timezone.utc)
+        else:
+            window_end = datetime(selected_year, selected_month + 1, 1, tzinfo=timezone.utc)
+        display_end = min(now, window_end - timedelta(days=1))
+        label = f"{start:%B %Y}"
+        date_range = f"{start:%Y-%m-%d} to {display_end:%Y-%m-%d} (UTC)"
+        suffix = f"{selected_year:04d}-{selected_month:02d}"
     elif period == "year":
-        start = datetime(now.year, 1, 1, tzinfo=timezone.utc)
-        label = "This year"
-        date_range = f"{start:%Y-%m-%d} to {now:%Y-%m-%d} (UTC)"
-        suffix = f"{now:%Y}"
+        selected_year = year or now.year
+        start = datetime(selected_year, 1, 1, tzinfo=timezone.utc)
+        window_end = datetime(selected_year + 1, 1, 1, tzinfo=timezone.utc)
+        display_end = min(now, window_end - timedelta(days=1))
+        label = f"Year {selected_year}"
+        date_range = f"{start:%Y-%m-%d} to {display_end:%Y-%m-%d} (UTC)"
+        suffix = f"{selected_year:04d}"
     else:
         start = now - timedelta(days=30)
+        window_end = None
         label = "Last 30 days"
         date_range = f"{start:%Y-%m-%d} to {now:%Y-%m-%d} (UTC)"
         suffix = "last-30-days"
 
     def in_window(case: Case) -> bool:
-        if case.received_at is None:
+        timestamp = case.received_at or case.created_at
+        if timestamp is None:
             return False
-        received = case.received_at
+        received = timestamp
         if received.tzinfo is None:
             received = received.replace(tzinfo=timezone.utc)
         else:
             received = received.astimezone(timezone.utc)
-        return start <= received <= now
+        within_selected_period = window_end is None or received < window_end
+        return start <= received <= now and within_selected_period
 
     return [case for case in cases if in_window(case)], label, date_range, suffix
 

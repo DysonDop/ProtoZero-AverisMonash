@@ -17,8 +17,8 @@
   --on-dark:      #FFFFFF;
   --on-dark-dim:  rgba(255,255,255,.55);
 
-  --sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
-  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --sans: 'Archivo', 'Segoe UI', system-ui, sans-serif;
+  --mono: 'Azeret Mono', 'Cascadia Mono', ui-monospace, monospace;
 
   --fs-title:  24px;
   --fs-head:   16px;
@@ -48,6 +48,7 @@ body{
   font-family: var(--sans);
   font-size: var(--fs-body);
   line-height: 1.5;
+  letter-spacing: -.006em;
 }
 
 .mono{ font-family: var(--mono) }
@@ -83,13 +84,10 @@ body{
               max-width: calc(var(--case-content-max) + var(--case-gutter) + var(--case-gutter));
               margin-inline: auto; padding-inline: var(--case-gutter);
               display: flex; align-items: center; gap: 13px }
-/* The zero is a real JetBrains Mono glyph, not a drawn shape: mono is what this
-   app uses to mean "read off a document", so the name carries its own rule. It
-   is sized against the Lato cap height rather than by eye. */
 .thin__mark{ flex: none; font-family: 'Lato', var(--sans); font-weight: 700;
              font-size: 17px; line-height: 1; letter-spacing: -.012em;
              color: var(--on-dark); white-space: nowrap }
-.thin__mark .z{ font-family: var(--mono); font-weight: 700;
+.thin__mark .z{ font-family: 'JetBrains Mono', var(--mono); font-weight: 700;
                 font-size: 1.06em; color: var(--orange) }
 .thin__divider{ width: 1px; height: 18px; background: rgba(255,255,255,.24) }
 .thin__section{ font-size: var(--fs-small); color: var(--on-dark) }
@@ -128,8 +126,11 @@ body{
 .margin{ min-width: 0;
          display: flex; flex-direction: column; gap: var(--gap-md);
          position: relative; z-index: 1 }
-.wmain, .rmain{ flex-grow: 1; min-height: 0; padding: 22px 34px;
-                display: flex; flex-direction: column; gap: 14px }
+.wmain{ width: 100%; max-width: 1380px; margin-inline: auto; flex-grow: 1; min-height: 0;
+        padding: 28px clamp(20px, 3vw, 42px) 42px;
+        display: flex; flex-direction: column; gap: 18px }
+.rmain{ flex-grow: 1; min-height: 0; padding: 22px 34px;
+        display: flex; flex-direction: column; gap: 14px }
 .chips{ display: flex; gap: 8px; flex-wrap: wrap }
 .cards{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: var(--gap-md); align-content: start }
@@ -143,29 +144,38 @@ body{
 .eyebrow{ display: block; color: var(--muted); font-size: var(--fs-label);
           font-weight: 600; letter-spacing: .13em; text-transform: uppercase }
 
-.welcome{ display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(310px, .75fr);
-          gap: 32px; max-width: 1080px; padding: 26px 28px;
+.welcome{ display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(370px, .85fr);
+          align-items: stretch; gap: clamp(24px, 4vw, 58px); padding: 30px 32px;
           background: var(--sheet); border: 1px solid var(--rule);
-          border-top: 3px solid var(--orange); border-radius: var(--r-panel) }
-.welcome__copy h1{ max-width: 650px; margin: 5px 0 8px;
-                    font-size: clamp(22px, 3vw, 32px); font-weight: 500;
-                    line-height: 1.15; letter-spacing: -.02em }
-.welcome__copy p{ max-width: 650px; margin: 0 0 17px; color: var(--muted);
-                  font-size: var(--fs-small); line-height: 1.6 }
+          border-left: 4px solid var(--orange); border-radius: 14px;
+          box-shadow: 0 16px 40px rgba(16,26,36,.045) }
+.welcome__copy{ display: flex; min-width: 0; flex-direction: column; align-items: flex-start;
+                justify-content: center; padding: 4px 0 }
+.welcome__copy h1{ max-width: 700px; margin: 7px 0 10px;
+                    font-size: clamp(28px, 3.4vw, 43px); font-weight: 600;
+                    line-height: 1.06; letter-spacing: -.035em }
+.welcome__copy p{ max-width: 680px; margin: 0 0 20px; color: var(--muted);
+                  font-size: 14px; line-height: 1.65 }
 .welcome__copy .btn{ display: inline-flex; align-items: center; text-decoration: none }
-.welcome__steps{ margin: 0; padding: 0 0 0 18px; list-style: none;
-                 border-left: 1px solid var(--rule) }
-.welcome__steps li{ display: flex; align-items: flex-start; gap: 11px; padding: 5px 0 12px }
-.welcome__steps li:last-child{ padding-bottom: 5px }
-.welcome__steps li > b{ display: inline-flex; width: 24px; height: 24px; flex: none;
+.welcome__path{ min-width: 0; padding: 20px 22px; border: 1px solid var(--rule);
+                border-radius: 10px; background: #F8F6F1 }
+.welcome__path > .eyebrow{ margin-bottom: 17px }
+.welcome__steps{ margin: 0; padding: 0; list-style: none }
+.welcome__steps li{ position: relative; display: flex; align-items: flex-start;
+                    gap: 13px; padding: 0 0 18px }
+.welcome__steps li:last-child{ padding-bottom: 0 }
+.welcome__steps li:not(:last-child)::after{ content: ''; position: absolute; top: 34px; bottom: 4px;
+                                            left: 16px; width: 1px; background: rgba(0,109,174,.22) }
+.welcome__steps li > b{ display: inline-flex; width: 33px; height: 33px; flex: none;
                         align-items: center; justify-content: center;
-                        border: 1px solid var(--blue); border-radius: 5px;
-                        color: var(--blue); font-family: var(--mono); font-size: 10px }
+                        border: 1px solid rgba(0,109,174,.45); border-radius: 7px;
+                        background: var(--sheet); color: var(--blue);
+                        font-family: var(--mono); font-size: 9px; font-weight: 600 }
 .welcome__steps span{ display: flex; flex-direction: column }
-.welcome__steps strong{ font-size: var(--fs-small); font-weight: 500 }
-.welcome__steps small{ color: var(--muted); font-size: var(--fs-meta); line-height: 1.45 }
-.ops{ max-width: 1080px; overflow: hidden; background: var(--sheet);
-      border: 1px solid var(--rule); border-radius: var(--r-panel) }
+.welcome__steps strong{ padding-top: 1px; font-size: var(--fs-small); font-weight: 600 }
+.welcome__steps small{ margin-top: 2px; color: var(--muted); font-size: var(--fs-meta); line-height: 1.45 }
+.ops{ overflow: hidden; background: var(--sheet);
+      border: 1px solid var(--rule); border-radius: 12px }
 .ops__summary{ position: relative; min-height: 68px; display: flex; align-items: center; gap: 20px;
                padding: 11px 18px; cursor: pointer; list-style: none }
 .ops__summary::-webkit-details-marker{ display: none }
@@ -247,29 +257,49 @@ body{
 .healthalert b{ color: #8A4B0A; font-size: 10px; letter-spacing: .08em; text-transform: uppercase }
 .healthalert span, .healthpanel__empty{ color: var(--muted) }
 .healthpanel__empty{ font-size: var(--fs-small) }
-.listhead{ display: flex; align-items: end; gap: 24px; margin-top: 8px }
-.listhead h2, .reviewhead h1{ margin: 3px 0 0; font-size: 19px; font-weight: 500 }
-.worktools{ display: flex; align-items: end; gap: 10px; margin-left: auto }
-.worksearch{ display: flex; flex-direction: column; gap: 4px; min-width: min(330px, 36vw) }
-.worksearch > span, .filterbar__label{ color: var(--muted); font-size: var(--fs-label);
+.workbench{ padding: 24px; background: var(--sheet); border: 1px solid var(--rule);
+            border-radius: 14px; box-shadow: 0 14px 34px rgba(16,26,36,.035) }
+.listhead{ display: flex; align-items: flex-end; justify-content: space-between; gap: 24px }
+.listhead h2, .reviewhead h1{ margin: 3px 0 0; font-size: 22px; font-weight: 600;
+                             letter-spacing: -.02em }
+.listhead p{ margin: 5px 0 0; color: var(--muted); font-size: var(--fs-small) }
+.workbench__total{ flex: none; padding-bottom: 2px; color: var(--muted); font-size: var(--fs-meta) }
+.workbench__total b{ color: var(--ink); font-family: var(--mono); font-weight: 500 }
+.worktools{ display: grid; grid-template-columns: minmax(320px, 1.25fr) minmax(360px, .75fr);
+            align-items: start; gap: 18px; margin-top: 20px; padding: 16px;
+            border: 1px solid var(--hair); border-radius: 10px; background: #F8F6F1 }
+.worksearch{ display: flex; min-width: 0; flex-direction: column; gap: 5px }
+.worksearch > span, .workexport-group > label, .filterbar__label{ color: var(--muted); font-size: var(--fs-label);
                                       font-weight: 600; letter-spacing: .1em;
                                       text-transform: uppercase }
-.worksearch input{ width: 100%; min-height: 40px; padding: 0 12px;
+.worksearch input{ width: 100%; min-height: 46px; padding: 0 14px;
                    border: 1px solid rgba(16,26,36,.25); border-radius: var(--r-control);
                    background: var(--sheet); color: var(--ink); font: inherit }
 .worksearch input::placeholder{ color: var(--muted) }
-.worksearch small{ max-width: 390px; color: var(--muted); font-size: 10px; line-height: 1.35 }
-.workexport-group{ display: flex; flex: none; flex-direction: column; gap: 4px }
-.workexport-group small{ color: var(--muted); font-size: 10px; line-height: 1.35; text-align: center }
-.workexport{ flex: none; white-space: nowrap }
-.filterbar{ display: flex; flex-direction: column; align-items: flex-start; gap: 7px }
+.worksearch small{ color: var(--muted); font-size: 10px; line-height: 1.35 }
+.workexport-group{ display: flex; min-width: 0; flex-direction: column; gap: 5px }
+.workexport-row{ min-width: 0 }
+.workexport-options{ min-width: 0 }
+.workexport-options--dated{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px }
+.workexport-row select, .workexport-row input{ width: 100%; min-width: 0; min-height: 46px;
+                        padding: 0 34px 0 13px; border: 1px solid rgba(16,26,36,.25);
+                        border-radius: var(--r-control); background: var(--sheet);
+                        color: var(--ink); font: inherit }
+.workexport-row input{ padding-right: 13px }
+.workexport-foot{ display: grid; grid-template-columns: minmax(0, 1fr) auto;
+                  align-items: start; gap: 12px }
+.workexport-group small{ padding-top: 3px; color: var(--muted); font-size: 10px; line-height: 1.35 }
+.workexport{ display: inline-flex; flex: none; align-items: center; justify-content: center;
+             min-height: 38px; white-space: nowrap; text-decoration: none }
+.filterbar{ display: flex; flex-direction: column; align-items: flex-start; gap: 9px;
+            margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--rule) }
 .filterbar__top{ display: flex; align-items: baseline; gap: 10px; width: 100% }
 .filterbar__count{ color: var(--muted); font-family: var(--mono); font-size: var(--fs-meta) }
 .filterbar__top button{ margin-left: auto; padding: 0; border: 0;
                         border-bottom: 1px solid currentColor; background: transparent;
                         color: var(--blue); font: inherit; font-size: var(--fs-meta); cursor: pointer }
 .pagination{ display: flex; align-items: center; justify-content: center; gap: 14px;
-             padding: 4px 0 10px }
+             padding: 18px 0 0 }
 .pagination__button{ display: inline-flex; min-height: 38px; align-items: center;
                      justify-content: center; gap: 7px; padding: 0 14px;
                      border: 1px solid rgba(16,26,36,.25); border-radius: var(--r-control);
@@ -534,7 +564,7 @@ button.bx--flag:hover{ background: rgba(184,58,40,.10) }
   border: 1px solid rgba(16,26,36,.22); border-radius: var(--r-pill);
   background: transparent; color: var(--ink);
   font-family: inherit; font-size: var(--fs-small);
-  padding: 0 14px; min-height: 36px; cursor: pointer;
+  padding: 0 14px; min-height: 38px; cursor: pointer;
 }
 .chip[aria-pressed="true"], .chip--on{
   background: var(--ink); border-color: var(--ink); color: var(--on-dark);
@@ -544,9 +574,9 @@ button.bx--flag:hover{ background: rgba(184,58,40,.10) }
 .chip--on .chip__count{ color: rgba(255,255,255,.6) }
 
 .wtable{ border: 1px solid var(--rule); border-radius: var(--r-panel);
-         background: var(--sheet); overflow: hidden }
+         margin-top: 16px; background: var(--sheet); overflow: hidden }
 .wrow{ display: flex; align-items: center; gap: 12px;
-       padding: 0 18px; min-height: 52px; border-bottom: 1px solid var(--hair) }
+       padding: 0 16px; min-height: 58px; border-bottom: 1px solid var(--hair) }
 .wrow:last-child{ border-bottom: 0 }
 .wrow--muted{ background: rgba(16,26,36,.02) }
 .wrow__subject{ font-size: var(--fs-small) }
@@ -554,6 +584,10 @@ button.bx--flag:hover{ background: rgba(184,58,40,.10) }
 .wrow__time{ font-family: var(--mono); font-size: var(--fs-meta); color: var(--muted);
              width: 56px; flex: none; text-align: right }
 .wrow__body{ flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px }
+.wrow__id{ flex: none; color: var(--muted); font-family: var(--mono); font-size: 10px }
+.wrow__open{ display: inline-flex; width: 26px; height: 26px; flex: none;
+             align-items: center; justify-content: center; border-radius: 50%;
+             color: var(--muted); font-size: 14px; transition: background .15s ease, color .15s ease }
 .wrow__note{ width: 190px; flex: none; font-size: 12.5px }
 .wrow__note--wrong { color: var(--wrong); font-weight: 500 }
 .wrow__note--review{ color: var(--blue) }
@@ -561,6 +595,7 @@ button.bx--flag:hover{ background: rgba(184,58,40,.10) }
 .wrow__note--none  { color: var(--muted) }
 .wrow--link{ color: inherit; text-decoration: none; cursor: pointer }
 .wrow--link:hover{ background: rgba(16,26,36,.035) }
+.wrow--link:hover .wrow__open{ background: var(--ink); color: var(--on-dark) }
 
 .card{ border: 1px solid var(--rule); border-radius: var(--r-panel);
        background: var(--sheet); padding: 18px 20px;
@@ -703,7 +738,7 @@ a.card__title:hover{ text-decoration: underline }
   .app .cards{ grid-template-columns: 1fr }
   .app .wmain, .app .rmain{ padding: 18px 20px }
   .welcome{ grid-template-columns: 1fr }
-  .welcome__steps{ padding: 14px 0 0; border-left: 0; border-top: 1px solid var(--rule) }
+  .worktools{ grid-template-columns: 1fr }
   .ops__body{ grid-template-columns: 1fr }
   .casebanner{ grid-template-columns: 12px 1fr }
   .casebanner__meta{ grid-column: 2; display: flex; gap: 16px }
@@ -716,10 +751,12 @@ a.card__title:hover{ text-decoration: underline }
   .thin__audit{ padding: 0 9px }
   .fbar{ flex-wrap: wrap; padding: 12px 16px }
   .fbar__prompt, .fbar__impact{ width: 100%; max-width: none }
-  .welcome{ padding: 21px 20px }
+  .welcome{ gap: 22px; padding: 24px 20px }
   .listhead{ align-items: flex-start; flex-direction: column; gap: 5px }
-  .worktools{ width: 100%; margin-left: 0 }
+  .workbench{ padding: 19px }
+  .worktools{ width: 100% }
   .worksearch{ flex-grow: 1; min-width: 0 }
+  .workexport-group{ min-width: 0 }
   .casebanner{ padding: 13px 18px }
   .sheet__grid{ grid-template-columns: 1fr }
   .bx{ border-right: 0 }
@@ -746,7 +783,8 @@ a.card__title:hover{ text-decoration: underline }
   .thin__divider, .thin__section{ display: none }
   .thin__action-label{ position: absolute; width: 1px; height: 1px; overflow: hidden;
                        clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap }
-  .worktools{ align-items: stretch; flex-direction: column }
+  .workexport-options--dated, .workexport-foot{ grid-template-columns: 1fr }
+  .workexport{ width: 100% }
   .filterbar__top{ align-items: flex-start; flex-wrap: wrap }
   .filterbar__top button{ margin-left: 0 }
   .pagination{ justify-content: space-between; gap: 8px }
@@ -759,4 +797,5 @@ a.card__title:hover{ text-decoration: underline }
   .reasonfacts > div{ grid-template-columns: 108px minmax(0, 1fr) }
   .casereport__head{ align-items: stretch; flex-direction: column }
   .casereport__actions{ justify-content: space-between }
+  .wrow__id{ display: none }
 }

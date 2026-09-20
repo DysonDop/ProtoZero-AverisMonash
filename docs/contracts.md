@@ -216,7 +216,7 @@ downloads. Errors are
 | --- | --- | --- | --- |
 | `GET` | `/health` | — | `{"status":"ok","cases":int,"version":str}` |
 | `GET` | `/cases` | `?category=&status=&lifecycle=&limit=50&cursor=` | `{"items":[CaseSummary],"next_cursor":str\|null}` |
-| `GET` | `/cases/export.xlsx` | — | Excel workbook containing every case, comparison, evidence row, review item and audit event |
+| `GET` | `/cases/export.xlsx` | `?period=all\|month\|year\|last_30_days&year=YYYY&month=1..12` | Excel workbook containing the cases in the selected UTC reporting period, plus their comparisons, evidence rows, review items and audit events. `year` and `month` select a specific calendar period; omitted values default to the current UTC period. |
 | `GET` | `/cases/{email_id}` | — | `Case` (full, with `comparisons`) |
 | `POST` | `/cases/{email_id}/rerun` | `{"force_llm": bool}` | `Case` |
 | `GET` | `/cases/{email_id}/document/{role}` | `role=SI\|BL` | `{"fmt":DocFormat,"text":str,"page_urls":[str]}` — SAS URLs for rendered pages |

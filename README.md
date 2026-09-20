@@ -68,9 +68,14 @@ plain language; one click opens both source excerpts with the compared text
 highlighted. The audit drawer exposes every event's trace ID, timestamp, actor,
 action, previous value, new value and reason.
 
-The **Export all cases (Excel)** action downloads the complete current store,
-regardless of worklist filters or pagination, with separate sheets for summary,
-cases, comparisons, document evidence, audit events and the review queue.
+The worklist has an **Export cases** period selector and **Download Excel** action.
+Reports can cover all cases, any selected calendar month or year, or the rolling
+last 30 days. The selected dates are shown before download. Downloads
+are independent of worklist search, result filters and pagination. Each workbook
+states its reporting scope and includes separate sheets for summary, cases,
+comparisons, document evidence, audit events and the review queue.
+Period reports use the email received timestamp when available and otherwise use
+the case's first processing timestamp, which is stated on the Summary sheet.
 
 Each comparison case also opens with a compact case report: documents present,
 issues, extracted field pairs, human corrections, final result, audit-event

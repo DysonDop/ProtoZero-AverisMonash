@@ -64,8 +64,13 @@ export const getAuditEvents = id =>
 export const getCaseReportPdfUrl = id =>
   mock ? null : BASE + '/cases/' + encodeURIComponent(id) + '/report.pdf'
 
-export const getAllCasesExcelUrl = () =>
-  mock ? null : BASE + '/cases/export.xlsx'
+export function getAllCasesExcelUrl({ period = 'all', year, month } = {}) {
+  if (mock) return null
+  const params = new URLSearchParams({ period })
+  if (year != null) params.set('year', year)
+  if (month != null) params.set('month', month)
+  return BASE + '/cases/export.xlsx?' + params.toString()
+}
 
 export async function resolveReview(id, body) {
   if (mock) return { ok: true }

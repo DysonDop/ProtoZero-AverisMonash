@@ -25,8 +25,8 @@ Four rules. Everything else in this document follows from them.
    word. Tested: our three status colours collapse to nearly the same grey when
    desaturated, so colour alone fails in greyscale and for colour-blind users.
 2. **Mono means "this is what the file actually said".** Any string lifted from
-   a source document is set in JetBrains Mono. Anything we wrote ourselves is
-   Plex. The eye learns the difference in about ten seconds and then it is free
+   a source document is set in Azeret Mono. Anything we wrote ourselves is
+   Archivo. The eye learns the difference in about ten seconds and then it is free
    information forever.
 3. **Every claim points at its evidence.** No value is shown without a route to
    the line it came from. This is the product's whole argument, so the UI is not
@@ -138,15 +138,19 @@ chart on the dashboard. Measured against our paper:
 
 | Role | Face | Size | Weight |
 | --- | --- | --- | --- |
-| Screen title | IBM Plex Sans | 22px | 500 |
-| Section heading | IBM Plex Sans | 18px | 500 |
-| Body and table cells | IBM Plex Sans | 14px | 400 |
-| Secondary and metadata | IBM Plex Sans | 13px | 400 |
-| **Document values** | **JetBrains Mono** | 13px | 400 |
-| Numeric columns | JetBrains Mono | 14px | 400 |
+| Screen title | Archivo | 22px | 600 |
+| Section heading | Archivo | 18px | 600 |
+| Body and table cells | Archivo | 14px | 400 |
+| Secondary and metadata | Archivo | 13px | 400 |
+| **Document values** | **Azeret Mono** | 13px | 400 |
+| Numeric columns | Azeret Mono | 14px | 400 |
 
-Two weights only, 400 and 500. Sentence case everywhere, never Title Case,
-never all-caps labels.
+The protected ProtoZero wordmark is the sole typography exception: it retains
+the original Lato 700 lettering and JetBrains Mono 700 orange zero.
+
+Use 400 for body copy, 500 for controls and 600 for headings. Weight 700 is
+reserved for the product wordmark. Sentence case everywhere except compact
+operational labels, which may use tracked capitals.
 
 Numbers get mono for a second reason beyond principle 2: in a proportional face,
 `131,058` reads as visually smaller than `99,999`. Container count and gross
@@ -465,3 +469,7 @@ component covers all three.
 - **v5, 21 Sep 2026** — added the evidence-first welcome path, explicit screen
   names, case context banner, review-queue explanation and useful empty-filter
   state for first-time users. Existing status shapes and colours remain intact.
+- **v6, 21 Sep 2026** — rebuilt the worklist as one coherent operations surface,
+  shortened the welcome content, grouped search/reporting/filters with the case
+  register, and replaced IBM Plex Sans + JetBrains Mono with Archivo + Azeret
+  Mono. The evidence-versus-interface type distinction remains unchanged.

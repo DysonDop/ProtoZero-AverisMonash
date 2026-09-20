@@ -100,7 +100,10 @@ def _build_summary_sheet(
     sheet["A4"] = "Scope"
     sheet["B4"] = f"{scope_label}; worklist search, result filters and pagination do not limit this export."
     sheet["A5"] = "Report period"
-    sheet["B5"] = date_range_label
+    sheet["B5"] = (
+        f"{date_range_label}; received timestamp, or first processing timestamp "
+        "when the source email has no date."
+    )
     sheet["A6"] = "Generated (UTC)"
     sheet["B6"] = _excel_datetime(generated_at)
     sheet["B6"].number_format = "yyyy-mm-dd hh:mm:ss"
@@ -136,7 +139,9 @@ def _build_summary_sheet(
             for block_column in (column, column + 1):
                 sheet.cell(block_row, block_column).fill = PatternFill("solid", fgColor=PAPER)
         label_cell.font = Font(name="Aptos", size=9, bold=True, color=MUTED)
+        label_cell.alignment = Alignment(horizontal="center", vertical="center")
         value_cell.font = Font(name="Aptos Display", size=18, bold=True, color=INK)
+        value_cell.alignment = Alignment(horizontal="center", vertical="center")
         value_cell.number_format = "#,##0"
 
     sheet["A18"] = "How to use this workbook"

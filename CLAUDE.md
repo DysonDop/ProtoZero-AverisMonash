@@ -118,7 +118,8 @@ If they disagree, one is a bug — say so rather than patching around it.
   lifts to `#5FB3E8` for *text* only.
 - **Colour is never the only signal.** Every state also carries a shape and a
   word. Desaturated, the three status colours land on nearly the same grey.
-- **Mono means "this is what the document said".** Anything we wrote is Plex.
+- **Mono means "this is what the document said".** Anything we wrote is Archivo;
+  source values and operational identifiers use Azeret Mono.
 - **One 50px bar is the whole shell.** No sidebar, no search box, no density
   switcher. Navigation is filter chips above the list. Adding a second
   navigation surface is a deliberate decision, not a habit.
