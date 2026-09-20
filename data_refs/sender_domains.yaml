@@ -1,0 +1,31 @@
+# Sender-domain allowlist for stage-1 classification.
+#
+# Rationale (docs/dataset_facts.md §2): all 40 SPAM emails are separable on the
+# sender domain alone, and macro-F1 makes those 40 worth as much as the 220
+# comparison emails. Classifying spam on CONTENT is both harder and more
+# fragile. A domain not on this list is spam.
+#
+# This list lives in data, not code, because in production it is an operations
+# artefact — ops adds a new customer domain without a deploy.
+
+corporate:
+  - aprilasia.com
+  - april.com.my
+  - fujitogrp.com
+  - psabdp.com
+  - ifpla.com
+  - algurg.ae
+  - safqa.co.ke
+  - roxcel.at
+  - vitalsolutions.sg
+
+# Domains observed sending spam in the sample inbox. Kept explicitly so the
+# demo can show a known-bad hit rather than only an allowlist miss; the
+# allowlist is still the decision rule.
+known_spam:
+  - webmail-verify.co
+  - secure-mailbox.org
+  - parcel-track.co
+  - logistics-deals.biz
+  - prize-claims.info
+  - crypto-invest.net

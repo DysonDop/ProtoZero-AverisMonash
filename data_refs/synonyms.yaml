@@ -1,0 +1,84 @@
+# Label → field map.
+#
+# Keys are ALREADY NORMALISED by pipeline.labels.normalise_label():
+#   lowercase → strip parentheticals → strip CJK → collapse whitespace →
+#   drop trailing colon.
+# So "Gross Weight毛重(KGS)", "Gross Wt (kgs)" and "GROSS WEIGHT" all arrive
+# here as "gross weight" / "gross wt".
+#
+# A label starting with "total" is handled by the parser as a precedence bump,
+# not by a separate key — see pipeline/labels.py.
+#
+# NEVER add a bare "weight" key. "NET WEIGHT" is a planted decoy that appears
+# on the five missing_value edge cases and on two Packing List decoys.
+
+shipper:
+  - shipper
+  - shipper/exporter
+  - shipper / exporter
+  - exporter                       # certificate-of-origin decoy only
+  - shipper/seller
+
+consignee:
+  - consignee
+  - to the order of                # a LABEL for consignee, not a bearer BL
+  - consignee/receiver
+
+notify_party:
+  - notify
+  - notify party
+  - notify party/intermediate consignee
+  - notify address
+
+port_of_loading:
+  - port of loading
+  - pol
+  - load port
+  - loading port
+  - port of receipt                # seen on one CoO decoy; harmless
+
+port_of_discharge:
+  - port of discharge
+  - pod
+  - discharge port
+  - port of delivery
+
+container_count:
+  - total containers
+  - no. of containers
+  - no of containers
+  - no. of containers or packages
+  - no of containers or packages
+  - container count
+  - number of containers
+  - containers
+
+gross_weight_kg:
+  - gross weight
+  - gross wt
+  - gross weight kgs
+  - gross wt kgs
+  - total gross weight
+  - total gross wt
+
+# Labels that must never resolve to a field, even if they fuzzy-match one.
+blacklist:
+  - net weight
+  - net wt
+  - tare weight
+  - tare wt
+  - measurement
+  - cbm
+  - description
+  - commodity
+  - vessel
+  - voyage
+  - export carrier
+  - freight
+  - hs code
+  - b/l no.
+  - bl no
+  - booking no.
+  - booking no
+  - order no.
+  - marks and numbers
