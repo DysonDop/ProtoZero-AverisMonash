@@ -47,6 +47,11 @@ documents a parser cannot.
    reason and its evidence. Refusing is a first-class outcome, not a failure path.
 7. **A person resolves** what was refused, and the correction is stored and reused.
 
+This is orchestration and deterministic document checking, not custom-model
+training. Optional AI services only assist when rules or parsers cannot finish;
+after repeated service failures a circuit breaker keeps the deterministic path
+running and says so in the interface.
+
 ## The interface
 
 Three screens, one for each person who uses it.
@@ -56,6 +61,25 @@ Three screens, one for each person who uses it.
 | Worklist | What came in, and what did the system conclude? |
 | Review queue | What did it refuse to decide, and can I settle it in one click? |
 | Case | What did we read, did it match, and how far do we trust our own reading? |
+
+The worklist also carries a measured operations snapshot and live component
+health. Flagged fields explain the two values, similarity and review status in
+plain language; one click opens both source excerpts with the compared text
+highlighted. The audit drawer exposes every event's trace ID, timestamp, actor,
+action, previous value, new value and reason.
+
+The **Export all cases (Excel)** action downloads the complete current store,
+regardless of worklist filters or pagination, with separate sheets for summary,
+cases, comparisons, document evidence, audit events and the review queue.
+
+Each comparison case also opens with a compact case report: documents present,
+issues, extracted field pairs, human corrections, final result, audit-event
+count and real page/line evidence locations. The **Download PDF** action exports
+that current case state together with the field comparison and audit trail.
+Selecting any field opens the full
+SI and BL source-text previews side by side, scrolls both to the located source
+line and highlights it. An **Open original** link serves the unmodified stored
+attachment when the live API is connected.
 
 Every compared field carries one word — `checked`, `unsure` or `not checked` —
 so the interface never states a result without also stating how much to trust
@@ -122,6 +146,11 @@ npm.cmd run dev
 The live path enables document evidence, ordered audit activity, review retries
 and case decisions. The in-memory backend keeps changes until the API process
 restarts.
+
+The worklist prioritises operational cases by severity and exposes measurable
+processing and health information. Reviewer corrections rejoin at comparison,
+leaving the source extraction intact, and the audit panel exposes the case
+trace ID.
 
 ### What the case buttons do
 

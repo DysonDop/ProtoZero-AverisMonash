@@ -105,12 +105,41 @@ class MemoryStore:
         comparisons = [c for c in cases if c.category == "BL_COMPARISON"]
         defects = [c for c in cases if c.has_defect]
         auto_cleared = [c for c in comparisons if c.status == "OK"]
+        issue_counts = Counter()
+        for case in cases:
+            reasons = set(case.escalation_reasons)
+            if "MISSING_ATTACHMENT" in reasons:
+                issue_counts["Missing attachment"] += 1
+            if "WRONG_DOC_TYPE" in reasons:
+                issue_counts["Wrong document type"] += 1
+            if "UNREADABLE_DOCUMENT" in reasons:
+                issue_counts["Unreadable document"] += 1
+            if reasons.intersection({"FIELD_NOT_FOUND", "GROUNDING_FAILED", "LOW_CONFIDENCE"}):
+                issue_counts["Missing or uncertain field"] += 1
+            if set(case.defect_fields).intersection({"shipper", "consignee", "notify_party"}):
+                issue_counts["Party mismatch"] += 1
+
+        documents = [document for case in cases for document in case.documents]
+        parsed_documents = [document for document in documents if document.fields is not None]
+        processing_times = [
+            case.timings_ms.get("total") for case in cases
+            if case.timings_ms.get("total") is not None
+        ]
         return {
             "total_emails": total,
             "by_category": dict(Counter(c.category for c in cases)),
             "by_status": dict(Counter(c.status for c in cases)),
             "mismatch_rate": round(len(defects) / len(comparisons), 4) if comparisons else 0.0,
             "review_queue_open": self.open_count(),
+            "automatically_cleared": len(auto_cleared),
+            "human_reviews": sum(1 for c in comparisons if c.status == "NEEDS_REVIEW"),
+            "rejected": sum(1 for decision in self.decisions.values() if decision.action == "reject"),
+            "avg_processing_ms": round(sum(processing_times) / len(processing_times), 1)
+            if processing_times else None,
+            "top_flagged_issues": [
+                {"label": label, "count": count}
+                for label, count in issue_counts.most_common(5)
+            ],
             "avg_fields_flagged": round(
                 sum(len(c.defect_fields) for c in defects) / len(defects), 2
             )
@@ -124,11 +153,9 @@ class MemoryStore:
             "parser_pct": round(
                 sum(
                     1
-                    for c in cases
-                    for d in c.documents
-                    if d.fields is not None
+                    for d in parsed_documents
                 )
-                / max(1, sum(len(c.documents) for c in cases)),
+                / max(1, len(documents)),
                 4,
             ),
             "llm_calls": sum(1 for c in cases if c.decided_by == "llm"),

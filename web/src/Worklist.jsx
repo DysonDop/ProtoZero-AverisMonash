@@ -1,32 +1,72 @@
 import { useEffect, useState } from 'react'
 import Bar from './Bar.jsx'
-import { getCases } from './api.js'
+import Dashboard from './Dashboard.jsx'
+import { getAllCasesExcelUrl, getCases } from './api.js'
 import { kindOf, KIND_WORD, FIELD_PLAIN, REASON_TITLE } from './status.js'
 
 const FILTERS = ['wrong', 'review', 'clear', 'none']
 const RANK = { wrong: 0, review: 1, clear: 2, none: 3 }
-
-export default function Worklist() {
+const PAGE_SIZE = 20
+export default function Worklist({ health }) {
   const [items, setItems] = useState(null)
   const [error, setError] = useState(null)
   const [filter, setFilter] = useState(null)
+  const [query, setQuery] = useState('')
+  const [page, setPage] = useState(1)
+
+  function loadCases() {
+    setItems(null)
+    setError(null)
+    getCases().then(d => setItems(d.items)).catch(e => setError(e.message))
+  }
 
   useEffect(() => {
-    getCases().then(d => setItems(d.items)).catch(e => setError(e.message))
+    loadCases()
   }, [])
 
-  if (error) return <Shell meta="worklist"><div className="state">Could not reach the case service. {error}</div></Shell>
+  useEffect(() => {
+    setPage(1)
+  }, [filter, query])
+
+  if (error) return (
+    <Shell meta="worklist">
+      <div className="state state--error">
+        <b>Could not load the email checks.</b>
+        <span>{error}</span>
+        <button className="btn btn--ghost btn--small" type="button" onClick={loadCases}>Try again</button>
+      </div>
+    </Shell>
+  )
   if (!items) return <Shell meta="worklist"><div className="state">Reading the inbox and preparing the checks.</div></Shell>
 
   const counts = {}
   for (const k of FILTERS) counts[k] = items.filter(c => kindOf(c) === k).length
 
   const ordered = [...items].sort((a, b) => RANK[kindOf(a)] - RANK[kindOf(b)])
-  const shown = filter ? ordered.filter(c => kindOf(c) === filter) : ordered
+  const needle = query.trim().toLowerCase()
+  const shown = ordered.filter(c => {
+    const matchesStatus = !filter || kindOf(c) === filter
+    const matchesQuery = !needle || [c.email_id, c.subject, c.from_addr, c.summary]
+      .some(value => String(value || '').toLowerCase().includes(needle))
+    return matchesStatus && matchesQuery
+  })
+  const pageCount = Math.max(1, Math.ceil(shown.length / PAGE_SIZE))
+  const currentPage = Math.min(page, pageCount)
+  const pageStart = (currentPage - 1) * PAGE_SIZE
+  const pageEnd = Math.min(pageStart + PAGE_SIZE, shown.length)
+  const visible = shown.slice(pageStart, pageEnd)
   const workedExample = ordered.find(c => c.status === 'MISMATCH')
+  const excelExportUrl = getAllCasesExcelUrl()
+
+  function changePage(nextPage) {
+    setPage(Math.max(1, Math.min(nextPage, pageCount)))
+    window.requestAnimationFrame(() => {
+      document.getElementById('email-checks-heading')?.scrollIntoView({ block: 'start' })
+    })
+  }
 
   return (
-    <Shell meta={items.length + ' emails'}>
+    <Shell meta={items.length + ' emails'} reviewCount={counts.review}>
       <div className="wmain">
         <section className="welcome" aria-labelledby="welcome-title">
           <div className="welcome__copy">
@@ -38,7 +78,7 @@ export default function Worklist() {
             </p>
             {workedExample && (
               <a className="btn btn--small" href={'#/case/' + workedExample.email_id}>
-                Start with a worked example
+                Open highest-priority case
               </a>
             )}
           </div>
@@ -49,22 +89,67 @@ export default function Worklist() {
           </ol>
         </section>
 
+        <Dashboard health={health} items={items} />
+
         <div className="listhead">
           <div>
             <span className="eyebrow">Live worklist</span>
-            <h2>Email checks</h2>
+            <h2 id="email-checks-heading">Email checks</h2>
           </div>
-          <p>Choose a status to focus the list or open the human queue. Select any row to inspect its evidence.</p>
+          <div className="worktools">
+            <label className="worksearch">
+              <span>Find an email</span>
+              <input
+                type="search"
+                value={query}
+                placeholder="e.g. email_004 or sender@company.com"
+                onChange={event => setQuery(event.target.value)}
+              />
+              <small>Use the case ID assigned here, or the subject, booking reference or sender from the original email.</small>
+            </label>
+            <div className="workexport-group">
+              {excelExportUrl ? (
+                <a
+                  className="btn btn--ghost btn--small workexport"
+                  href={excelExportUrl}
+                  download
+                  title="Downloads every case, regardless of the current filters"
+                >
+                  Export all {items.length} cases (Excel)
+                </a>
+              ) : (
+                <button className="btn btn--ghost btn--small workexport" type="button" disabled>
+                  Export all cases (Excel)
+                </button>
+              )}
+              <small>Includes every case, not just this page.</small>
+            </div>
+          </div>
         </div>
 
-        <div className="chips">
-          {FILTERS.map(k => k === 'review' ? (
-            <a className="chip" key={k} href="#/review">
-              <span className={'mk mk--' + k}></span>
-              {KIND_WORD[k]}
-              <span className="chip__count">{counts[k]}</span>
-            </a>
-          ) : (
+        <div className="filterbar" aria-label="Filter emails by result">
+          <div className="filterbar__top">
+            <span className="filterbar__label">Filter by result</span>
+            <span className="filterbar__count">
+              {shown.length === 0
+                ? `Showing 0 of ${items.length} emails`
+                : `Showing ${pageStart + 1}–${pageEnd} of ${shown.length}${shown.length !== items.length ? ' matching' : ''} emails`}
+            </span>
+            {(filter || query) && (
+              <button type="button" onClick={() => { setFilter(null); setQuery('') }}>Clear filters</button>
+            )}
+          </div>
+          <div className="chips">
+          <button
+            className="chip"
+            type="button"
+            aria-pressed={filter === null}
+            onClick={() => setFilter(null)}
+          >
+            All emails
+            <span className="chip__count">{items.length}</span>
+          </button>
+          {FILTERS.map(k => (
             <button
               className="chip"
               key={k}
@@ -77,16 +162,24 @@ export default function Worklist() {
               <span className="chip__count">{counts[k]}</span>
             </button>
           ))}
+          </div>
         </div>
 
         {shown.length === 0 ? (
           <div className="empty">
-            <b>No emails have this status.</b>
-            <span>Choose another status or return to the full worklist.</span>
-            <button className="btn btn--ghost btn--small" type="button" onClick={() => setFilter(null)}>Show all emails</button>
+            <b>No emails match these filters.</b>
+            <span>Try another status, change the search, or return to the full worklist.</span>
+            <button
+              className="btn btn--ghost btn--small"
+              type="button"
+              onClick={() => { setFilter(null); setQuery('') }}
+            >
+              Clear filters
+            </button>
           </div>
-        ) : <div className="wtable">
-          {shown.map(c => {
+        ) : <>
+          <div className="wtable">
+          {visible.map(c => {
             const k = kindOf(c)
             return (
               <a
@@ -102,7 +195,29 @@ export default function Worklist() {
               </a>
             )
           })}
-        </div>}
+          </div>
+          <nav className="pagination" aria-label="Email list pages">
+            <button
+              className="pagination__button"
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => changePage(currentPage - 1)}
+            >
+              <span aria-hidden="true">←</span> Previous
+            </button>
+            <span className="pagination__status">
+              Page <b>{currentPage}</b> of <b>{pageCount}</b>
+            </span>
+            <button
+              className="pagination__button"
+              type="button"
+              disabled={currentPage === pageCount}
+              onClick={() => changePage(currentPage + 1)}
+            >
+              Next <span aria-hidden="true">→</span>
+            </button>
+          </nav>
+        </>}
       </div>
     </Shell>
   )
@@ -127,10 +242,17 @@ function disagreement(fields) {
   return sentence + (names.length > 1 ? ' do not match' : ' does not match')
 }
 
-function Shell({ meta, children }) {
+function Shell({ meta, reviewCount, children }) {
+  const reviewAction = reviewCount != null && (
+    <a className="thin__queue" href="#/review">
+      <span className="mk mk--review" aria-hidden="true"></span>
+      <span className="thin__action-label">Review queue</span>
+      <b>{reviewCount}</b>
+    </a>
+  )
   return (
     <>
-      <Bar meta={meta} title="Email checks" />
+      <Bar meta={meta} title="Email checks" action={reviewAction} />
       {children}
     </>
   )

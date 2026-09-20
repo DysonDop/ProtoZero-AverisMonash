@@ -56,10 +56,13 @@ def decide(
 
     confident_mismatches = [
         c.field for c in comparisons
-        if c.verdict == "MISMATCH" and c.confidence.hard_fail is None
+        if c.verdict == "MISMATCH"
+        and (c.confidence.hard_fail is None or c.human_reviewed)
     ]
 
     for c in comparisons:
+        if c.human_reviewed:
+            continue
         if c.verdict == "ABSENT":
             reasons.append("FIELD_NOT_FOUND")
         elif c.verdict == "REVIEW":
@@ -102,7 +105,7 @@ def assert_invariants(case: Case) -> None:
         f"{case.email_id}: defect_fields must be sorted"
     )
     expected = sorted(c.field for c in case.comparisons if c.verdict == "MISMATCH"
-                      and c.confidence.hard_fail is None)
+                      and (c.confidence.hard_fail is None or c.human_reviewed))
     if case.status == "MISMATCH":
         assert case.defect_fields == expected, (
             f"{case.email_id}: defect_fields must equal the confident mismatches"

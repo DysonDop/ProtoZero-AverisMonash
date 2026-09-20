@@ -1,5 +1,22 @@
 # Backlog — agreed additions
 
+## Implementation status — 21 Sep 2026
+
+All four additions below are now implemented in the local application:
+
+- optional cloud calls share a circuit breaker and `/api/health` exposes the
+  current operating mode;
+- the five high-risk scenarios are covered by real cases and remain searchable
+  through the operational worklist;
+- reviewer corrections are applied at comparison while source extraction is
+  retained unchanged; and
+- every case, audit event and structured processing log carries one stable
+  correlation ID.
+
+The bundled app currently has no configured cloud credentials, so it correctly
+starts in deterministic-only mode. Pulling the network demonstrates a visible
+state change only when a real optional cloud callback is configured.
+
 v1, 19 Sep 2026. Four items carried over from the team's independent architecture
 review. Everything else in that review is either already implemented or was
 rejected on measured grounds (see `docs/dataset_facts.md` §10 for why unit
@@ -23,18 +40,18 @@ In the demo, pull the network mid-run. The system should keep processing, mark
 the affected cases, and carry on. That is a stronger argument for reliability
 than any slide about error handling.
 
-## 2. Trap cards for the demo
+## 2. High-risk scenario coverage
 
-Five prepared cases, each a real email from the corpus rather than a contrived
-one, shown in this order: a misleading subject that classifies correctly on the
-verb rather than the noun; a comparison request whose attachments were dropped
+Five known scenarios, each a real email from the corpus rather than a contrived
+one: a misleading subject that classifies correctly on the verb rather than the
+noun; a comparison request whose attachments were dropped
 (`email_506`); a `_BL` attachment that is actually a Certificate of Origin
 (`email_503`); a near-identical party name that is a genuine entity swap
 (`email_300`, APRIL Far East against APRIL Fine Paper Trading); and an
 image-only scan (`email_513`).
 
-Judges remember cases, not architecture diagrams. Five traps resolved correctly
-is a better five minutes than any walkthrough of the pipeline.
+They remain useful regression and operational-review cases, but are not pinned
+as presentation-only cards in the production worklist.
 
 ## 3. Corrections rejoin at comparison, never at extraction
 

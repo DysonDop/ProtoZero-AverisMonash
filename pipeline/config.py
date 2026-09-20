@@ -28,6 +28,10 @@ BORDERLINE_HIGH = 100.0
 # --- confidence ----------------------------------------------------------
 REVIEW_THRESHOLD = 0.55
 
+# Consecutive optional cloud failures before all further model/document calls
+# are skipped. The deterministic path continues to process the inbox.
+AI_FAILURE_THRESHOLD = int(os.getenv("SDOC_AI_FAILURE_THRESHOLD", "3"))
+
 CONFIDENCE_WEIGHTS = {
     "cross_check": 0.35,
     "doc_quality": 0.30,

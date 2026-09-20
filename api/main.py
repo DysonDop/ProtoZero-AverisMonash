@@ -2,24 +2,44 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import logging
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Literal
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from api.store import STORE
+from api.all_cases_excel import build_all_cases_workbook
+from api.case_report_pdf import build_case_report_pdf
 from eval.run_eval import Inbox
 from pipeline.config import DEFAULT_SOURCE, PIPELINE_VERSION
-from pipeline.report import to_submission_entry
-from pipeline.run import process_email
-from pipeline.schemas import AuditEvent, Case, CaseDecision, Correction, ReviewItem
+from pipeline.config import (
+    ENABLE_DOCINTEL,
+    ENABLE_LLM,
+    azure_openai_configured,
+    docintel_configured,
+)
+from pipeline.circuit_breaker import CircuitBreaker
+from pipeline.compare import recompare_with_correction
+from pipeline.report import decide, to_submission_entry, to_wire_reason
+from pipeline.run import comparison_summary, process_email
+from pipeline.schemas import (
+    FIELD_NAMES,
+    AuditEvent,
+    Case,
+    CaseDecision,
+    Correction,
+    ReviewItem,
+)
 from parsers.read import read as read_document
+
+logger = logging.getLogger("protozero.api")
 
 app = FastAPI(title="ProtoZero — Shipping Document Verification", version=PIPELINE_VERSION)
 app.add_middleware(
@@ -30,6 +50,19 @@ app.add_middleware(
 )
 
 _inbox = Inbox(DEFAULT_SOURCE)
+AI_BREAKER = CircuitBreaker()
+
+# Optional adapters are discovered at startup. Their absence is a supported
+# operating mode, not a boot failure.
+try:
+    from pipeline.azure_llm import classify_with_llm as _classify_llm
+except Exception:  # noqa: BLE001 - optional adapter absence must not block startup
+    _classify_llm = None
+
+try:
+    from pipeline.azure_docintel import extract_with_docintel as _extract_fallback
+except Exception:  # noqa: BLE001 - optional adapter absence must not block startup
+    _extract_fallback = None
 
 
 class IngestRequest(BaseModel):
@@ -40,7 +73,8 @@ class ResolveReviewRequest(BaseModel):
     action: Literal["confirm", "correct"]
     field: str | None = None
     correct_value: str | None = None
-    reviewer_id: str = "demo-reviewer"
+    document_role: Literal["SI", "BL"] = "BL"
+    reviewer_id: str = "review-desk"
 
 
 class RetryReviewRequest(BaseModel):
@@ -51,7 +85,7 @@ class CaseDecisionRequest(BaseModel):
     action: Literal["approve", "reject", "review", "request"]
     label: str
     done: str
-    reviewer_id: str = "demo-reviewer"
+    reviewer_id: str = "review-desk"
 
 
 # Set when the warm start fails. Surfaced in `/` and `/api/health` because
@@ -110,7 +144,9 @@ def root() -> dict:
             "/api/health",
             "/api/cases",
             "/api/cases/{email_id}",
+            "/api/cases/export.xlsx",
             "/api/cases/{email_id}/events",
+            "/api/cases/{email_id}/report.pdf",
             "/api/cases/{email_id}/document/{role}",
             "/api/review",
             "/api/metrics",
@@ -122,11 +158,27 @@ def root() -> dict:
 @app.get("/api/health")
 def health() -> dict:
     ensure_loaded()
+    classifier_ai = ENABLE_LLM and azure_openai_configured() and _classify_llm is not None
+    extraction_ai = ENABLE_DOCINTEL and docintel_configured() and _extract_fallback is not None
+    ai_available = classifier_ai or extraction_ai
+    deterministic_only = AI_BREAKER.state == "open" or not ai_available
+    classifier_state = "offline" if AI_BREAKER.state == "open" or not classifier_ai else "online"
+    extraction_state = "offline" if AI_BREAKER.state == "open" or not extraction_ai else "online"
     return {
-        "status": "ok",
+        "status": "degraded" if AI_BREAKER.state == "open" else "ok",
         "cases": len(STORE.cases),
         "version": PIPELINE_VERSION,
         "warm_start_error": WARM_START_ERROR,
+        "mode": "deterministic_only" if deterministic_only else "full",
+        "circuit_breaker": AI_BREAKER.state,
+        "ai_failures": AI_BREAKER.failures,
+        "components": [
+            {"name": "classifier", "state": classifier_state},
+            {"name": "extraction", "state": extraction_state},
+            {"name": "deterministic_rules", "state": "online"},
+            {"name": "comparison", "state": "online"},
+            {"name": "audit_log", "state": "online"},
+        ],
     }
 
 
@@ -141,14 +193,31 @@ def ingest(req: IngestRequest) -> dict:
         emails = [e for e in emails if e["email_id"] in wanted]
 
     for email in emails:
-        case, reviews = process_email(email, _inbox.read_bytes)
+        breaker_before = AI_BREAKER.state
+        case, reviews = process_email(
+            email,
+            _inbox.read_bytes,
+            classify_llm=_classify_llm if ENABLE_LLM else None,
+            extract_fallback=_extract_fallback if ENABLE_DOCINTEL else None,
+            circuit_breaker=AI_BREAKER,
+        )
         first_run = not STORE.list_events(case.email_id)
         STORE.put_case(case)
         STORE.replace_reviews(case.email_id, reviews)
+        logger.info(
+            "email processed",
+            extra={
+                "email_id": case.email_id,
+                "correlation_id": case.correlation_id,
+                "stage": "decision",
+                "result": case.status,
+            },
+        )
         if first_run:
             _record_initial_events(case, reviews)
         else:
             _add_event(case, "COMPARISON_RERUN", "The case was processed again.")
+        _record_breaker_transition(case, breaker_before)
 
     return {
         "processed": len(emails),
@@ -173,12 +242,14 @@ def list_cases(
         "items": [
             {
                 "email_id": c.email_id,
+                "correlation_id": c.correlation_id,
                 "subject": c.subject,
                 "from_addr": c.from_addr,
                 "category": c.category,
                 "status": c.status,
                 "has_defect": c.has_defect,
                 "defect_fields": c.defect_fields,
+                "wire_review_reason": c.wire_review_reason,
                 "summary": c.summary,
                 "lifecycle": c.lifecycle,
             }
@@ -186,6 +257,80 @@ def list_cases(
         ],
         "next_offset": offset + len(items) if offset + len(items) < total else None,
     }
+
+
+@app.get("/api/cases/export.xlsx")
+def export_all_cases_excel(
+    period: Literal["all", "month", "year", "last_30_days"] = Query("all"),
+) -> Response:
+    """Download a dated case register and its related operational records."""
+    ensure_loaded()
+    cases, _ = STORE.list_cases(limit=max(len(STORE.cases), 1), offset=0)
+    now = datetime.now(timezone.utc)
+    cases, scope_label, date_range_label, filename_suffix = _export_period(cases, period, now)
+    case_ids = {case.email_id for case in cases}
+    content = build_all_cases_workbook(
+        cases,
+        {case.email_id: STORE.list_events(case.email_id) for case in cases},
+        [
+            review
+            for review in STORE.list_reviews(state=None, limit=10000)
+            if review.email_id in case_ids
+        ],
+        {
+            case.email_id: decision
+            for case in cases
+            if (decision := STORE.get_decision(case.email_id)) is not None
+        },
+        generated_at=now,
+        scope_label=scope_label,
+        date_range_label=date_range_label,
+    )
+    return Response(
+        content=content,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": f'attachment; filename="protozero-cases-{filename_suffix}.xlsx"'
+        },
+    )
+
+
+def _export_period(
+    cases: list[Case],
+    period: Literal["all", "month", "year", "last_30_days"],
+    now: datetime,
+) -> tuple[list[Case], str, str, str]:
+    """Apply a UTC reporting window and return labels used by the workbook."""
+    if period == "all":
+        return cases, "All cases", "All available dates", "all"
+
+    if period == "month":
+        start = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
+        label = "This month"
+        date_range = f"{start:%Y-%m-%d} to {now:%Y-%m-%d} (UTC)"
+        suffix = f"{now:%Y-%m}"
+    elif period == "year":
+        start = datetime(now.year, 1, 1, tzinfo=timezone.utc)
+        label = "This year"
+        date_range = f"{start:%Y-%m-%d} to {now:%Y-%m-%d} (UTC)"
+        suffix = f"{now:%Y}"
+    else:
+        start = now - timedelta(days=30)
+        label = "Last 30 days"
+        date_range = f"{start:%Y-%m-%d} to {now:%Y-%m-%d} (UTC)"
+        suffix = "last-30-days"
+
+    def in_window(case: Case) -> bool:
+        if case.received_at is None:
+            return False
+        received = case.received_at
+        if received.tzinfo is None:
+            received = received.replace(tzinfo=timezone.utc)
+        else:
+            received = received.astimezone(timezone.utc)
+        return start <= received <= now
+
+    return [case for case in cases if in_window(case)], label, date_range, suffix
 
 
 @app.get("/api/cases/{email_id}")
@@ -209,7 +354,40 @@ def get_document(email_id: str, role: Literal["SI", "BL"]) -> dict:
         raise HTTPException(
             422, {"code": "document_unreadable", "message": str(exc)}
         ) from exc
-    return {"fmt": parsed.fmt, "text": parsed.full_text, "page_urls": []}
+    return {
+        "fmt": parsed.fmt,
+        "text": parsed.full_text,
+        "page_count": parsed.page_count,
+        "attachment_path": source.attachment_path,
+        "page_urls": [],
+    }
+
+
+@app.get("/api/cases/{email_id}/document/{role}/raw")
+def get_raw_document(email_id: str, role: Literal["SI", "BL"]) -> Response:
+    """Return the stored source attachment without altering it."""
+    ensure_loaded()
+    case = _case_or_404(email_id)
+    source = next((document for document in case.documents if document.role == role), None)
+    if source is None:
+        raise HTTPException(404, {"code": "not_found", "message": f"{email_id} has no {role}"})
+    try:
+        content = _inbox.read_bytes(source.attachment_path)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(404, {"code": "not_found", "message": str(exc)}) from exc
+    media_type = {
+        "txt": "text/plain",
+        "pdf": "application/pdf",
+        "scan_pdf": "application/pdf",
+        "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }.get(source.fmt, "application/octet-stream")
+    filename = Path(source.attachment_path).name.replace('"', "")
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'inline; filename="{filename}"'},
+    )
 
 
 @app.get("/api/cases/{email_id}/events")
@@ -217,6 +395,25 @@ def case_events(email_id: str) -> dict:
     ensure_loaded()
     _case_or_404(email_id)
     return {"items": [event.model_dump(mode="json") for event in STORE.list_events(email_id)]}
+
+
+@app.get("/api/cases/{email_id}/report.pdf")
+def case_report_pdf(email_id: str) -> Response:
+    """Download the current case summary, comparisons, and audit trail."""
+    ensure_loaded()
+    case = _case_or_404(email_id)
+    content = build_case_report_pdf(
+        case,
+        STORE.list_events(email_id),
+        STORE.get_decision(email_id),
+    )
+    safe_id = "".join(character for character in email_id if character.isalnum() or character in "-_")
+    safe_id = safe_id or "case"
+    return Response(
+        content=content,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{safe_id}-case-report.pdf"'},
+    )
 
 
 @app.get("/api/cases/{email_id}/decision")
@@ -276,7 +473,7 @@ def set_case_decision(email_id: str, req: CaseDecisionRequest) -> dict:
 
 
 @app.delete("/api/cases/{email_id}/decision")
-def delete_case_decision(email_id: str, reviewer_id: str = "demo-reviewer") -> dict:
+def delete_case_decision(email_id: str, reviewer_id: str = "review-desk") -> dict:
     ensure_loaded()
     case = _case_or_404(email_id)
     previous = STORE.get_decision(email_id)
@@ -303,11 +500,19 @@ def rerun(email_id: str) -> dict:
         email = next(e for e in _inbox.emails() if e["email_id"] == email_id)
     except StopIteration:
         raise HTTPException(404, {"code": "not_found", "message": email_id}) from None
-    case, reviews = process_email(email, _inbox.read_bytes)
+    breaker_before = AI_BREAKER.state
+    case, reviews = process_email(
+        email,
+        _inbox.read_bytes,
+        classify_llm=_classify_llm if ENABLE_LLM else None,
+        extract_fallback=_extract_fallback if ENABLE_DOCINTEL else None,
+        circuit_breaker=AI_BREAKER,
+    )
     STORE.put_case(case)
     STORE.replace_reviews(email_id, reviews)
     _add_event(case, "COMPARISON_RERUN", "The pipeline reran this case.")
     _record_result_events(case, reviews)
+    _record_breaker_transition(case, breaker_before)
     return case.model_dump(mode="json")
 
 
@@ -333,7 +538,11 @@ def resolve_review(review_id: str, req: ResolveReviewRequest) -> dict:
     case = _case_or_404(item.email_id)
     field = req.field or (item.fields[0] if item.fields else None)
     comparison = next((value for value in case.comparisons if value.field == field), None)
-    previous_value = comparison.bl.value if comparison else item.bl_value
+    previous_value = (
+        (comparison.si.value if req.document_role == "SI" else comparison.bl.value)
+        if comparison
+        else (item.si_value if req.document_role == "SI" else item.bl_value)
+    )
     if req.action == "correct" and field and not req.correct_value:
         raise HTTPException(
             422, {"code": "correct_value_required", "message": "A corrected field needs a value."}
@@ -346,16 +555,40 @@ def resolve_review(review_id: str, req: ResolveReviewRequest) -> dict:
     STORE.put_review(item)
 
     if comparison:
-        comparison.human_reviewed = True
+        if req.action == "correct":
+            corrected = recompare_with_correction(
+                comparison,
+                document_role=req.document_role,
+                correct_value=req.correct_value or "",
+            )
+            case.comparisons = [
+                corrected if value.field == field else value
+                for value in case.comparisons
+            ]
+            comparison = corrected
+        else:
+            comparison.human_reviewed = True
+
+        status, defects, reasons = decide(case.comparisons, [])
+        case.status = status  # type: ignore[assignment]
+        case.defect_fields = defects  # type: ignore[assignment]
+        case.has_defect = status == "MISMATCH"
+        case.escalation_reasons = reasons
+        case.wire_review_reason = (
+            to_wire_reason(reasons) if status == "NEEDS_REVIEW" else None
+        )
+        case.summary = comparison_summary(case)
     if field:
         correction = Correction(
             id=f"{review_id}:{STORE.next_event_seq(item.email_id)}",
             email_id=item.email_id,
             field=field,
-            document_role="BL",
+            document_role=req.document_role,
             was_value=previous_value,
             correct_value=req.correct_value if req.action == "correct" else previous_value,
-            label_seen=comparison.bl.label_seen if comparison else None,
+            label_seen=(
+                comparison.si.label_seen if req.document_role == "SI" else comparison.bl.label_seen
+            ) if comparison else None,
             action=req.action,
             reviewer_id=req.reviewer_id,
             created_at=now,
@@ -379,6 +612,17 @@ def resolve_review(review_id: str, req: ResolveReviewRequest) -> dict:
         previous_value=previous_value,
         new_value=req.correct_value if req.action == "correct" else previous_value,
     )
+    if req.action == "correct" and comparison:
+        _add_event(
+            case,
+            "COMPARISON_RERUN",
+            "The human correction rejoined at comparison; source extraction was retained.",
+            actor="reviewer",
+            reviewer_id=req.reviewer_id,
+            field=field,
+            previous_value=previous_value,
+            new_value=req.correct_value,
+        )
     if not remaining:
         _add_event(
             case,
@@ -397,7 +641,16 @@ def retry_review(review_id: str, req: RetryReviewRequest) -> dict:
     if item is None:
         raise HTTPException(404, {"code": "not_found", "message": review_id})
     email = _email_or_404(item.email_id)
-    case, reviews = process_email(email, _inbox.read_bytes)
+    if req.force_llm:
+        AI_BREAKER.begin_probe()
+    breaker_before = AI_BREAKER.state
+    case, reviews = process_email(
+        email,
+        _inbox.read_bytes,
+        classify_llm=_classify_llm if ENABLE_LLM else None,
+        extract_fallback=_extract_fallback if ENABLE_DOCINTEL else None,
+        circuit_breaker=AI_BREAKER,
+    )
     STORE.put_case(case)
     STORE.replace_reviews(item.email_id, reviews)
     _add_event(
@@ -405,9 +658,10 @@ def retry_review(review_id: str, req: RetryReviewRequest) -> dict:
         "COMPARISON_RERUN",
         "A reviewer retried the failed stage" + (" with AI fallback requested." if req.force_llm else "."),
         actor="reviewer",
-        reviewer_id=item.resolved_by or "demo-reviewer",
+        reviewer_id=item.resolved_by or "review-desk",
     )
     _record_result_events(case, reviews)
+    _record_breaker_transition(case, breaker_before)
     current = STORE.get_review(review_id) or item
     return {"review_item": current.model_dump(mode="json"), "case": case.model_dump(mode="json")}
 
@@ -453,7 +707,7 @@ def _add_event(
     event = AuditEvent(
         id=f"{case.email_id}:{seq}",
         email_id=case.email_id,
-        correlation_id=f"protozero:{case.email_id}",
+        correlation_id=case.correlation_id,
         seq=seq,
         at=datetime.now(timezone.utc),
         actor=actor,
@@ -479,9 +733,17 @@ def _record_initial_events(case: Case, reviews: list) -> None:
 
 def _record_result_events(case: Case, reviews: list) -> None:
     if case.documents:
+        used_ai = any(
+            document.fields
+            and any(
+                document.fields.get(field).extracted_by in {"doc_intelligence", "llm"}
+                for field in FIELD_NAMES
+            )
+            for document in case.documents
+        )
         _add_event(
             case,
-            "EXTRACTION_COMPLETED",
+            "AI_EXTRACTION_COMPLETED" if used_ai else "EXTRACTION_COMPLETED",
             f"The pipeline read {len(case.documents)} attached document(s).",
         )
     if case.escalation_reasons:
@@ -497,6 +759,21 @@ def _record_result_events(case: Case, reviews: list) -> None:
             f"{len(reviews)} review item(s) were opened.",
         )
     _add_event(case, "FINAL_DECISION", case.summary)
+
+
+def _record_breaker_transition(case: Case, previous_state: str) -> None:
+    if previous_state != "open" and AI_BREAKER.state == "open":
+        _add_event(
+            case,
+            "CIRCUIT_BREAKER_OPENED",
+            "Repeated optional AI service failures activated deterministic-only mode.",
+        )
+    elif previous_state in {"open", "half_open"} and AI_BREAKER.state == "closed":
+        _add_event(
+            case,
+            "CIRCUIT_BREAKER_CLOSED",
+            "The optional AI service recovered and full mode resumed.",
+        )
 
 
 # Keep this mount last so every explicit API and documentation route wins.

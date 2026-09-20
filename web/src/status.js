@@ -22,6 +22,11 @@ export function confidenceOf(comparison) {
   return { mod: '', word: 'checked' }
 }
 
+export function confidencePercent(comparison) {
+  const score = comparison?.confidence?.score
+  return Number.isFinite(score) ? `${Math.round(score * 100)}%` : null
+}
+
 export const FIELD_ORDER = [
   'shipper', 'consignee', 'notify_party', 'port_of_loading',
   'port_of_discharge', 'container_count', 'gross_weight_kg',

@@ -3,10 +3,11 @@ import Bar from './Bar.jsx'
 import Sheet from './Sheet.jsx'
 import Evidence from './Evidence.jsx'
 import AuditTrail from './AuditTrail.jsx'
+import CaseReport from './CaseReport.jsx'
 import {
-  clearCaseDecision, getCase, getCaseDecision, recordCaseDecision,
+  clearCaseDecision, getAuditEvents, getCase, getCaseDecision, recordCaseDecision,
 } from './api.js'
-import { FIELD_PLAIN, KIND_WORD, REASON_TITLE, kindOf } from './status.js'
+import { FIELD_PLAIN, KIND_WORD, REASON_TITLE, confidencePercent, kindOf } from './status.js'
 
 const DASH = '—'
 
@@ -15,13 +16,24 @@ export default function CaseView({ id }) {
   const [error, setError] = useState(null)
   const [auditOpen, setAuditOpen] = useState(false)
   const [selectedField, setSelectedField] = useState(null)
+  const [events, setEvents] = useState(null)
+
+  async function refreshCase() {
+    const [nextCase, nextEvents] = await Promise.all([
+      getCase(id),
+      getAuditEvents(id).catch(() => ({ items: [] })),
+    ])
+    setCase(nextCase)
+    setEvents(nextEvents.items)
+  }
 
   useEffect(() => {
     setCase(null)
     setError(null)
     setAuditOpen(false)
     setSelectedField(null)
-    getCase(id).then(setCase).catch(e => setError(e.message))
+    setEvents(null)
+    refreshCase().catch(e => setError(e.message))
   }, [id])
 
   if (error) return <Frame meta={id}><div className="state">Could not open {id}. {error}</div></Frame>
@@ -30,9 +42,9 @@ export default function CaseView({ id }) {
   let content
   if (kase.category !== 'BL_COMPARISON') content = <NotACheck kase={kase} />
   else if (drawable(kase)) {
-    content = <Compared kase={kase} selected={selectedField} onSelect={setSelectedField} />
+    content = <Compared kase={kase} selected={selectedField} onSelect={setSelectedField} onChanged={refreshCase} />
   }
-  else if (kase.status === 'NEEDS_REVIEW') content = <Refused kase={kase} />
+  else if (kase.status === 'NEEDS_REVIEW') content = <Refused kase={kase} onChanged={refreshCase} />
   else content = <NothingToCompare kase={kase} />
 
   const viewEvidence = drawable(kase)
@@ -50,6 +62,7 @@ export default function CaseView({ id }) {
       onAudit={() => setAuditOpen(!auditOpen)}
       onCloseAudit={() => setAuditOpen(false)}
       onViewEvidence={viewEvidence}
+      events={events}
     >
       {content}
     </Frame>
@@ -66,7 +79,7 @@ function drawable(kase) {
   return Boolean(hasValues) && kase.comparisons.length > 0
 }
 
-function Frame({ meta, kase, auditOpen, onAudit, onCloseAudit, onViewEvidence, children }) {
+function Frame({ meta, kase, events, auditOpen, onAudit, onCloseAudit, onViewEvidence, children }) {
   const action = kase && (
     <button
       className="thin__audit"
@@ -76,13 +89,14 @@ function Frame({ meta, kase, auditOpen, onAudit, onCloseAudit, onViewEvidence, c
       onClick={onAudit}
     >
       <span className="thin__auditmark" aria-hidden="true"></span>
-      Audit trail
+      <span className="thin__action-label">Audit trail</span>
     </button>
   )
   return (
     <>
       <Bar meta={meta} back="#/" action={action} title="Document check" />
       {kase && <CaseBanner kase={kase} />}
+      {kase && <CaseReport kase={kase} events={events} />}
       {children}
       {auditOpen && (
         <AuditTrail kase={kase} onClose={onCloseAudit} onViewEvidence={onViewEvidence} />
@@ -143,7 +157,7 @@ function NothingToCompare({ kase }) {
   )
 }
 
-function Refused({ kase }) {
+function Refused({ kase, onChanged }) {
   const si = kase.documents.find(d => d.role === 'SI')
   const bl = kase.documents.find(d => d.role === 'BL')
   return (
@@ -151,6 +165,7 @@ function Refused({ kase }) {
     <div className="rmain">
       <div className="cards">
         <div className="card">
+          <span className="eyebrow">Why this was flagged</span>
           <span className="card__title">{REASON_TITLE[kase.wire_review_reason] ?? 'Needs a person'}</span>
           <p className="card__body">{kase.summary}</p>
           <div className="card__evidence">
@@ -162,21 +177,28 @@ function Refused({ kase }) {
       <span className="grow"></span>
       <div className="quiet">We would rather ask than guess. Nothing here was compared.</div>
     </div>
-    <Actions kase={kase} />
+    <Actions kase={kase} onChanged={onChanged} />
     </>
   )
 }
 
-function Compared({ kase, selected, onSelect }) {
+function Compared({ kase, selected, onSelect, onChanged }) {
 
   const wrong = kase.comparisons.filter(c => c.verdict === 'MISMATCH')
   const blocked = kase.comparisons.filter(
-    c => c.verdict !== 'MISMATCH' && c.confidence && c.confidence.hard_fail)
+    c => c.verdict !== 'MISMATCH' && (
+      ['REVIEW', 'ABSENT'].includes(c.verdict) || c.confidence?.hard_fail
+    ))
   const matched = kase.comparisons.filter(c => c.verdict === 'MATCH').length
   const noted = wrong.length + blocked.length
   const open = kase.comparisons.find(c => c.field === selected)
-  const isNoted = [...wrong, ...blocked].some(c => c.field === selected)
   const close = () => onSelect(null)
+  const siDocument = kase.documents.find(document => document.role === 'SI')
+  const blDocument = kase.documents.find(document => document.role === 'BL')
+  const sourceFields = open ? {
+    si: siDocument?.fields?.[open.field],
+    bl: blDocument?.fields?.[open.field],
+  } : null
 
   return (
     <>
@@ -186,53 +208,89 @@ function Compared({ kase, selected, onSelect }) {
         <p className="sheet__hint">Click any checked field to see the line it came from.</p>
       </div>
       <div className="margin">
-        {open && !isNoted && (
-          <Evidence emailId={kase.email_id} comparison={open} onClose={close} />
+        {noted > 0 && (
+          <div className="whyhead">
+            <span className="eyebrow">What needs review</span>
+            <h2>{noted} field{noted === 1 ? ' needs' : 's need'} your review</h2>
+            <p>Each item compares the instruction with the draft and links to the original evidence.</p>
+          </div>
         )}
+        {wrong.map(c => (
+          <div className="issuegroup" key={c.field}>
+            <MismatchNote c={c} selected={c.field === selected} onSelect={onSelect} />
+          </div>
+        ))}
 
-        {wrong.map(c => c.field === selected
-          ? <Evidence key={c.field} emailId={kase.email_id} comparison={c} onClose={close} />
-          : <MismatchNote key={c.field} c={c} />)}
-
-        {blocked.map(c => c.field === selected
-          ? <Evidence key={c.field} emailId={kase.email_id} comparison={c} onClose={close} />
-          : <BlockedNote key={c.field} c={c} />)}
+        {blocked.map(c => (
+          <div className="issuegroup" key={c.field}>
+            <BlockedNote c={c} selected={c.field === selected} onSelect={onSelect} />
+          </div>
+        ))}
 
         {noted === 0
           ? <div className="quiet">All {matched} details match the instruction.</div>
           : <div className="quiet">The other {matched} details match the instruction.</div>}
       </div>
     </div>
-    <Actions kase={kase} />
+    {open && (
+      <Evidence
+        emailId={kase.email_id}
+        comparison={open}
+        sourceFields={sourceFields}
+        onClose={close}
+      />
+    )}
+    <Actions kase={kase} onChanged={onChanged} />
     </>
   )
 }
 
-function MismatchNote({ c }) {
+function MismatchNote({ c, selected, onSelect }) {
   return (
-    <div className="note">
-      <span className="note__field">{FIELD_PLAIN[c.field]}</span>
-      <span className="note__value note__value--wrong strike">{c.bl.value ?? DASH}</span>
-      <span className="note__value note__value--right">{c.si.value ?? DASH}</span>
+    <article className="note note--reason">
+      <span className="note__field">{FIELD_PLAIN[c.field]} values differ</span>
+      <dl className="reasonfacts">
+        <div><dt>Instruction</dt><dd>{c.si.value ?? DASH}</dd></div>
+        <div><dt>Draft</dt><dd className="reasonfacts__wrong">{c.bl.value ?? DASH}</dd></div>
+        <div><dt>Similarity</dt><dd>{similarity(c)}</dd></div>
+        <div><dt>Machine confidence</dt><dd>{confidencePercent(c) || 'Not recorded'}</dd></div>
+        <div><dt>Status</dt><dd>Confirmed difference</dd></div>
+      </dl>
       {c.si.label_seen && c.bl.label_seen && c.si.label_seen !== c.bl.label_seen && (
         <div className="note__synonym">
           Instruction calls this <b>{c.si.label_seen}</b>. Draft calls it <b>{c.bl.label_seen}</b>.
         </div>
       )}
-    </div>
+      <button className="evidencelink" type="button" onClick={() => onSelect(selected ? null : c.field)}>
+        {selected ? 'Hide source evidence' : 'View highlighted source evidence'}
+      </button>
+    </article>
   )
 }
 
-function BlockedNote({ c }) {
+function BlockedNote({ c, selected, onSelect }) {
   return (
-    <div className="note">
-      <span className="note__field">{FIELD_PLAIN[c.field]}</span>
+    <article className="note note--reason note--review">
+      <span className="note__field">{FIELD_PLAIN[c.field]} requires confirmation</span>
       <p className="note__body">{whyNotChecked(c)}</p>
-      <div className="note__synonym">
-        Instruction <b>{c.si.value || DASH}</b> &nbsp;&#183;&nbsp; Draft <b>{c.bl.value || DASH}</b>
-      </div>
-    </div>
+      <dl className="reasonfacts">
+        <div><dt>Instruction</dt><dd>{c.si.value || DASH}</dd></div>
+        <div><dt>Draft</dt><dd>{c.bl.value || DASH}</dd></div>
+        <div><dt>Similarity</dt><dd>{similarity(c)}</dd></div>
+        <div><dt>Machine confidence</dt><dd>{confidencePercent(c) || 'Not recorded'}</dd></div>
+        <div><dt>Status</dt><dd>Requires human confirmation</dd></div>
+      </dl>
+      <button className="evidencelink" type="button" onClick={() => onSelect(selected ? null : c.field)}>
+        {selected ? 'Hide source evidence' : 'View highlighted source evidence'}
+      </button>
+    </article>
   )
+}
+
+function similarity(comparison) {
+  return Number.isFinite(comparison.similarity)
+    ? `${Math.round(comparison.similarity)}%`
+    : 'Not applicable'
 }
 
 const CHOICES = {
@@ -280,7 +338,7 @@ const DECISION_RESULT = {
   request: 'A follow-up item is now in the Needs a person queue.',
 }
 
-function Actions({ kase }) {
+function Actions({ kase, onChanged }) {
   const [decision, setDecision] = useState(null)
   const [pendingChoice, setPendingChoice] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -300,6 +358,7 @@ function Actions({ kase }) {
     setError(null)
     try {
       setDecision(await recordCaseDecision(kase.email_id, choice))
+      await onChanged?.()
       setPendingChoice(null)
     } catch (e) {
       setError(e.message)
@@ -314,6 +373,7 @@ function Actions({ kase }) {
     try {
       await clearCaseDecision(kase.email_id)
       setDecision(null)
+      await onChanged?.()
     } catch (e) {
       setError(e.message)
     } finally {

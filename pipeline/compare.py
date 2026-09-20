@@ -112,6 +112,61 @@ def compare_documents(
     return out
 
 
+def recompare_with_correction(
+    comparison: FieldComparison,
+    *,
+    document_role: str,
+    correct_value: str,
+) -> FieldComparison:
+    """Apply a human value at comparison time without rewriting extraction.
+
+    The source documents on ``Case.documents`` remain untouched. The comparison
+    carries the reviewer overlay, while its confidence breakdown remains the
+    machine's original score so the audit record never makes an uncertain
+    extraction look certain after the fact.
+    """
+    updated = comparison.model_copy(deep=True)
+    target = updated.si if document_role == "SI" else updated.bl
+    target.value = correct_value
+    target.extracted_by = "human"
+    target.evidence = None
+    target.locator = None
+
+    si_norm = normalise(updated.field, updated.si.value)
+    bl_norm = normalise(updated.field, updated.bl.value)
+    si_missing = updated.si.value is None or is_blank(updated.si.value) or si_norm is None
+    bl_missing = updated.bl.value is None or is_blank(updated.bl.value) or bl_norm is None
+
+    updated.si_normalized = None if si_norm is None else str(si_norm)
+    updated.bl_normalized = None if bl_norm is None else str(bl_norm)
+    updated.similarity = None
+    if si_missing or bl_missing:
+        updated.verdict = "ABSENT"
+        updated.explanation = _explain_absent(
+            updated.field, updated.si, updated.bl, si_missing, bl_missing
+        )
+    elif si_norm == bl_norm:
+        updated.verdict = "MATCH"
+        updated.explanation = f"{_LABELS[updated.field]} — match after human correction"
+    else:
+        updated.similarity = float(
+            fuzz.token_sort_ratio(_as_text(si_norm), _as_text(bl_norm))
+        )
+        if BORDERLINE_LOW <= updated.similarity < BORDERLINE_HIGH:
+            updated.verdict = "REVIEW"
+            updated.explanation = (
+                f"{_LABELS[updated.field]} — near match ({updated.similarity:.0f}%), "
+                f"SI: {updated.si.value} / BL: {updated.bl.value}"
+            )
+        else:
+            updated.verdict = "MISMATCH"
+            updated.explanation = (
+                f"{_LABELS[updated.field]} — SI: {updated.si.value} / BL: {updated.bl.value}"
+            )
+    updated.human_reviewed = True
+    return updated
+
+
 def _explain_absent(field, si, bl, si_missing, bl_missing) -> str:
     label = _LABELS[field]
     if si_missing and bl_missing:

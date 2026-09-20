@@ -49,11 +49,14 @@ AuditAction = Literal[
     "EMAIL_RECEIVED",
     "DOCUMENT_CLASSIFIED",
     "EXTRACTION_COMPLETED",
+    "AI_EXTRACTION_COMPLETED",
     "VALIDATION_FAILED",
     "HUMAN_REVIEW_CREATED",
     "HUMAN_CORRECTION",
     "COMPARISON_RERUN",
     "FINAL_DECISION",
+    "CIRCUIT_BREAKER_OPENED",
+    "CIRCUIT_BREAKER_CLOSED",
 ]
 WireReviewReason = Literal[
     "wrong_doc_type", "missing_attachment", "unreadable", "missing_value"
@@ -177,6 +180,7 @@ class FieldComparison(BaseModel):
 
 class Case(BaseModel):
     email_id: str
+    correlation_id: str
     received_at: datetime | None = None
     from_addr: str = ""
     subject: str = ""
@@ -230,7 +234,7 @@ class Correction(BaseModel):
     correct_value: str | None = None
     label_seen: str | None = None
     action: Literal["confirm", "correct", "retry"]
-    reviewer_id: str = "demo-reviewer"
+    reviewer_id: str = "review-desk"
     created_at: datetime | None = None
 
 
@@ -254,7 +258,7 @@ class CaseDecision(BaseModel):
     action: Literal["approve", "reject", "review", "request"]
     label: str
     done: str
-    reviewer_id: str = "demo-reviewer"
+    reviewer_id: str = "review-desk"
     recorded_at: datetime
 
 

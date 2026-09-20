@@ -65,7 +65,9 @@ export default function AuditTrail({ kase, onClose, onViewEvidence }) {
   }
 
   function downloadCase() {
-    const blob = new Blob([JSON.stringify(kase, null, 2)], { type: 'application/json' })
+    const blob = new Blob([
+      JSON.stringify({ case: kase, events: events || [] }, null, 2),
+    ], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
@@ -157,16 +159,19 @@ export default function AuditTrail({ kase, onClose, onViewEvidence }) {
             <ol>
               {events.map(event => (
                 <li key={event.id}>
-                  <span className="auditlog__meta">
-                    #{event.seq} · {event.actor === 'reviewer' ? event.reviewer_id || 'Reviewer' : 'System'} · {formatDate(event.at)}
-                  </span>
-                  <strong>{actionWord(event.action)}</strong>
-                  <p>{event.reason}</p>
-                  {(event.previous_value != null || event.new_value != null) && (
-                    <span className="auditlog__change">
-                      {event.previous_value || 'empty'} → {event.new_value || 'empty'}
-                    </span>
-                  )}
+                  <div className="auditlog__eventhead">
+                    <time dateTime={event.at}>{formatTime(event.at)}</time>
+                    <strong>{event.action}</strong>
+                  </div>
+                  <dl className="auditlog__details">
+                    <div><dt>Correlation ID</dt><dd>{event.correlation_id}</dd></div>
+                    <div><dt>Timestamp</dt><dd>{formatDate(event.at)}</dd></div>
+                    <div><dt>Actor</dt><dd>{event.actor === 'reviewer' ? event.reviewer_id || 'Reviewer' : 'System'}</dd></div>
+                    <div><dt>Action</dt><dd>{actionWord(event.action)}</dd></div>
+                    <div><dt>Previous value</dt><dd>{event.previous_value ?? '—'}</dd></div>
+                    <div><dt>New value</dt><dd>{event.new_value ?? '—'}</dd></div>
+                    <div><dt>Reason</dt><dd>{event.reason}</dd></div>
+                  </dl>
                 </li>
               ))}
             </ol>
@@ -185,6 +190,7 @@ export default function AuditTrail({ kase, onClose, onViewEvidence }) {
         <details className="audittech">
           <summary>Technical details</summary>
           <dl>
+            <div><dt>Trace ID</dt><dd>{kase.correlation_id || events?.[0]?.correlation_id || 'not recorded'}</dd></div>
             <div><dt>Case created</dt><dd>{formatDate(kase.created_at)}</dd></div>
             <div><dt>Last updated</dt><dd>{formatDate(kase.updated_at)}</dd></div>
             <div><dt>Pipeline</dt><dd>{kase.pipeline_version || 'not recorded'}</dd></div>
@@ -277,10 +283,9 @@ function buildStages(kase) {
         : `Read all ${extracted.found} available field values and kept their source evidence.`,
     facts: canExtract ? [
       ['Method', methods.map(methodWord).join(', ') || 'not recorded'],
+      ['Values read', `${extracted.found} of ${extracted.total}`],
       ['Evidence', `${extracted.evidence} values linked to source text`],
     ] : [],
-    fields: evidenceFields(comparisons, comparison =>
-      comparison.verdict !== 'MATCH' || comparison.confidence?.hard_fail),
   }
 
   const normalized = comparisons.length > 0
@@ -319,6 +324,15 @@ function buildStages(kase) {
   }
 
   const confidence = countConfidence(comparisons)
+  const confidenceScores = comparisons
+    .map(comparison => comparison.confidence?.score)
+    .filter(Number.isFinite)
+  const averageConfidence = confidenceScores.length
+    ? Math.round(confidenceScores.reduce((sum, value) => sum + value, 0) / confidenceScores.length * 100) + '%'
+    : 'not recorded'
+  const lowestConfidence = confidenceScores.length
+    ? Math.round(Math.min(...confidenceScores) * 100) + '%'
+    : 'not recorded'
   const confidenceStage = {
     name: 'Score confidence',
     state: !normalized ? 'skipped' : confidence.unsure + confidence.notChecked > 0 ? 'attention' : 'done',
@@ -332,6 +346,8 @@ function buildStages(kase) {
       ['Checked', String(confidence.checked)],
       ['Unsure', String(confidence.unsure)],
       ['Not checked', String(confidence.notChecked)],
+      ['Average score', averageConfidence],
+      ['Lowest score', lowestConfidence],
     ] : [],
     fields: evidenceFields(comparisons, comparison =>
       comparison.confidence?.hard_fail ||
@@ -434,6 +450,14 @@ function formatDate(value) {
   if (!value) return 'not recorded'
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
+}
+
+function formatTime(value) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '--:--:--'
+  return date.toLocaleTimeString([], {
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+  })
 }
 
 function actionWord(action) {

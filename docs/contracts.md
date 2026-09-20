@@ -126,6 +126,7 @@ Cosmos DB container **`cases`**, partition key `/email_id`, document id = `email
 ```python
 class Case(BaseModel):
     email_id: str
+    correlation_id: str
     received_at: datetime
     from_addr: str
     subject: str
@@ -197,7 +198,7 @@ class Correction(BaseModel):
     correct_value: str | None         # what the human says it is
     label_seen: str | None            # feeds the synonym map
     action: Literal["confirm", "correct", "retry"]
-    reviewer_id: str = "demo-reviewer"
+    reviewer_id: str = "review-desk"
     created_at: datetime
 ```
 
@@ -207,17 +208,21 @@ the evaluated set** — that would inflate the self-eval (see `docs/eval_plan.md
 
 ## 6. HTTP API
 
-Base `/api`. All responses JSON. Errors are
+Base `/api`. Responses are JSON except for original-document and PDF-report
+downloads. Errors are
 `{"error": {"code": str, "message": str}}` with a conventional status code.
 
 | Method | Path | Body / query | Returns |
 | --- | --- | --- | --- |
 | `GET` | `/health` | — | `{"status":"ok","cases":int,"version":str}` |
 | `GET` | `/cases` | `?category=&status=&lifecycle=&limit=50&cursor=` | `{"items":[CaseSummary],"next_cursor":str\|null}` |
+| `GET` | `/cases/export.xlsx` | — | Excel workbook containing every case, comparison, evidence row, review item and audit event |
 | `GET` | `/cases/{email_id}` | — | `Case` (full, with `comparisons`) |
 | `POST` | `/cases/{email_id}/rerun` | `{"force_llm": bool}` | `Case` |
 | `GET` | `/cases/{email_id}/document/{role}` | `role=SI\|BL` | `{"fmt":DocFormat,"text":str,"page_urls":[str]}` — SAS URLs for rendered pages |
+| `GET` | `/cases/{email_id}/document/{role}/raw` | `role=SI\|BL` | Original stored attachment, unmodified |
 | `GET` | `/cases/{email_id}/events` | — | `{"items":[AuditEvent]}` ordered by `seq` |
+| `GET` | `/cases/{email_id}/report.pdf` | — | Downloadable case summary, comparison and audit-trail PDF |
 | `GET` | `/cases/{email_id}/decision` | — | `{"decision":CaseDecision\|null}` |
 | `POST` | `/cases/{email_id}/decision` | case decision and reviewer | `{"decision":CaseDecision,"case":Case}` |
 | `DELETE` | `/cases/{email_id}/decision` | — | `{"ok":true,"case":Case}` |
@@ -301,10 +306,11 @@ render caching.
 ## 10. Frontend extension status
 
 Raised by seunniee, 20 Sep, from the frontend side. Everything in §1–§9 is
-unchanged. As of 21 Sep, `human_reviewed`, the in-memory audit event store and
-`GET /cases/{email_id}/events` are implemented. Component health, a case-level
-correlation field and the two metrics additions remain proposed. The current
-store is process-local; the same interfaces are intended to move to Cosmos.
+unchanged. As of 21 Sep, `human_reviewed`, the in-memory audit event store,
+`GET /cases/{email_id}/events`, detailed component health and a case-level
+correlation field are implemented. The two metrics additions remain proposed.
+The current store is process-local; the same interfaces are intended to move to
+Cosmos.
 
 ### 10.1 `human_reviewed` on `FieldComparison`
 
@@ -353,8 +359,8 @@ class Health(BaseModel):
     components: list[ComponentHealth]
 ```
 
-`mode` is the one the UI actually renders. The rest is for the health panel if
-we build one.
+`mode` drives the persistent UI banner. The remaining fields support diagnostics
+and a future detailed health panel.
 
 ### 10.3 `correlation_id` on `Case`
 
@@ -366,14 +372,16 @@ One id per email, threaded through every log line and every audit event, so a
 reviewer asking "what happened to this email" gets one thread rather than a
 search.
 
-### 10.4 Audit events — new container, new endpoint
+### 10.4 Audit events — append-only history
 
-Nothing today records what happened to a case over time. `Case` holds the
-current state only.
+The in-memory implementation records what happened to a case over time while
+`Case` holds its current state. The same contract is intended for a separate
+persistent container.
 
 ```python
 AuditAction = Literal[
     "EMAIL_RECEIVED", "DOCUMENT_CLASSIFIED", "EXTRACTION_COMPLETED",
+    "AI_EXTRACTION_COMPLETED",
     "VALIDATION_FAILED", "HUMAN_REVIEW_CREATED", "HUMAN_CORRECTION",
     "COMPARISON_RERUN", "FINAL_DECISION",
     "CIRCUIT_BREAKER_OPENED", "CIRCUIT_BREAKER_CLOSED",
@@ -404,24 +412,29 @@ is a single-partition read.
 `previous_value` and `new_value` are what make a correction auditable rather
 than just logged.
 
-### 10.5 Two additions to `Metrics`
+### 10.5 Operations dashboard additions to `Metrics`
 
 ```python
-avg_processing_ms: int
-top_issues: dict[str, int]        # EscalationReason or FieldName → count, descending
+automatically_cleared: int
+human_reviews: int
+rejected: int
+avg_processing_ms: float | None
+top_flagged_issues: list[{label: str, count: int}]  # descending
 ```
 
-Neither is derivable from the current `Metrics`. `timings_ms` exists per case
-but there is no aggregate, and there is no breakdown of what is being flagged.
+These are calculated from the current in-memory run. `rejected` reflects saved
+reviewer decisions, while issue counts may overlap because one case can contain
+more than one problem.
 
 ### 10.6 Fixture drift to fix on our side
 
-`web/mocks/metrics.json` is missing `parser_pct`, which `Metrics` requires, and
-sets `est_minutes_saved` to `null` where the model says `float`. Frontend's to
-fix, listed here so it is not mistaken for a contract question.
+`web/mocks/metrics.json` mirrors the implemented dashboard fields so standalone
+frontend mode demonstrates the same layout without presenting live health.
 
 ## Changelog
 
+- **v1.2, 21 Sep 2026** — implemented detailed health, correlation IDs,
+  comparison-stage corrections, dashboard metrics and the full event ledger.
 - **v1.1, 21 Sep 2026** — implemented §10.1 and §10.4 in the local FastAPI
   backend; added document evidence, review resolve/retry and persistent-for-the-
   process case-decision routes used by the frontend.

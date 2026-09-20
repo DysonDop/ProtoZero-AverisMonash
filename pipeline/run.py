@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import time
 from datetime import datetime, timezone
+from uuid import NAMESPACE_URL, uuid5
 
 from parsers.read import ParsedDocument, read as read_document
 from pipeline import classify as classify_mod
@@ -36,22 +37,29 @@ def process_email(
     *,
     classify_llm=None,
     extract_fallback=None,
+    circuit_breaker=None,
 ) -> tuple[Case, list[ReviewItem]]:
     started = time.perf_counter()
     now = datetime.now(timezone.utc)
     email_id = email["email_id"]
+    correlation_id = str(uuid5(NAMESPACE_URL, f"protozero:{email_id}"))
     attachments = list(email.get("attachments") or [])
+
+    guarded_classifier = _guarded(
+        classify_llm, circuit_breaker, correlation_id, "classifier"
+    )
 
     category, decided_by, confidence = classify_mod.classify(
         email.get("subject", ""),
         email.get("body", ""),
         email.get("from", ""),
         len(attachments),
-        llm_fn=classify_llm,
+        llm_fn=guarded_classifier,
     )
 
     case = Case(
         email_id=email_id,
+        correlation_id=correlation_id,
         from_addr=email.get("from", ""),
         subject=email.get("subject", ""),
         category=category,
@@ -106,7 +114,18 @@ def process_email(
             "UNREADABLE_DOCUMENT" in result.escalations
             and extract_fallback is not None
         ):
-            recovered = extract_fallback(attachments, documents, read_bytes)
+            try:
+                recovered = _call_optional(
+                    extract_fallback,
+                    circuit_breaker,
+                    correlation_id,
+                    "extraction",
+                    attachments,
+                    documents,
+                    read_bytes,
+                )
+            except Exception:  # noqa: BLE001 - deterministic review path remains available
+                recovered = None
             if recovered:
                 documents.update(recovered)
                 result = gate(attachments, email.get("body", ""), documents)
@@ -176,11 +195,35 @@ def process_email(
     case.wire_review_reason = (
         to_wire_reason(reasons) if status == "NEEDS_REVIEW" else None
     )
-    case.summary = _comparison_summary(case)
+    case.summary = comparison_summary(case)
     case.lifecycle = "in_review" if status == "NEEDS_REVIEW" else "new"
     case.timings_ms = {"total": int((time.perf_counter() - started) * 1000)}
 
     return case, _review_items(case, now)
+
+
+def _guarded(operation, breaker, correlation_id: str, service: str):
+    if operation is None:
+        return None
+
+    def call(*args, **kwargs):
+        return _call_optional(
+            operation, breaker, correlation_id, service, *args, **kwargs
+        )
+
+    return call
+
+
+def _call_optional(operation, breaker, correlation_id: str, service: str, *args, **kwargs):
+    if breaker is None:
+        return operation(*args, **kwargs)
+    return breaker.call(
+        operation,
+        *args,
+        correlation_id=correlation_id,
+        service=service,
+        **kwargs,
+    )
 
 
 def _non_comparison_summary(category: str) -> str:
@@ -192,7 +235,7 @@ def _non_comparison_summary(category: str) -> str:
     }.get(category, "No comparison required.")
 
 
-def _comparison_summary(case: Case) -> str:
+def comparison_summary(case: Case) -> str:
     if case.status == "OK":
         return "No mismatch detected. All seven fields agree with the Shipping Instruction."
     if case.status == "MISMATCH":

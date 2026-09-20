@@ -14,8 +14,20 @@
   },
   "mismatch_rate": 0.422,
   "review_queue_open": 20,
+  "automatically_cleared": 154,
+  "human_reviews": 20,
+  "rejected": 0,
+  "avg_processing_ms": 1,
+  "top_flagged_issues": [
+    { "label": "Party mismatch", "count": 18 },
+    { "label": "Missing attachment", "count": 5 },
+    { "label": "Wrong document type", "count": 5 },
+    { "label": "Unreadable document", "count": 5 },
+    { "label": "Missing or uncertain field", "count": 5 }
+  ],
   "avg_fields_flagged": 1.57,
   "rule_pct": 0.93,
-  "llm_calls": 37,
+  "parser_pct": 1.0,
+  "llm_calls": 0,
   "est_minutes_saved": null
 }

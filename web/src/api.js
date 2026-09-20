@@ -1,12 +1,29 @@
 const BASE = import.meta.env.VITE_API_BASE ?? ''
 const mock = BASE === ''
+const REQUEST_TIMEOUT_MS = 15000
 
-export const fixtureMode = mock
+export const offlineMode = mock
+export const reviewerId = import.meta.env.VITE_REVIEWER_ID ?? 'review-desk'
+
+export const getHealth = () => mock
+  ? Promise.resolve(null)
+  : get(BASE + '/health')
 
 async function get(path) {
-  const res = await fetch(path)
-  if (!res.ok) throw new Error(path + ' returned ' + res.status)
-  return res.json()
+  const controller = new AbortController()
+  const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  try {
+    const res = await fetch(path, { signal: controller.signal })
+    if (!res.ok) throw new Error(path + ' returned ' + res.status)
+    return res.json()
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error('The case service took too long to respond. Check that the backend is running.')
+    }
+    throw error
+  } finally {
+    window.clearTimeout(timeout)
+  }
 }
 
 export async function getCases() {
@@ -31,12 +48,24 @@ export const getCase = id =>
 export const getReview = () =>
   get(mock ? '/review.json' : BASE + '/review')
 
+export const getMetrics = () =>
+  get(mock ? '/metrics.json' : BASE + '/metrics')
+
 export const getDocument = (id, role) =>
   get(mock ? '/documents/' + id + '_' + role + '.json'
            : BASE + '/cases/' + id + '/document/' + role)
 
+export const getRawDocumentUrl = (id, role) =>
+  mock ? null : BASE + '/cases/' + id + '/document/' + role + '/raw'
+
 export const getAuditEvents = id =>
   mock ? Promise.resolve({ items: [] }) : get(BASE + '/cases/' + id + '/events')
+
+export const getCaseReportPdfUrl = id =>
+  mock ? null : BASE + '/cases/' + encodeURIComponent(id) + '/report.pdf'
+
+export const getAllCasesExcelUrl = () =>
+  mock ? null : BASE + '/cases/export.xlsx'
 
 export async function resolveReview(id, body) {
   if (mock) return { ok: true }
@@ -71,7 +100,7 @@ export async function recordCaseDecision(emailId, choice) {
   const res = await fetch(BASE + '/cases/' + emailId + '/decision', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...choice, reviewer_id: 'demo-reviewer' }),
+    body: JSON.stringify({ ...choice, reviewer_id: reviewerId }),
   })
   if (!res.ok) throw new Error('decision for ' + emailId + ' returned ' + res.status)
   return (await res.json()).decision

@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
-import { getDocument } from './api.js'
-import { FIELD_PLAIN } from './status.js'
+import { useEffect, useRef, useState } from 'react'
+import { getDocument, getRawDocumentUrl } from './api.js'
+import { FIELD_PLAIN, confidencePercent } from './status.js'
 
-export default function Evidence({ emailId, comparison, onClose }) {
+export default function Evidence({ emailId, comparison, sourceFields, onClose }) {
   const [docs, setDocs] = useState(null)
   const [error, setError] = useState(null)
 
@@ -15,9 +15,13 @@ export default function Evidence({ emailId, comparison, onClose }) {
   }, [emailId])
 
   return (
-    <div className="ev">
+    <section className="doccompare" aria-labelledby="evidence-title">
       <div className="ev__head">
-        <span className="ev__field">{FIELD_PLAIN[comparison.field] ?? comparison.field}</span>
+        <span>
+          <span className="ev__eyebrow">Side-by-side source evidence</span>
+          <span className="ev__field" id="evidence-title">{FIELD_PLAIN[comparison.field] ?? comparison.field}</span>
+          <span className="ev__score">Machine confidence {confidencePercent(comparison) || 'not recorded'}</span>
+        </span>
         <button className="ev__close" type="button" onClick={onClose} aria-label="Close evidence">
           &#215;
         </button>
@@ -28,60 +32,94 @@ export default function Evidence({ emailId, comparison, onClose }) {
 
       {docs && (
         <>
-          <Side label="Instruction" text={docs.si.text} field={comparison.si} />
-          <Side label="Draft" text={docs.bl.text} field={comparison.bl} />
+          <p className="ev__intro">
+            These are the complete source-text previews. Each pane has scrolled to the original line used for comparison.
+          </p>
+          <div className="doccompare__grid">
+            <DocumentPreview
+              emailId={emailId}
+              role="SI"
+              label="Shipping instruction"
+              document={docs.si}
+              field={sourceFields?.si || comparison.si}
+              comparedField={comparison.si}
+            />
+            <DocumentPreview
+              emailId={emailId}
+              role="BL"
+              label="Bill of lading"
+              document={docs.bl}
+              field={sourceFields?.bl || comparison.bl}
+              comparedField={comparison.bl}
+            />
+          </div>
         </>
       )}
-    </div>
+    </section>
   )
 }
 
-function Side({ label, text, field }) {
-  const line = lineAround(text, field.locator) || evidenceAround(field)
+function DocumentPreview({ emailId, role, label, document, field, comparedField }) {
+  const markRef = useRef(null)
+  const parts = documentParts(document.text, field)
+  const rawUrl = getRawDocumentUrl(emailId, role)
+
+  useEffect(() => {
+    markRef.current?.scrollIntoView({ block: 'center' })
+  }, [document.text, field?.locator?.char_start])
+
   return (
-    <div className="ev__side">
-      <span className="ev__doc">{label}</span>
-      {line
+    <article className="docpreview">
+      <header className="docpreview__head">
+        <div>
+          <span className="ev__doc">{label}</span>
+          <strong>{fileOf(document.attachment_path) || `${role} source`}</strong>
+          <small>{locationOf(field?.locator)} · {document.fmt?.toUpperCase()}</small>
+        </div>
+        {rawUrl && <a href={rawUrl} target="_blank" rel="noreferrer">Open original</a>}
+      </header>
+      {comparedField?.extracted_by === 'human' && (
+        <p className="docpreview__correction">
+          Human comparison value: <b>{comparedField.value}</b>. The highlight below remains the original extracted evidence.
+        </p>
+      )}
+      {parts
         ? (
-          <span className="ev__line">
-            {line.before}<mark>{line.value}</mark>{line.after}
-          </span>
+          <pre className="docpreview__text">
+            {parts.before}<mark ref={markRef}>{parts.value}</mark>{parts.after}
+          </pre>
         )
-        : <span className="ev__none">Nothing was found for this field in this document.</span>}
-    </div>
+        : <div className="docpreview__empty">No source text was available for this document.</div>}
+    </article>
   )
 }
 
-// Spreadsheet locators identify a sheet and row rather than character offsets.
-// The parser also stores the exact evidence string, so use that instead of
-// claiming nothing was found when a row-based source cannot be sliced by char.
-function evidenceAround(field) {
-  const evidence = field?.evidence
-  if (!evidence) return null
-  const value = field?.value == null ? '' : String(field.value)
-  const start = value ? evidence.indexOf(value) : -1
-  if (start < 0) return { before: '', value: evidence, after: '' }
+function documentParts(text, field) {
+  if (!text) return null
+  const locator = field?.locator
+  const { char_start: start, char_end: end } = locator || {}
+  if (start != null && end != null && start >= 0 && end > start && end <= text.length) {
+    return { before: text.slice(0, start), value: text.slice(start, end), after: text.slice(end) }
+  }
+
+  const evidence = field?.evidence || field?.value
+  const foundAt = evidence ? text.indexOf(String(evidence).split('\n')[0]) : -1
+  if (foundAt < 0) return { before: '', value: text, after: '' }
   return {
-    before: evidence.slice(0, start),
-    value,
-    after: evidence.slice(start + value.length),
+    before: text.slice(0, foundAt),
+    value: text.slice(foundAt, foundAt + String(evidence).split('\n')[0].length),
+    after: text.slice(foundAt + String(evidence).split('\n')[0].length),
   }
 }
 
-// The locator points at the value itself. Widening it to the enclosing line is
-// what makes the highlight readable: the label sits to the left of the value in
-// every one of these documents, and it is the label that proves we read the
-// right row.
-function lineAround(text, locator) {
-  if (!text || !locator) return null
-  const { char_start: start, char_end: end } = locator
-  if (start == null || end == null) return null
-  const from = text.lastIndexOf('\n', start - 1) + 1
-  let to = text.indexOf('\n', end)
-  if (to === -1) to = text.length
-  return {
-    before: text.slice(from, start),
-    value: text.slice(start, end),
-    after: text.slice(end, to),
-  }
+function locationOf(locator) {
+  if (!locator) return 'Location unavailable'
+  if (locator.page != null) return `Page ${locator.page}`
+  if (locator.sheet) return `${locator.sheet}, row ${locator.line ?? '—'}`
+  if (locator.line != null) return `Line ${locator.line + 1}`
+  return 'Location unavailable'
+}
+
+function fileOf(path) {
+  return String(path || '').split('/').pop()
 }

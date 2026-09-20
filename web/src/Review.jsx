@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import Bar from './Bar.jsx'
-import { fixtureMode, getReview, resolveReview, retryReview } from './api.js'
+import { offlineMode, getReview, resolveReview, retryReview, reviewerId } from './api.js'
 
 const TITLE = {
   MISSING_ATTACHMENT: 'Nothing attached to check',
@@ -26,12 +26,13 @@ export default function Review() {
   const [error, setError] = useState(null)
   const [pending, setPending] = useState(null)
   const [notice, setNotice] = useState(null)
+  const [correction, setCorrection] = useState(null)
 
   useEffect(() => {
     getReview().then(d => setItems(d.items)).catch(e => setError(e.message))
   }, [])
 
-  async function resolve(item, action) {
+  async function resolve(item, action, details = {}) {
     const previous = items
     setPending(item.id)
     setError(null)
@@ -39,11 +40,13 @@ export default function Review() {
     setItems(items.filter(i => i.id !== item.id))
     try {
       await resolveReview(item.id, {
-        action: action === 'Dismiss' || action === 'Confirm' ? 'confirm' : 'correct',
+        action: details.correctValue != null ? 'correct' : 'confirm',
         field: item.fields[0] ?? null,
-        correct_value: null,
-        reviewer_id: 'demo-reviewer',
+        correct_value: details.correctValue ?? null,
+        document_role: details.documentRole ?? 'BL',
+        reviewer_id: reviewerId,
       })
+      setCorrection(null)
     } catch (e) {
       setItems(previous)
       setError(e.message)
@@ -108,9 +111,47 @@ export default function Review() {
                       <div><em>Draft</em><span>{item.bl_value ?? '—'}</span></div>
                     </div>
                   )}
+                  {correction?.id === item.id && (
+                    <form
+                      className="card__correction"
+                      onSubmit={event => {
+                        event.preventDefault()
+                        resolve(item, 'Correct', {
+                          correctValue: correction.value.trim(),
+                          documentRole: correction.role,
+                        })
+                      }}
+                    >
+                      <label>
+                        <span>Correct which document?</span>
+                        <select
+                          value={correction.role}
+                          onChange={event => setCorrection({ ...correction, role: event.target.value })}
+                        >
+                          <option value="BL">Draft bill of lading</option>
+                          <option value="SI">Shipping instruction</option>
+                        </select>
+                      </label>
+                      <label>
+                        <span>Correct value</span>
+                        <input
+                          value={correction.value}
+                          onChange={event => setCorrection({ ...correction, value: event.target.value })}
+                          placeholder="Enter the value shown in the document"
+                          required
+                          autoFocus
+                        />
+                      </label>
+                      <p>The source extraction stays unchanged. This value rejoins at comparison and is recorded in the audit log.</p>
+                      <div className="card__actions">
+                        <button className="btn btn--small" type="submit" disabled={!correction.value.trim() || pending === item.id}>Save and compare again</button>
+                        <button className="btn btn--ghost btn--small" type="button" onClick={() => setCorrection(null)}>Cancel</button>
+                      </div>
+                    </form>
+                  )}
                   <div className="card__actions">
                     <a className="btn btn--ghost btn--small" href={'#/case/' + item.email_id}>Open case</a>
-                    {!fixtureMode && retryable(item.reason) && (
+                    {!offlineMode && retryable(item.reason) && (
                       <button
                         className="btn btn--ghost btn--small"
                         type="button"
@@ -120,20 +161,35 @@ export default function Review() {
                         Retry failed stage
                       </button>
                     )}
-                    {fixtureMode ? (
+                    {offlineMode ? (
                       <>
                         <button className="btn btn--small" type="button" onClick={() => resolve(item, primary)}>{primary}</button>
                         <button className="btn btn--ghost btn--small" type="button" onClick={() => resolve(item, secondary)}>{secondary}</button>
                       </>
                     ) : (
-                      <button
-                        className="btn btn--small"
-                        type="button"
-                        disabled={pending === item.id}
-                        onClick={() => resolve(item, 'Confirm')}
-                      >
-                        Mark handled
-                      </button>
+                      <>
+                        {item.fields.length > 0 && correction?.id !== item.id && (
+                          <button
+                            className="btn btn--ghost btn--small"
+                            type="button"
+                            onClick={() => setCorrection({
+                              id: item.id,
+                              role: 'BL',
+                              value: item.bl_value ?? '',
+                            })}
+                          >
+                            Correct a value
+                          </button>
+                        )}
+                        <button
+                          className="btn btn--small"
+                          type="button"
+                          disabled={pending === item.id}
+                          onClick={() => resolve(item, 'Confirm')}
+                        >
+                          Confirm and close
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
