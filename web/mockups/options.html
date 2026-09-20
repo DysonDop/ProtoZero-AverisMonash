@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Protozero, the correction note</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+  :root{
+    --ink:#101A24; --paper:#EDEAE3; --sheet:#FFFFFF; --muted:#55606B;
+    --rule:rgba(16,26,36,.13); --hair:rgba(16,26,36,.09);
+    --orange:#D88C3D; --blue:#006DAE; --wrong:#B83A28; --clear:#1F6252;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#DEDCD6;color:var(--ink);
+       font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:14px;line-height:1.5}
+  .page{padding:34px 26px 80px}
+  h1{font-size:23px;font-weight:600;margin:0 0 6px}
+  .sub{color:#3D4650;font-size:14px;margin:0 0 28px;max-width:800px}
+  .cap{display:flex;align-items:baseline;gap:12px;margin:0 0 4px}
+  .cap b{font-size:17px;font-weight:600}
+  .cap span{font-size:13px;color:#3D4650}
+  .why{font-size:13px;color:#3D4650;margin:0 0 14px;max-width:800px}
+  .row3{display:flex;gap:20px;flex-wrap:wrap;margin:0 0 40px}
+  .col{width:330px}
+  .col h4{margin:0 0 3px;font-size:14px;font-weight:600}
+  .col p{margin:0 0 12px;font-size:12.5px;color:#3D4650;min-height:52px}
+  .grow{flex-grow:1}
+
+  /* the note itself */
+  .note{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;
+        display:flex;flex-direction:column;gap:9px}
+  .note .f{font-size:14.5px;font-weight:600}
+  .val{font-family:'JetBrains Mono',monospace;font-size:13.5px;line-height:1.4}
+  .val.bad{color:var(--wrong);font-weight:700}
+  .val.good{color:var(--clear);font-weight:700}
+  .lbl{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+       display:block;margin-bottom:2px}
+  .syn{font-size:11.5px;color:var(--muted);border-top:1px dashed var(--rule);padding-top:8px}
+  .syn b{font-weight:500;color:var(--ink)}
+
+  .strike{text-decoration:line-through;text-decoration-thickness:1.5px;
+          text-decoration-color:rgba(184,58,40,.7)}
+  .arrow{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:11px;
+         letter-spacing:.09em;text-transform:uppercase}
+  .arrow hr{flex-grow:1;border:0;border-top:1px dashed var(--rule);margin:0}
+  .swapline{display:flex;align-items:baseline;gap:9px}
+  .swapline .tag{font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+                 border-radius:3px;padding:2px 6px;flex:none}
+  .tag.d{background:rgba(184,58,40,.12);color:var(--wrong)}
+  .tag.s{background:rgba(31,98,82,.12);color:var(--clear)}
+
+  /* full screen */
+  .hold{width:1360px;max-width:100%;overflow:auto;border-radius:14px}
+  .frame{width:1360px;height:780px;background:var(--paper);display:flex;flex-direction:column}
+  .thin{height:50px;flex:none;display:flex;align-items:center;gap:13px;padding:0 22px;
+        background:var(--ink);color:#fff}
+  .thin i{width:12px;height:12px;background:var(--orange);border-radius:3px;display:block;flex:none}
+  .thin b{font-size:14px;font-weight:500}
+  .thin .c{font-family:'JetBrains Mono',monospace;font-size:12px;color:rgba(255,255,255,.55)}
+  .btn{border:0;border-radius:8px;background:var(--orange);color:#FFFFFF;font-family:inherit;
+       font-size:14px;font-weight:500;padding:0 20px;min-height:44px;cursor:pointer}
+  .btn.ghost{border:1px solid rgba(16,26,36,.25);background:transparent;color:var(--ink)}
+  .stage{flex-grow:1;min-height:0;position:relative;display:flex;padding:24px 34px 24px 44px}
+  #wires{position:absolute;inset:0;pointer-events:none;z-index:2}
+  .sheetwrap{width:700px;flex:none;position:relative;z-index:1}
+  .sheet{background:var(--sheet);border:1px solid rgba(16,26,36,.20);
+         border-bottom-width:2px;border-right-width:2px}
+  .head{display:flex;align-items:flex-start;gap:16px;padding:17px 22px 13px;border-bottom:1px solid var(--rule)}
+  .head h4{margin:0 0 3px;font-size:16px;font-weight:600;letter-spacing:.10em}
+  .head .car{font-size:11.5px;color:var(--muted)}
+  .draft{margin-left:auto;font-size:10.5px;font-weight:600;letter-spacing:.18em;
+         color:var(--muted);border:1px solid var(--rule);border-radius:3px;padding:3px 9px}
+  .grid{display:grid;grid-template-columns:1fr 1fr}
+  .bx{padding:11px 16px 12px;border-right:1px solid var(--hair);border-bottom:1px solid var(--hair);
+      min-height:70px}
+  .bx.full{grid-column:1 / -1}
+  .bx:nth-child(2n){border-right:0}
+  .bx.flag{background:rgba(184,58,40,.06)}
+  .bx.flag .lab{color:var(--wrong)}
+  .bx.flag .v{color:var(--wrong);font-weight:700}
+  .lab{font-size:9.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;
+       color:var(--muted);display:block;margin-bottom:5px}
+  .v{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;line-height:1.5;display:block}
+  .sm{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);
+      line-height:1.5;display:block;margin-top:2px}
+  .foot{display:flex;gap:16px;padding:11px 16px;border-top:1px solid var(--rule)}
+  .foot span{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted)}
+  .margin{flex-grow:1;min-width:0;padding-left:54px;padding-top:118px;
+          display:flex;flex-direction:column;gap:16px;position:relative;z-index:1}
+  .rest{font-size:12.5px;color:var(--muted)}
+  .fbar{flex:none;display:flex;align-items:center;gap:12px;padding:14px 34px;
+        border-top:1px solid var(--rule);background:var(--sheet)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>Wrong on top, correct underneath</h1>
+  <p class="sub">Three ways to do it. All three put the draft's value first and the instruction's value second. What differs is what carries the direction once the labels shrink, because red and green alone cannot do it.</p>
+
+  <div class="row3">
+
+    <div class="col">
+      <h4>A. Short labels</h4>
+      <p>Two small tags. Unambiguous with no colour at all, and the words do the work.</p>
+      <div class="note">
+        <span class="f">Receiver</span>
+        <div class="swapline"><span class="tag d">Draft</span><span class="val bad">UAB NOVAKOPA</span></div>
+        <div class="swapline"><span class="tag s">Should be</span><span class="val good">EAST BRIGHT FZ-LLC</span></div>
+        <div class="syn">Instruction calls this <b>Consignee</b>. Draft calls it <b>To the order of</b>.</div>
+      </div>
+    </div>
+
+    <div class="col">
+      <h4>B. Struck through</h4>
+      <p>The wrong value is crossed out, the replacement sits under it. No labels at all. Reads instantly as an edit.</p>
+      <div class="note">
+        <span class="f">Receiver</span>
+        <span class="val bad strike">UAB NOVAKOPA</span>
+        <span class="val good">EAST BRIGHT FZ-LLC</span>
+        <div class="syn">Instruction calls this <b>Consignee</b>. Draft calls it <b>To the order of</b>.</div>
+      </div>
+    </div>
+
+    <div class="col">
+      <h4>C. Divider</h4>
+      <p>A thin rule labelled "should be" between the two. Quietest, and it scales if a field ever has more to say.</p>
+      <div class="note">
+        <span class="f">Receiver</span>
+        <span class="val bad">UAB NOVAKOPA</span>
+        <div class="arrow"><hr>should be<hr></div>
+        <span class="val good">EAST BRIGHT FZ-LLC</span>
+        <div class="syn">Instruction calls this <b>Consignee</b>. Draft calls it <b>To the order of</b>.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="cap"><b>In place</b><span>using B, the struck-through version</span></div>
+  <p class="why">The margin now reads as two edits rather than two tables. The struck value in the note matches the red value in the box it points at, so your eye goes box, line, correction, without a label to read.</p>
+
+  <div class="hold"><div class="frame">
+    <div class="thin"><i></i><b>protozero</b><span class="c">email_004</span></div>
+    <div class="stage">
+      <svg id="wires"></svg>
+      <div class="sheetwrap"><div class="sheet" id="sheet"></div></div>
+      <div class="margin">
+        <div class="note" data-target="a-consignee">
+          <span class="f">Receiver</span>
+          <span class="val bad strike">UAB NOVAKOPA</span>
+          <span class="val good">EAST BRIGHT FZ-LLC</span>
+          <div class="syn">Instruction calls this <b>Consignee</b>. Draft calls it <b>To the order of</b>.</div>
+        </div>
+        <div class="note" data-target="a-notify">
+          <span class="f">Notify on arrival</span>
+          <span class="val bad strike">UAB NOVAKOPA</span>
+          <span class="val good">EAST BRIGHT FZ-LLC</span>
+          <div class="syn">Instruction calls this <b>Notify</b>. Draft calls it <b>Notify party</b>.</div>
+        </div>
+        <div class="rest">The other five details match the instruction.</div>
+      </div>
+    </div>
+    <div class="fbar">
+      <span class="grow"></span>
+      <button class="btn ghost" type="button">Send to a person</button>
+      <button class="btn" type="button">Reject the draft</button>
+    </div>
+  </div></div>
+
+</div>
+
+<script>
+document.getElementById('sheet').innerHTML=''
+ +'<div class="head"><div><h4>BILL OF LADING</h4>'
+ +'<div class="car">ONE Ocean Network Express &nbsp;·&nbsp; SINF88496965</div></div>'
+ +'<span class="draft">DRAFT</span></div>'
+ +'<div class="grid">'
+ +'<div class="bx full"><span class="lab">Shipper</span>'
+ +'<span class="v">APRIL FAR EAST (M) SDN BHD</span>'
+ +'<span class="sm">TOWER 2, AVENUE 5, LEVEL 6; BANGSAR SOUTH CITY, KUALA LUMPUR</span></div>'
+ +'<div class="bx full flag" id="a-consignee"><span class="lab">To the order of</span>'
+ +'<span class="v">UAB NOVAKOPA</span>'
+ +'<span class="sm">RAKEZ AMENITY CENTER; AL HAMRA INDUSTRIAL ZONE, RAK, UAE</span></div>'
+ +'<div class="bx full flag" id="a-notify"><span class="lab">Notify party</span>'
+ +'<span class="v">UAB NOVAKOPA</span></div>'
+ +'<div class="bx"><span class="lab">Port of loading</span>'
+ +'<span class="v">NANTONG, CHINA</span><span class="sm">CNNTG</span></div>'
+ +'<div class="bx"><span class="lab">Port of discharge</span>'
+ +'<span class="v">KARACHI, PAKISTAN</span><span class="sm">PKKHI</span></div>'
+ +'<div class="bx"><span class="lab">Container count</span><span class="v">6 x 40\'HC</span></div>'
+ +'<div class="bx"><span class="lab">Gross weight (KG)</span><span class="v">131,058 KG</span></div>'
+ +'<div class="bx"><span class="lab">Export carrier</span>'
+ +'<span class="v">NAP 914 V.BS007</span><span class="sm">Voyage BS012</span></div>'
+ +'<div class="bx"><span class="lab">Commodity</span>'
+ +'<span class="v">COATED IVORY BOARD</span><span class="sm">HS 48105900</span></div>'
+ +'</div>'
+ +'<div class="foot"><span>BOOKING REF &nbsp; ONEYSINF32871</span><span>FREIGHT &nbsp; PREPAID</span></div>';
+
+function drawWires(){
+  const svg=document.getElementById('wires');
+  const S=svg.parentElement.getBoundingClientRect();
+  svg.setAttribute('viewBox','0 0 '+S.width+' '+S.height);
+  svg.setAttribute('width',S.width); svg.setAttribute('height',S.height);
+  let out='';
+  document.querySelectorAll('.note[data-target]').forEach(function(c){
+    const box=document.getElementById(c.dataset.target);
+    if(!box) return;
+    const B=box.getBoundingClientRect(), C=c.getBoundingClientRect();
+    const x1=B.right-S.left, y1=B.top-S.top+B.height/2;
+    const x2=C.left-S.left,  y2=C.top-S.top+22;
+    const mid=x1+(x2-x1)/2;
+    out+='<path d="M '+x1+' '+y1+' H '+mid+' V '+y2+' H '+x2+'" fill="none" stroke="rgba(16,26,36,.28)" stroke-width="1"/>';
+  });
+  svg.innerHTML=out;
+}
+window.addEventListener('load',drawWires);
+window.addEventListener('resize',drawWires);
+drawWires();
+</script>
+</body>
+</html>

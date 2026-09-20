@@ -1,0 +1,21 @@
+{
+  "total_emails": 520,
+  "by_category": {
+    "BL_COMPARISON": 220,
+    "SI_REQUEST": 125,
+    "INVOICE_QUERY": 75,
+    "GENERAL": 60,
+    "SPAM": 40
+  },
+  "by_status": {
+    "OK": 454,
+    "MISMATCH": 46,
+    "NEEDS_REVIEW": 20
+  },
+  "mismatch_rate": 0.422,
+  "review_queue_open": 20,
+  "avg_fields_flagged": 1.57,
+  "rule_pct": 0.93,
+  "llm_calls": 37,
+  "est_minutes_saved": null
+}

@@ -1,0 +1,31 @@
+{
+  "email_id": "email_002",
+  "received_at": "2026-09-18T23:14:00Z",
+  "from_addr": "nirmala@fujitogrp.com",
+  "subject": "RE_ LOCAL CHARGES FOB - KARGOSMAR - 5AKR-61849 - TELEX RELEASE CHARGES",
+  "category": "INVOICE_QUERY",
+  "decided_by": "rule",
+  "category_confidence": 0.97,
+  "status": "OK",
+  "has_defect": false,
+  "defect_fields": [],
+  "escalation_reasons": [],
+  "wire_review_reason": null,
+  "documents": [],
+  "comparisons": [],
+  "summary": "A billing question. No check needed.",
+  "lifecycle": "new",
+  "pipeline_version": "fixture",
+  "prompt_version": "fixture",
+  "models": {
+    "classify": "rule",
+    "extract": "parser"
+  },
+  "timings_ms": {
+    "classify": 3,
+    "extract": 41,
+    "compare": 2
+  },
+  "created_at": "2026-09-19T09:00:00Z",
+  "updated_at": "2026-09-19T09:00:00Z"
+}

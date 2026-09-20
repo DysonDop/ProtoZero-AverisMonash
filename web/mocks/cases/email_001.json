@@ -1,0 +1,596 @@
+{
+  "email_id": "email_001",
+  "received_at": "2026-09-18T23:14:00Z",
+  "from_addr": "aziztz@safqa.co.ke",
+  "subject": "TO CONFIRM DOCS _ 5RSG-00133 _ CALLAO_PERU _ MOORIM SP CO., LTD _ MEDUUD104332",
+  "category": "BL_COMPARISON",
+  "decided_by": "rule",
+  "category_confidence": 0.97,
+  "status": "OK",
+  "has_defect": false,
+  "defect_fields": [],
+  "escalation_reasons": [],
+  "wire_review_reason": null,
+  "documents": [
+    {
+      "attachment_path": "attachments/email_001_SI.txt",
+      "role": "SI",
+      "detected_kind": "SI",
+      "fmt": "txt",
+      "readable": true,
+      "text_sha256": "d16c8b1d56e11644e8905c4af65bcc6fc3a0265d447c248c2cd9eef0572c3c58",
+      "page_count": null,
+      "fields": {
+        "shipper": {
+          "value": "APRIL FAR EAST (M) SDN BHD",
+          "evidence": "Shipper/Exporter: APRIL FAR EAST (M) SDN BHD",
+          "label_seen": "Shipper/Exporter",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 3,
+            "char_start": 81,
+            "char_end": 107,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "consignee": {
+          "value": "MOORIM SP CO., LTD",
+          "evidence": "CONSIGNEE: MOORIM SP CO., LTD",
+          "label_seen": "CONSIGNEE",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 5,
+            "char_start": 220,
+            "char_end": 238,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "notify_party": {
+          "value": "UAB NOVAKOPA",
+          "evidence": "NOTIFY PARTY: UAB NOVAKOPA",
+          "label_seen": "NOTIFY PARTY",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 7,
+            "char_start": 325,
+            "char_end": 337,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "port_of_loading": {
+          "value": "PORT KLANG (WESTPORT), MALAYSIA (MYPKG)",
+          "evidence": "Port of Loading: PORT KLANG (WESTPORT), MALAYSIA (MYPKG)",
+          "label_seen": "Port of Loading",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 8,
+            "char_start": 355,
+            "char_end": 394,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "port_of_discharge": {
+          "value": "CALLAO, PERU (PECLL)",
+          "evidence": "Discharge Port: CALLAO, PERU (PECLL)",
+          "label_seen": "Discharge Port",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 9,
+            "char_start": 411,
+            "char_end": 431,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "container_count": {
+          "value": "1 x 40'HC",
+          "evidence": "No. of Containers or Packages: 1 x 40'HC",
+          "label_seen": "No. of Containers or Packages",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 10,
+            "char_start": 463,
+            "char_end": 472,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "gross_weight_kg": {
+          "value": "21,577 KG",
+          "evidence": "Gross Weight (KG): 21,577 KG",
+          "label_seen": "Gross Weight (KG)",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 11,
+            "char_start": 492,
+            "char_end": 501,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        }
+      },
+      "parse_error": null
+    },
+    {
+      "attachment_path": "attachments/email_001_BL.txt",
+      "role": "BL",
+      "detected_kind": "BL",
+      "fmt": "txt",
+      "readable": true,
+      "text_sha256": "508d9a3d1f08fd10d3cf558b1bceb071f88482f1077c1af293154989f1379a08",
+      "page_count": null,
+      "fields": {
+        "shipper": {
+          "value": "APRIL FAR EAST (M) SDN BHD",
+          "evidence": "SHIPPER: APRIL FAR EAST (M) SDN BHD",
+          "label_seen": "SHIPPER",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 3,
+            "char_start": 74,
+            "char_end": 100,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "consignee": {
+          "value": "MOORIM SP CO., LTD",
+          "evidence": "CONSIGNEE: MOORIM SP CO., LTD",
+          "label_seen": "CONSIGNEE",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 5,
+            "char_start": 213,
+            "char_end": 231,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "notify_party": {
+          "value": "UAB NOVAKOPA",
+          "evidence": "Notify: UAB NOVAKOPA",
+          "label_seen": "Notify",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 7,
+            "char_start": 312,
+            "char_end": 324,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "port_of_loading": {
+          "value": "PORT KLANG (WESTPORT), MALAYSIA (MYPKG)",
+          "evidence": "Port of Loading (POL): PORT KLANG (WESTPORT), MALAYSIA (MYPKG)",
+          "label_seen": "Port of Loading (POL)",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 8,
+            "char_start": 348,
+            "char_end": 387,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "port_of_discharge": {
+          "value": "CALLAO, PERU (PECLL)",
+          "evidence": "POD: CALLAO, PERU (PECLL)",
+          "label_seen": "POD",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 9,
+            "char_start": 393,
+            "char_end": 413,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "container_count": {
+          "value": "1 x 40'HC",
+          "evidence": "Container Count: 1 x 40'HC",
+          "label_seen": "Container Count",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 10,
+            "char_start": 431,
+            "char_end": 440,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "gross_weight_kg": {
+          "value": "21,577 KG",
+          "evidence": "Gross Wt (kgs): 21,577 KG",
+          "label_seen": "Gross Wt (kgs)",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 11,
+            "char_start": 457,
+            "char_end": 466,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        }
+      },
+      "parse_error": null
+    }
+  ],
+  "comparisons": [
+    {
+      "field": "shipper",
+      "si": {
+        "value": "APRIL FAR EAST (M) SDN BHD",
+        "evidence": "Shipper/Exporter: APRIL FAR EAST (M) SDN BHD",
+        "label_seen": "Shipper/Exporter",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 3,
+          "char_start": 81,
+          "char_end": 107,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "bl": {
+        "value": "APRIL FAR EAST (M) SDN BHD",
+        "evidence": "SHIPPER: APRIL FAR EAST (M) SDN BHD",
+        "label_seen": "SHIPPER",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 3,
+          "char_start": 74,
+          "char_end": 100,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "si_normalized": "APRIL FAR EAST (M) SDN BHD",
+      "bl_normalized": "APRIL FAR EAST (M) SDN BHD",
+      "verdict": "MATCH",
+      "similarity": null,
+      "confidence": {
+        "grounded": 1.0,
+        "parse_valid": 1.0,
+        "cross_check": 1.0,
+        "doc_quality": 1.0,
+        "model_selfrating": 0.5,
+        "score": 0.95,
+        "hard_fail": null
+      },
+      "explanation": "shipper - both documents agree"
+    },
+    {
+      "field": "consignee",
+      "si": {
+        "value": "MOORIM SP CO., LTD",
+        "evidence": "CONSIGNEE: MOORIM SP CO., LTD",
+        "label_seen": "CONSIGNEE",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 5,
+          "char_start": 220,
+          "char_end": 238,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "bl": {
+        "value": "MOORIM SP CO., LTD",
+        "evidence": "CONSIGNEE: MOORIM SP CO., LTD",
+        "label_seen": "CONSIGNEE",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 5,
+          "char_start": 213,
+          "char_end": 231,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "si_normalized": "MOORIM SP CO., LTD",
+      "bl_normalized": "MOORIM SP CO., LTD",
+      "verdict": "MATCH",
+      "similarity": null,
+      "confidence": {
+        "grounded": 1.0,
+        "parse_valid": 1.0,
+        "cross_check": 1.0,
+        "doc_quality": 1.0,
+        "model_selfrating": 0.5,
+        "score": 0.95,
+        "hard_fail": null
+      },
+      "explanation": "consignee - both documents agree"
+    },
+    {
+      "field": "notify_party",
+      "si": {
+        "value": "UAB NOVAKOPA",
+        "evidence": "NOTIFY PARTY: UAB NOVAKOPA",
+        "label_seen": "NOTIFY PARTY",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 7,
+          "char_start": 325,
+          "char_end": 337,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "bl": {
+        "value": "UAB NOVAKOPA",
+        "evidence": "Notify: UAB NOVAKOPA",
+        "label_seen": "Notify",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 7,
+          "char_start": 312,
+          "char_end": 324,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "si_normalized": "UAB NOVAKOPA",
+      "bl_normalized": "UAB NOVAKOPA",
+      "verdict": "MATCH",
+      "similarity": null,
+      "confidence": {
+        "grounded": 1.0,
+        "parse_valid": 1.0,
+        "cross_check": 1.0,
+        "doc_quality": 1.0,
+        "model_selfrating": 0.5,
+        "score": 0.95,
+        "hard_fail": null
+      },
+      "explanation": "notify_party - both documents agree"
+    },
+    {
+      "field": "port_of_loading",
+      "si": {
+        "value": "PORT KLANG (WESTPORT), MALAYSIA (MYPKG)",
+        "evidence": "Port of Loading: PORT KLANG (WESTPORT), MALAYSIA (MYPKG)",
+        "label_seen": "Port of Loading",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 8,
+          "char_start": 355,
+          "char_end": 394,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "bl": {
+        "value": "PORT KLANG (WESTPORT), MALAYSIA (MYPKG)",
+        "evidence": "Port of Loading (POL): PORT KLANG (WESTPORT), MALAYSIA (MYPKG)",
+        "label_seen": "Port of Loading (POL)",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 8,
+          "char_start": 348,
+          "char_end": 387,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "si_normalized": "PORT KLANG (WESTPORT), MALAYSIA",
+      "bl_normalized": "PORT KLANG (WESTPORT), MALAYSIA",
+      "verdict": "MATCH",
+      "similarity": null,
+      "confidence": {
+        "grounded": 1.0,
+        "parse_valid": 1.0,
+        "cross_check": 1.0,
+        "doc_quality": 1.0,
+        "model_selfrating": 0.5,
+        "score": 0.95,
+        "hard_fail": null
+      },
+      "explanation": "port_of_loading - both documents agree"
+    },
+    {
+      "field": "port_of_discharge",
+      "si": {
+        "value": "CALLAO, PERU (PECLL)",
+        "evidence": "Discharge Port: CALLAO, PERU (PECLL)",
+        "label_seen": "Discharge Port",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 9,
+          "char_start": 411,
+          "char_end": 431,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "bl": {
+        "value": "CALLAO, PERU (PECLL)",
+        "evidence": "POD: CALLAO, PERU (PECLL)",
+        "label_seen": "POD",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 9,
+          "char_start": 393,
+          "char_end": 413,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "si_normalized": "CALLAO, PERU",
+      "bl_normalized": "CALLAO, PERU",
+      "verdict": "MATCH",
+      "similarity": null,
+      "confidence": {
+        "grounded": 1.0,
+        "parse_valid": 1.0,
+        "cross_check": 1.0,
+        "doc_quality": 1.0,
+        "model_selfrating": 0.5,
+        "score": 0.95,
+        "hard_fail": null
+      },
+      "explanation": "port_of_discharge - both documents agree"
+    },
+    {
+      "field": "container_count",
+      "si": {
+        "value": "1 x 40'HC",
+        "evidence": "No. of Containers or Packages: 1 x 40'HC",
+        "label_seen": "No. of Containers or Packages",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 10,
+          "char_start": 463,
+          "char_end": 472,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "bl": {
+        "value": "1 x 40'HC",
+        "evidence": "Container Count: 1 x 40'HC",
+        "label_seen": "Container Count",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 10,
+          "char_start": 431,
+          "char_end": 440,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "si_normalized": "1",
+      "bl_normalized": "1",
+      "verdict": "MATCH",
+      "similarity": null,
+      "confidence": {
+        "grounded": 1.0,
+        "parse_valid": 1.0,
+        "cross_check": 1.0,
+        "doc_quality": 1.0,
+        "model_selfrating": 0.5,
+        "score": 0.95,
+        "hard_fail": null
+      },
+      "explanation": "container_count - both documents agree"
+    },
+    {
+      "field": "gross_weight_kg",
+      "si": {
+        "value": "21,577 KG",
+        "evidence": "Gross Weight (KG): 21,577 KG",
+        "label_seen": "Gross Weight (KG)",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 11,
+          "char_start": 492,
+          "char_end": 501,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "bl": {
+        "value": "21,577 KG",
+        "evidence": "Gross Wt (kgs): 21,577 KG",
+        "label_seen": "Gross Wt (kgs)",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 11,
+          "char_start": 457,
+          "char_end": 466,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "si_normalized": "21577.0",
+      "bl_normalized": "21577.0",
+      "verdict": "MATCH",
+      "similarity": null,
+      "confidence": {
+        "grounded": 1.0,
+        "parse_valid": 1.0,
+        "cross_check": 1.0,
+        "doc_quality": 1.0,
+        "model_selfrating": 0.5,
+        "score": 0.95,
+        "hard_fail": null
+      },
+      "explanation": "gross_weight_kg - both documents agree"
+    }
+  ],
+  "summary": "All 7 details match.",
+  "lifecycle": "new",
+  "pipeline_version": "fixture",
+  "prompt_version": "fixture",
+  "models": {
+    "classify": "rule",
+    "extract": "parser"
+  },
+  "timings_ms": {
+    "classify": 3,
+    "extract": 41,
+    "compare": 2
+  },
+  "created_at": "2026-09-19T09:00:00Z",
+  "updated_at": "2026-09-19T09:00:00Z"
+}

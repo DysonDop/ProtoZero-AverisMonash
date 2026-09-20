@@ -1,0 +1,599 @@
+{
+  "email_id": "email_004",
+  "received_at": "2026-09-18T23:14:00Z",
+  "from_addr": "docs@vitalsolutions.sg",
+  "subject": "REQUEST BL DRAFT _ PO 26067_ COATED IVORY BOARD__138MT",
+  "category": "BL_COMPARISON",
+  "decided_by": "rule",
+  "category_confidence": 0.97,
+  "status": "MISMATCH",
+  "has_defect": true,
+  "defect_fields": [
+    "consignee",
+    "notify_party"
+  ],
+  "escalation_reasons": [],
+  "wire_review_reason": null,
+  "documents": [
+    {
+      "attachment_path": "attachments/email_004_SI.txt",
+      "role": "SI",
+      "detected_kind": "SI",
+      "fmt": "txt",
+      "readable": true,
+      "text_sha256": "9999bc211a85fbf68de6ded4c68b0b4a5bc7ea16cc27aaba23b736332c091c1a",
+      "page_count": null,
+      "fields": {
+        "shipper": {
+          "value": "APRIL FAR EAST (M) SDN BHD",
+          "evidence": "Shipper: APRIL FAR EAST (M) SDN BHD",
+          "label_seen": "Shipper",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 3,
+            "char_start": 72,
+            "char_end": 98,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "consignee": {
+          "value": "EAST BRIGHT FZ-LLC",
+          "evidence": "Consignee (Non-Negotiable): EAST BRIGHT FZ-LLC",
+          "label_seen": "Consignee (Non-Negotiable)",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 5,
+            "char_start": 228,
+            "char_end": 246,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "notify_party": {
+          "value": "EAST BRIGHT FZ-LLC",
+          "evidence": "Notify: EAST BRIGHT FZ-LLC",
+          "label_seen": "Notify",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 7,
+            "char_start": 314,
+            "char_end": 332,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "port_of_loading": {
+          "value": "NANTONG, CHINA (CNNTG)",
+          "evidence": "Port of Loading (POL): NANTONG, CHINA (CNNTG)",
+          "label_seen": "Port of Loading (POL)",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 8,
+            "char_start": 356,
+            "char_end": 378,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "port_of_discharge": {
+          "value": "KARACHI, PAKISTAN (PKKHI)",
+          "evidence": "POD: KARACHI, PAKISTAN (PKKHI)",
+          "label_seen": "POD",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 9,
+            "char_start": 384,
+            "char_end": 409,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "container_count": {
+          "value": "6 x 40'HC",
+          "evidence": "Total Containers: 6 x 40'HC",
+          "label_seen": "Total Containers",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 10,
+            "char_start": 428,
+            "char_end": 437,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "gross_weight_kg": {
+          "value": "131,058 KG",
+          "evidence": "Gross Wt (kgs): 131,058 KG",
+          "label_seen": "Gross Wt (kgs)",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 11,
+            "char_start": 454,
+            "char_end": 464,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        }
+      },
+      "parse_error": null
+    },
+    {
+      "attachment_path": "attachments/email_004_BL.txt",
+      "role": "BL",
+      "detected_kind": "BL",
+      "fmt": "txt",
+      "readable": true,
+      "text_sha256": "083fec3ad529d756c3d309092330f8fea395174e1552efcaa7ad571755e7b05c",
+      "page_count": null,
+      "fields": {
+        "shipper": {
+          "value": "APRIL FAR EAST (M) SDN BHD",
+          "evidence": "SHIPPER: APRIL FAR EAST (M) SDN BHD",
+          "label_seen": "SHIPPER",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 3,
+            "char_start": 74,
+            "char_end": 100,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "consignee": {
+          "value": "UAB NOVAKOPA",
+          "evidence": "To the Order of: UAB NOVAKOPA",
+          "label_seen": "To the Order of",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 5,
+            "char_start": 219,
+            "char_end": 231,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "notify_party": {
+          "value": "UAB NOVAKOPA",
+          "evidence": "Notify Party: UAB NOVAKOPA",
+          "label_seen": "Notify Party",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 7,
+            "char_start": 305,
+            "char_end": 317,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "port_of_loading": {
+          "value": "NANTONG, CHINA (CNNTG)",
+          "evidence": "Port of Loading (POL): NANTONG, CHINA (CNNTG)",
+          "label_seen": "Port of Loading (POL)",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 8,
+            "char_start": 341,
+            "char_end": 363,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "port_of_discharge": {
+          "value": "KARACHI, PAKISTAN (PKKHI)",
+          "evidence": "POD: KARACHI, PAKISTAN (PKKHI)",
+          "label_seen": "POD",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 9,
+            "char_start": 369,
+            "char_end": 394,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "container_count": {
+          "value": "6 x 40'HC",
+          "evidence": "Container Count: 6 x 40'HC",
+          "label_seen": "Container Count",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 10,
+            "char_start": 412,
+            "char_end": 421,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "gross_weight_kg": {
+          "value": "131,058 KG",
+          "evidence": "Gross Weight (KG): 131,058 KG",
+          "label_seen": "Gross Weight (KG)",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 11,
+            "char_start": 441,
+            "char_end": 451,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        }
+      },
+      "parse_error": null
+    }
+  ],
+  "comparisons": [
+    {
+      "field": "shipper",
+      "si": {
+        "value": "APRIL FAR EAST (M) SDN BHD",
+        "evidence": "Shipper: APRIL FAR EAST (M) SDN BHD",
+        "label_seen": "Shipper",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 3,
+          "char_start": 72,
+          "char_end": 98,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "bl": {
+        "value": "APRIL FAR EAST (M) SDN BHD",
+        "evidence": "SHIPPER: APRIL FAR EAST (M) SDN BHD",
+        "label_seen": "SHIPPER",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 3,
+          "char_start": 74,
+          "char_end": 100,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "si_normalized": "APRIL FAR EAST (M) SDN BHD",
+      "bl_normalized": "APRIL FAR EAST (M) SDN BHD",
+      "verdict": "MATCH",
+      "similarity": null,
+      "confidence": {
+        "grounded": 1.0,
+        "parse_valid": 1.0,
+        "cross_check": 1.0,
+        "doc_quality": 1.0,
+        "model_selfrating": 0.5,
+        "score": 0.95,
+        "hard_fail": null
+      },
+      "explanation": "shipper - both documents agree"
+    },
+    {
+      "field": "consignee",
+      "si": {
+        "value": "EAST BRIGHT FZ-LLC",
+        "evidence": "Consignee (Non-Negotiable): EAST BRIGHT FZ-LLC",
+        "label_seen": "Consignee (Non-Negotiable)",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 5,
+          "char_start": 228,
+          "char_end": 246,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "bl": {
+        "value": "UAB NOVAKOPA",
+        "evidence": "To the Order of: UAB NOVAKOPA",
+        "label_seen": "To the Order of",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 5,
+          "char_start": 219,
+          "char_end": 231,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "si_normalized": "EAST BRIGHT FZ-LLC",
+      "bl_normalized": "UAB NOVAKOPA",
+      "verdict": "MISMATCH",
+      "similarity": null,
+      "confidence": {
+        "grounded": 1.0,
+        "parse_valid": 1.0,
+        "cross_check": 1.0,
+        "doc_quality": 1.0,
+        "model_selfrating": 0.5,
+        "score": 0.95,
+        "hard_fail": null
+      },
+      "explanation": "consignee - SI: EAST BRIGHT FZ-LLC / BL: UAB NOVAKOPA"
+    },
+    {
+      "field": "notify_party",
+      "si": {
+        "value": "EAST BRIGHT FZ-LLC",
+        "evidence": "Notify: EAST BRIGHT FZ-LLC",
+        "label_seen": "Notify",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 7,
+          "char_start": 314,
+          "char_end": 332,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "bl": {
+        "value": "UAB NOVAKOPA",
+        "evidence": "Notify Party: UAB NOVAKOPA",
+        "label_seen": "Notify Party",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 7,
+          "char_start": 305,
+          "char_end": 317,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "si_normalized": "EAST BRIGHT FZ-LLC",
+      "bl_normalized": "UAB NOVAKOPA",
+      "verdict": "MISMATCH",
+      "similarity": null,
+      "confidence": {
+        "grounded": 1.0,
+        "parse_valid": 1.0,
+        "cross_check": 1.0,
+        "doc_quality": 1.0,
+        "model_selfrating": 0.5,
+        "score": 0.95,
+        "hard_fail": null
+      },
+      "explanation": "notify_party - SI: EAST BRIGHT FZ-LLC / BL: UAB NOVAKOPA"
+    },
+    {
+      "field": "port_of_loading",
+      "si": {
+        "value": "NANTONG, CHINA (CNNTG)",
+        "evidence": "Port of Loading (POL): NANTONG, CHINA (CNNTG)",
+        "label_seen": "Port of Loading (POL)",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 8,
+          "char_start": 356,
+          "char_end": 378,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "bl": {
+        "value": "NANTONG, CHINA (CNNTG)",
+        "evidence": "Port of Loading (POL): NANTONG, CHINA (CNNTG)",
+        "label_seen": "Port of Loading (POL)",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 8,
+          "char_start": 341,
+          "char_end": 363,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "si_normalized": "NANTONG, CHINA",
+      "bl_normalized": "NANTONG, CHINA",
+      "verdict": "MATCH",
+      "similarity": null,
+      "confidence": {
+        "grounded": 1.0,
+        "parse_valid": 1.0,
+        "cross_check": 1.0,
+        "doc_quality": 1.0,
+        "model_selfrating": 0.5,
+        "score": 0.95,
+        "hard_fail": null
+      },
+      "explanation": "port_of_loading - both documents agree"
+    },
+    {
+      "field": "port_of_discharge",
+      "si": {
+        "value": "KARACHI, PAKISTAN (PKKHI)",
+        "evidence": "POD: KARACHI, PAKISTAN (PKKHI)",
+        "label_seen": "POD",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 9,
+          "char_start": 384,
+          "char_end": 409,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "bl": {
+        "value": "KARACHI, PAKISTAN (PKKHI)",
+        "evidence": "POD: KARACHI, PAKISTAN (PKKHI)",
+        "label_seen": "POD",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 9,
+          "char_start": 369,
+          "char_end": 394,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "si_normalized": "KARACHI, PAKISTAN",
+      "bl_normalized": "KARACHI, PAKISTAN",
+      "verdict": "MATCH",
+      "similarity": null,
+      "confidence": {
+        "grounded": 1.0,
+        "parse_valid": 1.0,
+        "cross_check": 1.0,
+        "doc_quality": 1.0,
+        "model_selfrating": 0.5,
+        "score": 0.95,
+        "hard_fail": null
+      },
+      "explanation": "port_of_discharge - both documents agree"
+    },
+    {
+      "field": "container_count",
+      "si": {
+        "value": "6 x 40'HC",
+        "evidence": "Total Containers: 6 x 40'HC",
+        "label_seen": "Total Containers",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 10,
+          "char_start": 428,
+          "char_end": 437,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "bl": {
+        "value": "6 x 40'HC",
+        "evidence": "Container Count: 6 x 40'HC",
+        "label_seen": "Container Count",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 10,
+          "char_start": 412,
+          "char_end": 421,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "si_normalized": "6",
+      "bl_normalized": "6",
+      "verdict": "MATCH",
+      "similarity": null,
+      "confidence": {
+        "grounded": 1.0,
+        "parse_valid": 1.0,
+        "cross_check": 1.0,
+        "doc_quality": 1.0,
+        "model_selfrating": 0.5,
+        "score": 0.95,
+        "hard_fail": null
+      },
+      "explanation": "container_count - both documents agree"
+    },
+    {
+      "field": "gross_weight_kg",
+      "si": {
+        "value": "131,058 KG",
+        "evidence": "Gross Wt (kgs): 131,058 KG",
+        "label_seen": "Gross Wt (kgs)",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 11,
+          "char_start": 454,
+          "char_end": 464,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "bl": {
+        "value": "131,058 KG",
+        "evidence": "Gross Weight (KG): 131,058 KG",
+        "label_seen": "Gross Weight (KG)",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 11,
+          "char_start": 441,
+          "char_end": 451,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "si_normalized": "131058.0",
+      "bl_normalized": "131058.0",
+      "verdict": "MATCH",
+      "similarity": null,
+      "confidence": {
+        "grounded": 1.0,
+        "parse_valid": 1.0,
+        "cross_check": 1.0,
+        "doc_quality": 1.0,
+        "model_selfrating": 0.5,
+        "score": 0.95,
+        "hard_fail": null
+      },
+      "explanation": "gross_weight_kg - both documents agree"
+    }
+  ],
+  "summary": "2 of 7 details disagree: consignee, notify_party",
+  "lifecycle": "new",
+  "pipeline_version": "fixture",
+  "prompt_version": "fixture",
+  "models": {
+    "classify": "rule",
+    "extract": "parser"
+  },
+  "timings_ms": {
+    "classify": 3,
+    "extract": 41,
+    "compare": 2
+  },
+  "created_at": "2026-09-19T09:00:00Z",
+  "updated_at": "2026-09-19T09:00:00Z"
+}

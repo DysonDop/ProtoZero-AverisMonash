@@ -1,0 +1,163 @@
+{
+  "email_id": "email_511",
+  "received_at": "2026-09-18T23:14:00Z",
+  "from_addr": "willy_ss@aprilasia.com",
+  "subject": "RE_ TO CONFIRM DOCS _ 5SUS-40134 _ KOPER_SLOVENIA _ AL GURG STATIONERY LLC _ MCLSIN6917768",
+  "category": "BL_COMPARISON",
+  "decided_by": "rule",
+  "category_confidence": 0.97,
+  "status": "NEEDS_REVIEW",
+  "has_defect": false,
+  "defect_fields": [],
+  "escalation_reasons": [
+    "UNREADABLE_DOCUMENT",
+    "WRONG_DOC_TYPE"
+  ],
+  "wire_review_reason": "unreadable",
+  "documents": [
+    {
+      "attachment_path": "attachments/email_511_SI.txt",
+      "role": "SI",
+      "detected_kind": "SI",
+      "fmt": "txt",
+      "readable": true,
+      "text_sha256": "19f5e1a468cf5f2447910be88630d125aee28156747e5b28834eb7ec95f73dac",
+      "page_count": null,
+      "fields": {
+        "shipper": {
+          "value": "APRIL FINE PAPER TRADING",
+          "evidence": "Shipper: APRIL FINE PAPER TRADING",
+          "label_seen": "Shipper",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 3,
+            "char_start": 72,
+            "char_end": 96,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "consignee": {
+          "value": "AL GURG STATIONERY LLC",
+          "evidence": "To the Order of: AL GURG STATIONERY LLC",
+          "label_seen": "To the Order of",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 5,
+            "char_start": 197,
+            "char_end": 219,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "notify_party": {
+          "value": "AL GURG STATIONERY LLC",
+          "evidence": "Notify: AL GURG STATIONERY LLC",
+          "label_seen": "Notify",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 7,
+            "char_start": 273,
+            "char_end": 295,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "port_of_loading": {
+          "value": "NHAVA SHEVA, INDIA (INNSA)",
+          "evidence": "POL: NHAVA SHEVA, INDIA (INNSA)",
+          "label_seen": "POL",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 8,
+            "char_start": 301,
+            "char_end": 327,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "port_of_discharge": {
+          "value": "KOPER, SLOVENIA (SIKOP)",
+          "evidence": "Port of Discharge (POD): KOPER, SLOVENIA (SIKOP)",
+          "label_seen": "Port of Discharge (POD)",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 9,
+            "char_start": 353,
+            "char_end": 376,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "container_count": {
+          "value": "6 x 40'HC",
+          "evidence": "Total Containers: 6 x 40'HC",
+          "label_seen": "Total Containers",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 10,
+            "char_start": 395,
+            "char_end": 404,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "gross_weight_kg": {
+          "value": "134,904 KG",
+          "evidence": "Gross Weight毛重(KGS): 134,904 KG",
+          "label_seen": "Gross Weight毛重(KGS)",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 11,
+            "char_start": 426,
+            "char_end": 436,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        }
+      },
+      "parse_error": null
+    },
+    {
+      "attachment_path": "attachments/email_511_BL.pdf",
+      "role": "BL",
+      "detected_kind": "UNKNOWN",
+      "fmt": "pdf",
+      "readable": false,
+      "text_sha256": null,
+      "page_count": null,
+      "fields": null,
+      "parse_error": "no extractable text"
+    }
+  ],
+  "comparisons": [],
+  "summary": "The draft BL could not be read. It has no extractable text layer.",
+  "lifecycle": "in_review",
+  "pipeline_version": "fixture",
+  "prompt_version": "fixture",
+  "models": {
+    "classify": "rule",
+    "extract": "parser"
+  },
+  "timings_ms": {
+    "classify": 3,
+    "extract": 41,
+    "compare": 2
+  },
+  "created_at": "2026-09-19T09:00:00Z",
+  "updated_at": "2026-09-19T09:00:00Z"
+}

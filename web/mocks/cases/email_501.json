@@ -1,0 +1,219 @@
+{
+  "email_id": "email_501",
+  "received_at": "2026-09-18T23:14:00Z",
+  "from_addr": "exports@ifpla.com",
+  "subject": "RE_ TO CONFIRM DOCS _ 5RSG-51584 _ HOUSTON_US _ KPP-ANTALIS (SINGAPORE) PTE. LTD. _ YMJAI905670867",
+  "category": "BL_COMPARISON",
+  "decided_by": "rule",
+  "category_confidence": 0.97,
+  "status": "NEEDS_REVIEW",
+  "has_defect": false,
+  "defect_fields": [],
+  "escalation_reasons": [
+    "WRONG_DOC_TYPE"
+  ],
+  "wire_review_reason": "wrong_doc_type",
+  "documents": [
+    {
+      "attachment_path": "attachments/email_501_SI.txt",
+      "role": "SI",
+      "detected_kind": "SI",
+      "fmt": "txt",
+      "readable": true,
+      "text_sha256": "6e5cfdaa47eacc42dc5d9afcdb61d6cbc7afae42ac87534bc27dd91a56766aea",
+      "page_count": null,
+      "fields": {
+        "shipper": {
+          "value": "APRIL FINE PAPER TRADING (MIDDLE EAST) FZE",
+          "evidence": "Shipper: APRIL FINE PAPER TRADING (MIDDLE EAST) FZE",
+          "label_seen": "Shipper",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 3,
+            "char_start": 72,
+            "char_end": 114,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "consignee": {
+          "value": "KPP-ANTALIS (SINGAPORE) PTE. LTD.",
+          "evidence": "CONSIGNEE: KPP-ANTALIS (SINGAPORE) PTE. LTD.",
+          "label_seen": "CONSIGNEE",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 5,
+            "char_start": 211,
+            "char_end": 244,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "notify_party": {
+          "value": "KPP-ANTALIS (SINGAPORE) PTE. LTD.",
+          "evidence": "Notify Party: KPP-ANTALIS (SINGAPORE) PTE. LTD.",
+          "label_seen": "Notify Party",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 7,
+            "char_start": 322,
+            "char_end": 355,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "port_of_loading": {
+          "value": "RUGAO/NANTONG/SHANGHAI, CHINA (CNSHA)",
+          "evidence": "Load Port: RUGAO/NANTONG/SHANGHAI, CHINA (CNSHA)",
+          "label_seen": "Load Port",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 8,
+            "char_start": 367,
+            "char_end": 404,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "port_of_discharge": {
+          "value": "HOUSTON, US (USHOU)",
+          "evidence": "Port of Discharge (POD): HOUSTON, US (USHOU)",
+          "label_seen": "Port of Discharge (POD)",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 9,
+            "char_start": 430,
+            "char_end": 449,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "container_count": {
+          "value": "5 x 40'HC",
+          "evidence": "No. of Containers or Packages: 5 x 40'HC",
+          "label_seen": "No. of Containers or Packages",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 10,
+            "char_start": 481,
+            "char_end": 490,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "gross_weight_kg": {
+          "value": "100,225 KG",
+          "evidence": "Gross Wt (kgs): 100,225 KG",
+          "label_seen": "Gross Wt (kgs)",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 11,
+            "char_start": 507,
+            "char_end": 517,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        }
+      },
+      "parse_error": null
+    },
+    {
+      "attachment_path": "attachments/email_501_BL.txt",
+      "role": "BL",
+      "detected_kind": "COMMERCIAL_INVOICE",
+      "fmt": "txt",
+      "readable": true,
+      "text_sha256": "2cac989c23164f362301a8159f8a6d4a6aefe1a5c5d53f83cc92589c059ea5d0",
+      "page_count": null,
+      "fields": {
+        "shipper": {
+          "value": null,
+          "evidence": null,
+          "label_seen": null,
+          "locator": null,
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "consignee": {
+          "value": null,
+          "evidence": null,
+          "label_seen": null,
+          "locator": null,
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "notify_party": {
+          "value": null,
+          "evidence": null,
+          "label_seen": null,
+          "locator": null,
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "port_of_loading": {
+          "value": null,
+          "evidence": null,
+          "label_seen": null,
+          "locator": null,
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "port_of_discharge": {
+          "value": null,
+          "evidence": null,
+          "label_seen": null,
+          "locator": null,
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "container_count": {
+          "value": null,
+          "evidence": null,
+          "label_seen": null,
+          "locator": null,
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "gross_weight_kg": {
+          "value": null,
+          "evidence": null,
+          "label_seen": null,
+          "locator": null,
+          "extracted_by": "parser",
+          "model_confidence": null
+        }
+      },
+      "parse_error": null
+    }
+  ],
+  "comparisons": [],
+  "summary": "The attachment named as the draft BL is a Commercial Invoice. There is nothing to compare against.",
+  "lifecycle": "in_review",
+  "pipeline_version": "fixture",
+  "prompt_version": "fixture",
+  "models": {
+    "classify": "rule",
+    "extract": "parser"
+  },
+  "timings_ms": {
+    "classify": 3,
+    "extract": 41,
+    "compare": 2
+  },
+  "created_at": "2026-09-19T09:00:00Z",
+  "updated_at": "2026-09-19T09:00:00Z"
+}

@@ -1,0 +1,33 @@
+{
+  "email_id": "email_506",
+  "received_at": "2026-09-18T23:14:00Z",
+  "from_addr": "arlene_yamomo@aprilasia.com",
+  "subject": "RE_ AFRT - LONG BEACH_US - EVER(EGLV433335384951) - 5RSG-19787 - 5250071809 - EAST BRIGHT FZ-LLC - OA_CFR",
+  "category": "BL_COMPARISON",
+  "decided_by": "rule",
+  "category_confidence": 0.97,
+  "status": "NEEDS_REVIEW",
+  "has_defect": false,
+  "defect_fields": [],
+  "escalation_reasons": [
+    "MISSING_ATTACHMENT"
+  ],
+  "wire_review_reason": "missing_attachment",
+  "documents": [],
+  "comparisons": [],
+  "summary": "The email asks for a document check but no draft BL was attached.",
+  "lifecycle": "in_review",
+  "pipeline_version": "fixture",
+  "prompt_version": "fixture",
+  "models": {
+    "classify": "rule",
+    "extract": "parser"
+  },
+  "timings_ms": {
+    "classify": 3,
+    "extract": 41,
+    "compare": 2
+  },
+  "created_at": "2026-09-19T09:00:00Z",
+  "updated_at": "2026-09-19T09:00:00Z"
+}

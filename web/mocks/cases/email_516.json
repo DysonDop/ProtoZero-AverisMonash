@@ -1,0 +1,570 @@
+{
+  "email_id": "email_516",
+  "received_at": "2026-09-18T23:14:00Z",
+  "from_addr": "elisa_tukiman@april.com.my",
+  "subject": "RE_ AFEMY - CONAKRY_GUINEA - MONTER(MCLSIN6123859) - 5RCY-68239 - 5250074840 - KPP-ANTALIS (SINGAPORE) PTE. LTD. - OA_CFR",
+  "category": "BL_COMPARISON",
+  "decided_by": "rule",
+  "category_confidence": 0.97,
+  "status": "NEEDS_REVIEW",
+  "has_defect": false,
+  "defect_fields": [],
+  "escalation_reasons": [
+    "FIELD_NOT_FOUND"
+  ],
+  "wire_review_reason": "missing_value",
+  "documents": [
+    {
+      "attachment_path": "attachments/email_516_SI.txt",
+      "role": "SI",
+      "detected_kind": "SI",
+      "fmt": "txt",
+      "readable": true,
+      "text_sha256": "4e8ea40c69f97bcb467d0737824d0026bc7feaa05c120654607707ed3d8a8e89",
+      "page_count": null,
+      "fields": {
+        "shipper": {
+          "value": null,
+          "evidence": null,
+          "label_seen": null,
+          "locator": null,
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "consignee": {
+          "value": "KPP-ANTALIS (SINGAPORE) PTE. LTD.",
+          "evidence": "Consignee: KPP-ANTALIS (SINGAPORE) PTE. LTD.",
+          "label_seen": "Consignee",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 4,
+            "char_start": 130,
+            "char_end": 163,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "notify_party": {
+          "value": "KPP-ANTALIS (SINGAPORE) PTE. LTD.",
+          "evidence": "Notify: KPP-ANTALIS (SINGAPORE) PTE. LTD.",
+          "label_seen": "Notify",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 5,
+            "char_start": 172,
+            "char_end": 205,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "port_of_loading": {
+          "value": "NHAVA SHEVA, INDIA",
+          "evidence": "PORT OF LOADING: NHAVA SHEVA, INDIA",
+          "label_seen": "PORT OF LOADING",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 6,
+            "char_start": 223,
+            "char_end": 241,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "port_of_discharge": {
+          "value": "CONAKRY, GUINEA",
+          "evidence": "POD: CONAKRY, GUINEA",
+          "label_seen": "POD",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 7,
+            "char_start": 247,
+            "char_end": 262,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "container_count": {
+          "value": "10 x 20'FCL",
+          "evidence": "No. of Containers or Packages: 10 x 20'FCL",
+          "label_seen": "No. of Containers or Packages",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 8,
+            "char_start": 294,
+            "char_end": 305,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "gross_weight_kg": {
+          "value": "N/A",
+          "evidence": "Gross Weight毛重(KGS): N/A",
+          "label_seen": "Gross Weight毛重(KGS)",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 9,
+            "char_start": 327,
+            "char_end": 330,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        }
+      },
+      "parse_error": null
+    },
+    {
+      "attachment_path": "attachments/email_516_BL.txt",
+      "role": "BL",
+      "detected_kind": "BL",
+      "fmt": "txt",
+      "readable": true,
+      "text_sha256": "2956a09f874459b1aff5feed9220345929b2958c2aff707cecba37d53d4c4439",
+      "page_count": null,
+      "fields": {
+        "shipper": {
+          "value": "APRIL FINE PAPER TRADING",
+          "evidence": "Shipper: APRIL FINE PAPER TRADING",
+          "label_seen": "Shipper",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 3,
+            "char_start": 74,
+            "char_end": 98,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "consignee": {
+          "value": "KPP-ANTALIS (SINGAPORE) PTE. LTD.",
+          "evidence": "Consignee: KPP-ANTALIS (SINGAPORE) PTE. LTD.",
+          "label_seen": "Consignee",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 5,
+            "char_start": 193,
+            "char_end": 226,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "notify_party": {
+          "value": null,
+          "evidence": null,
+          "label_seen": null,
+          "locator": null,
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "port_of_loading": {
+          "value": "NHAVA SHEVA, INDIA (INNSA)",
+          "evidence": "Load Port: NHAVA SHEVA, INDIA (INNSA)",
+          "label_seen": "Load Port",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 8,
+            "char_start": 372,
+            "char_end": 398,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "port_of_discharge": {
+          "value": "CONAKRY, GUINEA (GNCKY)",
+          "evidence": "POD: CONAKRY, GUINEA (GNCKY)",
+          "label_seen": "POD",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 9,
+            "char_start": 404,
+            "char_end": 427,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "container_count": {
+          "value": "10 x 20'FCL",
+          "evidence": "Container Count: 10 x 20'FCL",
+          "label_seen": "Container Count",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 10,
+            "char_start": 445,
+            "char_end": 456,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "gross_weight_kg": {
+          "value": "235,550 KG",
+          "evidence": "Gross Weight (KG): 235,550 KG",
+          "label_seen": "Gross Weight (KG)",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 11,
+            "char_start": 476,
+            "char_end": 486,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        }
+      },
+      "parse_error": null
+    }
+  ],
+  "comparisons": [
+    {
+      "field": "shipper",
+      "si": {
+        "value": null,
+        "evidence": null,
+        "label_seen": null,
+        "locator": null,
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "bl": {
+        "value": "APRIL FINE PAPER TRADING",
+        "evidence": "Shipper: APRIL FINE PAPER TRADING",
+        "label_seen": "Shipper",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 3,
+          "char_start": 74,
+          "char_end": 98,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "si_normalized": null,
+      "bl_normalized": "APRIL FINE PAPER TRADING",
+      "verdict": "REVIEW",
+      "similarity": null,
+      "confidence": {
+        "grounded": 0.0,
+        "parse_valid": 0.0,
+        "cross_check": 1.0,
+        "doc_quality": 1.0,
+        "model_selfrating": 0.5,
+        "score": 0.35,
+        "hard_fail": "FIELD_NOT_FOUND"
+      },
+      "explanation": "shipper - SI: (blank) / BL: APRIL FINE PAPER TRADING"
+    },
+    {
+      "field": "consignee",
+      "si": {
+        "value": "KPP-ANTALIS (SINGAPORE) PTE. LTD.",
+        "evidence": "Consignee: KPP-ANTALIS (SINGAPORE) PTE. LTD.",
+        "label_seen": "Consignee",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 4,
+          "char_start": 130,
+          "char_end": 163,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "bl": {
+        "value": "KPP-ANTALIS (SINGAPORE) PTE. LTD.",
+        "evidence": "Consignee: KPP-ANTALIS (SINGAPORE) PTE. LTD.",
+        "label_seen": "Consignee",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 5,
+          "char_start": 193,
+          "char_end": 226,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "si_normalized": "KPP-ANTALIS (SINGAPORE) PTE. LTD.",
+      "bl_normalized": "KPP-ANTALIS (SINGAPORE) PTE. LTD.",
+      "verdict": "MATCH",
+      "similarity": null,
+      "confidence": {
+        "grounded": 1.0,
+        "parse_valid": 1.0,
+        "cross_check": 1.0,
+        "doc_quality": 1.0,
+        "model_selfrating": 0.5,
+        "score": 0.95,
+        "hard_fail": null
+      },
+      "explanation": "consignee - both documents agree"
+    },
+    {
+      "field": "notify_party",
+      "si": {
+        "value": "KPP-ANTALIS (SINGAPORE) PTE. LTD.",
+        "evidence": "Notify: KPP-ANTALIS (SINGAPORE) PTE. LTD.",
+        "label_seen": "Notify",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 5,
+          "char_start": 172,
+          "char_end": 205,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "bl": {
+        "value": null,
+        "evidence": null,
+        "label_seen": null,
+        "locator": null,
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "si_normalized": "KPP-ANTALIS (SINGAPORE) PTE. LTD.",
+      "bl_normalized": null,
+      "verdict": "REVIEW",
+      "similarity": null,
+      "confidence": {
+        "grounded": 0.0,
+        "parse_valid": 0.0,
+        "cross_check": 1.0,
+        "doc_quality": 1.0,
+        "model_selfrating": 0.5,
+        "score": 0.35,
+        "hard_fail": "FIELD_NOT_FOUND"
+      },
+      "explanation": "notify_party - SI: KPP-ANTALIS (SINGAPORE) PTE. LTD. / BL: (blank)"
+    },
+    {
+      "field": "port_of_loading",
+      "si": {
+        "value": "NHAVA SHEVA, INDIA",
+        "evidence": "PORT OF LOADING: NHAVA SHEVA, INDIA",
+        "label_seen": "PORT OF LOADING",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 6,
+          "char_start": 223,
+          "char_end": 241,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "bl": {
+        "value": "NHAVA SHEVA, INDIA (INNSA)",
+        "evidence": "Load Port: NHAVA SHEVA, INDIA (INNSA)",
+        "label_seen": "Load Port",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 8,
+          "char_start": 372,
+          "char_end": 398,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "si_normalized": "NHAVA SHEVA, INDIA",
+      "bl_normalized": "NHAVA SHEVA, INDIA",
+      "verdict": "MATCH",
+      "similarity": null,
+      "confidence": {
+        "grounded": 1.0,
+        "parse_valid": 1.0,
+        "cross_check": 1.0,
+        "doc_quality": 1.0,
+        "model_selfrating": 0.5,
+        "score": 0.95,
+        "hard_fail": null
+      },
+      "explanation": "port_of_loading - both documents agree"
+    },
+    {
+      "field": "port_of_discharge",
+      "si": {
+        "value": "CONAKRY, GUINEA",
+        "evidence": "POD: CONAKRY, GUINEA",
+        "label_seen": "POD",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 7,
+          "char_start": 247,
+          "char_end": 262,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "bl": {
+        "value": "CONAKRY, GUINEA (GNCKY)",
+        "evidence": "POD: CONAKRY, GUINEA (GNCKY)",
+        "label_seen": "POD",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 9,
+          "char_start": 404,
+          "char_end": 427,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "si_normalized": "CONAKRY, GUINEA",
+      "bl_normalized": "CONAKRY, GUINEA",
+      "verdict": "MATCH",
+      "similarity": null,
+      "confidence": {
+        "grounded": 1.0,
+        "parse_valid": 1.0,
+        "cross_check": 1.0,
+        "doc_quality": 1.0,
+        "model_selfrating": 0.5,
+        "score": 0.95,
+        "hard_fail": null
+      },
+      "explanation": "port_of_discharge - both documents agree"
+    },
+    {
+      "field": "container_count",
+      "si": {
+        "value": "10 x 20'FCL",
+        "evidence": "No. of Containers or Packages: 10 x 20'FCL",
+        "label_seen": "No. of Containers or Packages",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 8,
+          "char_start": 294,
+          "char_end": 305,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "bl": {
+        "value": "10 x 20'FCL",
+        "evidence": "Container Count: 10 x 20'FCL",
+        "label_seen": "Container Count",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 10,
+          "char_start": 445,
+          "char_end": 456,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "si_normalized": "10",
+      "bl_normalized": "10",
+      "verdict": "MATCH",
+      "similarity": null,
+      "confidence": {
+        "grounded": 1.0,
+        "parse_valid": 1.0,
+        "cross_check": 1.0,
+        "doc_quality": 1.0,
+        "model_selfrating": 0.5,
+        "score": 0.95,
+        "hard_fail": null
+      },
+      "explanation": "container_count - both documents agree"
+    },
+    {
+      "field": "gross_weight_kg",
+      "si": {
+        "value": "N/A",
+        "evidence": "Gross Weight毛重(KGS): N/A",
+        "label_seen": "Gross Weight毛重(KGS)",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 9,
+          "char_start": 327,
+          "char_end": 330,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "bl": {
+        "value": "235,550 KG",
+        "evidence": "Gross Weight (KG): 235,550 KG",
+        "label_seen": "Gross Weight (KG)",
+        "locator": {
+          "page": null,
+          "sheet": null,
+          "line": 11,
+          "char_start": 476,
+          "char_end": 486,
+          "bbox": null
+        },
+        "extracted_by": "parser",
+        "model_confidence": null
+      },
+      "si_normalized": null,
+      "bl_normalized": "235550.0",
+      "verdict": "REVIEW",
+      "similarity": null,
+      "confidence": {
+        "grounded": 1.0,
+        "parse_valid": 0.0,
+        "cross_check": 1.0,
+        "doc_quality": 1.0,
+        "model_selfrating": 0.5,
+        "score": 0.7,
+        "hard_fail": "FIELD_NOT_FOUND"
+      },
+      "explanation": "gross_weight_kg - SI: N/A / BL: 235,550 KG"
+    }
+  ],
+  "summary": "Required values are blank in the shipping instruction. A blank is not a disagreement.",
+  "lifecycle": "in_review",
+  "pipeline_version": "fixture",
+  "prompt_version": "fixture",
+  "models": {
+    "classify": "rule",
+    "extract": "parser"
+  },
+  "timings_ms": {
+    "classify": 3,
+    "extract": 41,
+    "compare": 2
+  },
+  "created_at": "2026-09-19T09:00:00Z",
+  "updated_at": "2026-09-19T09:00:00Z"
+}

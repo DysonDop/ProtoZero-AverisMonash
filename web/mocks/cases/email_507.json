@@ -1,0 +1,151 @@
+{
+  "email_id": "email_507",
+  "received_at": "2026-09-18T23:14:00Z",
+  "from_addr": "docs@vitalsolutions.sg",
+  "subject": "RE_ TO CONFIRM DOCS _ 5AKR-00230 _ KOPER_SLOVENIA _ 3S PAPER PRODUCTS SDN BHD _ YMJAI530601198",
+  "category": "BL_COMPARISON",
+  "decided_by": "rule",
+  "category_confidence": 0.97,
+  "status": "NEEDS_REVIEW",
+  "has_defect": false,
+  "defect_fields": [],
+  "escalation_reasons": [
+    "MISSING_ATTACHMENT"
+  ],
+  "wire_review_reason": "missing_attachment",
+  "documents": [
+    {
+      "attachment_path": "attachments/email_507_SI.txt",
+      "role": "SI",
+      "detected_kind": "SI",
+      "fmt": "txt",
+      "readable": true,
+      "text_sha256": "12927916083b0c35b66e40746fef4aa4eb0fcacc18320a9fc987ac91789f9eac",
+      "page_count": null,
+      "fields": {
+        "shipper": {
+          "value": "APRIL FAR EAST (M) SDN BHD",
+          "evidence": "Shipper: APRIL FAR EAST (M) SDN BHD",
+          "label_seen": "Shipper",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 3,
+            "char_start": 72,
+            "char_end": 98,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "consignee": {
+          "value": "3S PAPER PRODUCTS SDN BHD",
+          "evidence": "Consignee: 3S PAPER PRODUCTS SDN BHD",
+          "label_seen": "Consignee",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 5,
+            "char_start": 211,
+            "char_end": 236,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "notify_party": {
+          "value": "3S PAPER PRODUCTS SDN BHD",
+          "evidence": "Notify Party: 3S PAPER PRODUCTS SDN BHD",
+          "label_seen": "Notify Party",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 7,
+            "char_start": 348,
+            "char_end": 373,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "port_of_loading": {
+          "value": "PORT KLANG (WESTPORT), MALAYSIA (MYPKG)",
+          "evidence": "Load Port: PORT KLANG (WESTPORT), MALAYSIA (MYPKG)",
+          "label_seen": "Load Port",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 8,
+            "char_start": 385,
+            "char_end": 424,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "port_of_discharge": {
+          "value": "KOPER, SLOVENIA (SIKOP)",
+          "evidence": "Port of Discharge: KOPER, SLOVENIA (SIKOP)",
+          "label_seen": "Port of Discharge",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 9,
+            "char_start": 444,
+            "char_end": 467,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "container_count": {
+          "value": "1 x 40'HC",
+          "evidence": "No. of Containers or Packages: 1 x 40'HC",
+          "label_seen": "No. of Containers or Packages",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 10,
+            "char_start": 499,
+            "char_end": 508,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        },
+        "gross_weight_kg": {
+          "value": "20,572 KG",
+          "evidence": "Gross Wt (kgs): 20,572 KG",
+          "label_seen": "Gross Wt (kgs)",
+          "locator": {
+            "page": null,
+            "sheet": null,
+            "line": 11,
+            "char_start": 525,
+            "char_end": 534,
+            "bbox": null
+          },
+          "extracted_by": "parser",
+          "model_confidence": null
+        }
+      },
+      "parse_error": null
+    }
+  ],
+  "comparisons": [],
+  "summary": "The email asks for a document check but no draft BL was attached.",
+  "lifecycle": "in_review",
+  "pipeline_version": "fixture",
+  "prompt_version": "fixture",
+  "models": {
+    "classify": "rule",
+    "extract": "parser"
+  },
+  "timings_ms": {
+    "classify": 3,
+    "extract": 41,
+    "compare": 2
+  },
+  "created_at": "2026-09-19T09:00:00Z",
+  "updated_at": "2026-09-19T09:00:00Z"
+}

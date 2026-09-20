@@ -1,0 +1,31 @@
+{
+  "email_id": "email_003",
+  "received_at": "2026-09-18T23:14:00Z",
+  "from_addr": "exports@ifpla.com",
+  "subject": "RE_ TO CONFIRM DOCS _ 5AAT-03056 _ AQABA_JORDAN _ ROXCEL TRADING GMBH _ SIN525534192",
+  "category": "BL_COMPARISON",
+  "decided_by": "rule",
+  "category_confidence": 0.97,
+  "status": "OK",
+  "has_defect": false,
+  "defect_fields": [],
+  "escalation_reasons": [],
+  "wire_review_reason": null,
+  "documents": [],
+  "comparisons": [],
+  "summary": "No documents attached to compare.",
+  "lifecycle": "new",
+  "pipeline_version": "fixture",
+  "prompt_version": "fixture",
+  "models": {
+    "classify": "rule",
+    "extract": "parser"
+  },
+  "timings_ms": {
+    "classify": 3,
+    "extract": 41,
+    "compare": 2
+  },
+  "created_at": "2026-09-19T09:00:00Z",
+  "updated_at": "2026-09-19T09:00:00Z"
+}
