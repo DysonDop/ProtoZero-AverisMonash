@@ -26,6 +26,7 @@ ExtractedBy   = Literal["parser", "doc_intelligence", "llm", "human"]
 EscalationReason = Literal[
     "MISSING_ATTACHMENT", "UNREADABLE_DOCUMENT", "WRONG_DOC_TYPE", "FIELD_NOT_FOUND",
     "GROUNDING_FAILED", "LOW_CONFIDENCE", "BORDERLINE_MATCH", "PROCESSING_ERROR",
+    "MANUAL_REVIEW_REQUESTED",
 ]
 # what the organisers' submission accepts
 WireReviewReason = Literal["wrong_doc_type", "missing_attachment", "unreadable", "missing_value"]
@@ -216,6 +217,10 @@ Base `/api`. All responses JSON. Errors are
 | `GET` | `/cases/{email_id}` | — | `Case` (full, with `comparisons`) |
 | `POST` | `/cases/{email_id}/rerun` | `{"force_llm": bool}` | `Case` |
 | `GET` | `/cases/{email_id}/document/{role}` | `role=SI\|BL` | `{"fmt":DocFormat,"text":str,"page_urls":[str]}` — SAS URLs for rendered pages |
+| `GET` | `/cases/{email_id}/events` | — | `{"items":[AuditEvent]}` ordered by `seq` |
+| `GET` | `/cases/{email_id}/decision` | — | `{"decision":CaseDecision\|null}` |
+| `POST` | `/cases/{email_id}/decision` | case decision and reviewer | `{"decision":CaseDecision,"case":Case}` |
+| `DELETE` | `/cases/{email_id}/decision` | — | `{"ok":true,"case":Case}` |
 | `GET` | `/review` | `?state=open&limit=50` | `{"items":[ReviewItem],"open_count":int}` |
 | `POST` | `/review/{id}/resolve` | `{"action":"confirm"\|"correct","field":FieldName\|null,"correct_value":str\|null,"reviewer_id":str}` | `{"review_item":ReviewItem,"case":Case}` |
 | `POST` | `/review/{id}/retry` | `{"force_llm": bool}` | `{"review_item":ReviewItem,"case":Case}` |
@@ -293,13 +298,13 @@ Read access via user-delegation SAS URLs, 1-hour expiry. The bundled dataset is 
 inside the container, not from Blob Storage; this container is for demo uploads and
 render caching.
 
-## 10. Proposed, not ratified
+## 10. Frontend extension status
 
-**Raised by seunniee, 20 Sep, from the frontend side. Nothing below is live.**
-Everything in §1–§9 is unchanged. These are the six things the UI needs that do
-not exist yet, written down before they get coded, per `CLAUDE.md`. Gene and
-Christabel: argue with these, then we move them up into the numbered sections
-with a changelog line.
+Raised by seunniee, 20 Sep, from the frontend side. Everything in §1–§9 is
+unchanged. As of 21 Sep, `human_reviewed`, the in-memory audit event store and
+`GET /cases/{email_id}/events` are implemented. Component health, a case-level
+correlation field and the two metrics additions remain proposed. The current
+store is process-local; the same interfaces are intended to move to Cosmos.
 
 ### 10.1 `human_reviewed` on `FieldComparison`
 
@@ -417,6 +422,9 @@ fix, listed here so it is not mistaken for a contract question.
 
 ## Changelog
 
+- **v1.1, 21 Sep 2026** — implemented §10.1 and §10.4 in the local FastAPI
+  backend; added document evidence, review resolve/retry and persistent-for-the-
+  process case-decision routes used by the frontend.
 - **v1.0.1, 20 Sep 2026** — added §10, proposed changes from the frontend.
   No existing shape changed.
 - **v1, 19 Sep 2026** — initial. `role` / `detected_kind` split and the

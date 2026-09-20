@@ -16,21 +16,46 @@ export default function Worklist() {
   }, [])
 
   if (error) return <Shell meta="worklist"><div className="state">Could not reach the case service. {error}</div></Shell>
-  if (!items) return <Shell meta="worklist"><div className="state">Reading the inbox.</div></Shell>
+  if (!items) return <Shell meta="worklist"><div className="state">Reading the inbox and preparing the checks.</div></Shell>
 
   const counts = {}
   for (const k of FILTERS) counts[k] = items.filter(c => kindOf(c) === k).length
 
   const ordered = [...items].sort((a, b) => RANK[kindOf(a)] - RANK[kindOf(b)])
   const shown = filter ? ordered.filter(c => kindOf(c) === filter) : ordered
+  const workedExample = ordered.find(c => c.status === 'MISMATCH')
 
   return (
     <Shell meta={items.length + ' emails'}>
       <div className="wmain">
-        <p className="intro">
-          Every email that came in. We check the ones asking us to compare a draft
-          bill of lading against the shipping instruction it belongs to.
-        </p>
+        <section className="welcome" aria-labelledby="welcome-title">
+          <div className="welcome__copy">
+            <span className="eyebrow">Evidence-first document checking</span>
+            <h1 id="welcome-title">From inbox to decision, with proof at every step.</h1>
+            <p>
+              ProtoZero compares a draft bill of lading with its shipping instruction,
+              explains every difference and asks a person whenever it cannot be certain.
+            </p>
+            {workedExample && (
+              <a className="btn btn--small" href={'#/case/' + workedExample.email_id}>
+                Start with a worked example
+              </a>
+            )}
+          </div>
+          <ol className="welcome__steps" aria-label="How ProtoZero works">
+            <li><b>1</b><span><strong>Sort the email</strong><small>Find requests that need a document check.</small></span></li>
+            <li><b>2</b><span><strong>Compare seven details</strong><small>Read both documents and keep the source evidence.</small></span></li>
+            <li><b>3</b><span><strong>Explain the decision</strong><small>Clear, flag or hand off without guessing.</small></span></li>
+          </ol>
+        </section>
+
+        <div className="listhead">
+          <div>
+            <span className="eyebrow">Live worklist</span>
+            <h2>Email checks</h2>
+          </div>
+          <p>Choose a status to focus the list or open the human queue. Select any row to inspect its evidence.</p>
+        </div>
 
         <div className="chips">
           {FILTERS.map(k => k === 'review' ? (
@@ -54,11 +79,13 @@ export default function Worklist() {
           ))}
         </div>
 
-        {shown.length === 0 && (
-          <div className="state">Nothing in this group. Press the chip again to see every email.</div>
-        )}
-
-        <div className="wtable">
+        {shown.length === 0 ? (
+          <div className="empty">
+            <b>No emails have this status.</b>
+            <span>Choose another status or return to the full worklist.</span>
+            <button className="btn btn--ghost btn--small" type="button" onClick={() => setFilter(null)}>Show all emails</button>
+          </div>
+        ) : <div className="wtable">
           {shown.map(c => {
             const k = kindOf(c)
             return (
@@ -75,7 +102,7 @@ export default function Worklist() {
               </a>
             )
           })}
-        </div>
+        </div>}
       </div>
     </Shell>
   )
@@ -103,7 +130,7 @@ function disagreement(fields) {
 function Shell({ meta, children }) {
   return (
     <>
-      <Bar meta={meta} />
+      <Bar meta={meta} title="Email checks" />
       {children}
     </>
   )

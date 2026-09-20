@@ -9,13 +9,16 @@ from __future__ import annotations
 
 from collections import Counter
 
-from pipeline.schemas import Case, ReviewItem
+from pipeline.schemas import AuditEvent, Case, CaseDecision, Correction, ReviewItem
 
 
 class MemoryStore:
     def __init__(self) -> None:
         self.cases: dict[str, Case] = {}
         self.reviews: dict[str, ReviewItem] = {}
+        self.corrections: dict[str, Correction] = {}
+        self.events: dict[str, list[AuditEvent]] = {}
+        self.decisions: dict[str, CaseDecision] = {}
 
     # -- cases ------------------------------------------------------------
     def put_case(self, case: Case) -> None:
@@ -48,10 +51,49 @@ class MemoryStore:
         for item in items:
             self.reviews[item.id] = item
 
+    def replace_reviews(self, email_id: str, items: list[ReviewItem]) -> None:
+        self.reviews = {
+            review_id: item
+            for review_id, item in self.reviews.items()
+            if item.email_id != email_id
+        }
+        self.put_reviews(items)
+
     def list_reviews(self, state: str | None = "open", limit: int = 50) -> list[ReviewItem]:
         items = [r for r in self.reviews.values() if state is None or r.state == state]
         items.sort(key=lambda r: r.id)
         return items[:limit]
+
+    def get_review(self, review_id: str) -> ReviewItem | None:
+        return self.reviews.get(review_id)
+
+    def put_review(self, item: ReviewItem) -> None:
+        self.reviews[item.id] = item
+
+    def delete_review(self, review_id: str) -> None:
+        self.reviews.pop(review_id, None)
+
+    def put_correction(self, correction: Correction) -> None:
+        self.corrections[correction.id] = correction
+
+    def add_event(self, event: AuditEvent) -> None:
+        self.events.setdefault(event.email_id, []).append(event)
+
+    def list_events(self, email_id: str) -> list[AuditEvent]:
+        return sorted(self.events.get(email_id, []), key=lambda event: event.seq)
+
+    def next_event_seq(self, email_id: str) -> int:
+        items = self.events.get(email_id, [])
+        return (max((event.seq for event in items), default=0) // 10 + 1) * 10
+
+    def get_decision(self, email_id: str) -> CaseDecision | None:
+        return self.decisions.get(email_id)
+
+    def put_decision(self, decision: CaseDecision) -> None:
+        self.decisions[decision.email_id] = decision
+
+    def delete_decision(self, email_id: str) -> None:
+        self.decisions.pop(email_id, None)
 
     def open_count(self) -> int:
         return sum(1 for r in self.reviews.values() if r.state == "open")

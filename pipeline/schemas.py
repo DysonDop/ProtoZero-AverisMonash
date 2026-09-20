@@ -43,6 +43,17 @@ EscalationReason = Literal[
     "LOW_CONFIDENCE",
     "BORDERLINE_MATCH",
     "PROCESSING_ERROR",
+    "MANUAL_REVIEW_REQUESTED",
+]
+AuditAction = Literal[
+    "EMAIL_RECEIVED",
+    "DOCUMENT_CLASSIFIED",
+    "EXTRACTION_COMPLETED",
+    "VALIDATION_FAILED",
+    "HUMAN_REVIEW_CREATED",
+    "HUMAN_CORRECTION",
+    "COMPARISON_RERUN",
+    "FINAL_DECISION",
 ]
 WireReviewReason = Literal[
     "wrong_doc_type", "missing_attachment", "unreadable", "missing_value"
@@ -156,6 +167,7 @@ class FieldComparison(BaseModel):
     similarity: float | None = None
     confidence: ConfidenceBreakdown
     explanation: str
+    human_reviewed: bool = False
 
 
 # --------------------------------------------------------------------------
@@ -220,6 +232,30 @@ class Correction(BaseModel):
     action: Literal["confirm", "correct", "retry"]
     reviewer_id: str = "demo-reviewer"
     created_at: datetime | None = None
+
+
+class AuditEvent(BaseModel):
+    id: str
+    email_id: str
+    correlation_id: str
+    seq: int
+    at: datetime
+    actor: Literal["system", "reviewer"]
+    reviewer_id: str | None = None
+    action: AuditAction
+    field: FieldName | None = None
+    previous_value: str | None = None
+    new_value: str | None = None
+    reason: str
+
+
+class CaseDecision(BaseModel):
+    email_id: str
+    action: Literal["approve", "reject", "review", "request"]
+    label: str
+    done: str
+    reviewer_id: str = "demo-reviewer"
+    recorded_at: datetime
 
 
 class EmailRecord(BaseModel):

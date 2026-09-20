@@ -37,7 +37,7 @@ export default function Evidence({ emailId, comparison, onClose }) {
 }
 
 function Side({ label, text, field }) {
-  const line = lineAround(text, field.locator)
+  const line = lineAround(text, field.locator) || evidenceAround(field)
   return (
     <div className="ev__side">
       <span className="ev__doc">{label}</span>
@@ -50,6 +50,22 @@ function Side({ label, text, field }) {
         : <span className="ev__none">Nothing was found for this field in this document.</span>}
     </div>
   )
+}
+
+// Spreadsheet locators identify a sheet and row rather than character offsets.
+// The parser also stores the exact evidence string, so use that instead of
+// claiming nothing was found when a row-based source cannot be sliced by char.
+function evidenceAround(field) {
+  const evidence = field?.evidence
+  if (!evidence) return null
+  const value = field?.value == null ? '' : String(field.value)
+  const start = value ? evidence.indexOf(value) : -1
+  if (start < 0) return { before: '', value: evidence, after: '' }
+  return {
+    before: evidence.slice(0, start),
+    value,
+    after: evidence.slice(start + value.length),
+  }
 }
 
 // The locator points at the value itself. Widening it to the enclosing line is

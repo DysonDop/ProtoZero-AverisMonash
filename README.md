@@ -106,16 +106,47 @@ To point the app at a live API instead of the fixtures, set `VITE_API_BASE`:
 VITE_API_BASE=/api npm run build
 ```
 
+For local end-to-end development, run the API from the repository root:
+
+```bash
+uv run --with-requirements requirements.txt uvicorn api.main:app --reload --port 8000
+```
+
+Then start the frontend from `web/` with the API base set. In PowerShell:
+
+```powershell
+$env:VITE_API_BASE="http://127.0.0.1:8000/api"
+npm.cmd run dev
+```
+
+The live path enables document evidence, ordered audit activity, review retries
+and case decisions. The in-memory backend keeps changes until the API process
+restarts.
+
+### What the case buttons do
+
+Every action first opens a confirmation explaining its effect. Nothing sends an
+email or edits an uploaded document automatically.
+
+| Button | Result after confirmation |
+| --- | --- |
+| **Send to a person** | Adds the case to the **Needs a person** queue, marks its lifecycle `in_review`, and records the handoff in the audit log. |
+| **Reject the draft** | Marks the case `resolved`, records that the draft was rejected, and adds the reviewer action to the audit log. |
+| **Approve the draft** | Marks the case `resolved` as approved and records the action in the audit log. |
+| **Ask for a complete instruction** | Adds a follow-up item to the review queue. It does not contact the sender automatically. |
+| **Undo** | Removes the saved decision and any manual review item created by it, then records the undo in the audit log. |
+
 ## Status
 
-**20 September 2026.** The frontend runs end to end against fixtures built from
-the real dataset: worklist, review queue and case screens, with per-field
-confidence and explained differences.
+**21 September 2026.** The frontend and FastAPI backend run end to end against
+all 520 bundled cases. The worklist, review queue, case decisions, source
+evidence, retries and ordered audit activity are connected to live API routes.
 
-The pipeline is fully specified in `docs/spec/pipeline.md` and
-`docs/contracts.md` and is being implemented against those contracts. The
-fixtures in `web/mocks/` match the documented API shape for shape, so the
-frontend switches over with one environment variable.
+Fixture mode remains available for frontend-only development. The production
+Dockerfile builds the frontend with `/api` as its data source and FastAPI serves
+both the API and SPA from one public URL. Reviewer actions currently use the
+process-local memory store and reset when the API process restarts; Cosmos is
+the intended persistent deployment store.
 
 ## A note on the data
 

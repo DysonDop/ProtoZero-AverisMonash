@@ -2,27 +2,58 @@ import { useEffect, useState } from 'react'
 import Bar from './Bar.jsx'
 import Sheet from './Sheet.jsx'
 import Evidence from './Evidence.jsx'
-import { getCase } from './api.js'
-import { FIELD_PLAIN, REASON_TITLE } from './status.js'
+import AuditTrail from './AuditTrail.jsx'
+import {
+  clearCaseDecision, getCase, getCaseDecision, recordCaseDecision,
+} from './api.js'
+import { FIELD_PLAIN, KIND_WORD, REASON_TITLE, kindOf } from './status.js'
 
 const DASH = '—'
 
 export default function CaseView({ id }) {
   const [kase, setCase] = useState(null)
   const [error, setError] = useState(null)
+  const [auditOpen, setAuditOpen] = useState(false)
+  const [selectedField, setSelectedField] = useState(null)
 
   useEffect(() => {
     setCase(null)
+    setError(null)
+    setAuditOpen(false)
+    setSelectedField(null)
     getCase(id).then(setCase).catch(e => setError(e.message))
   }, [id])
 
   if (error) return <Frame meta={id}><div className="state">Could not open {id}. {error}</div></Frame>
   if (!kase) return <Frame meta={id}><div className="state">Opening {id}.</div></Frame>
 
-  if (kase.category !== 'BL_COMPARISON') return <Frame meta={id}><NotACheck kase={kase} /></Frame>
-  if (drawable(kase)) return <Frame meta={id}><Compared kase={kase} /></Frame>
-  if (kase.status === 'NEEDS_REVIEW') return <Frame meta={id}><Refused kase={kase} /></Frame>
-  return <Frame meta={id}><NothingToCompare kase={kase} /></Frame>
+  let content
+  if (kase.category !== 'BL_COMPARISON') content = <NotACheck kase={kase} />
+  else if (drawable(kase)) {
+    content = <Compared kase={kase} selected={selectedField} onSelect={setSelectedField} />
+  }
+  else if (kase.status === 'NEEDS_REVIEW') content = <Refused kase={kase} />
+  else content = <NothingToCompare kase={kase} />
+
+  const viewEvidence = drawable(kase)
+    ? field => {
+        setSelectedField(field)
+        setAuditOpen(false)
+      }
+    : null
+
+  return (
+    <Frame
+      meta={id}
+      kase={kase}
+      auditOpen={auditOpen}
+      onAudit={() => setAuditOpen(!auditOpen)}
+      onCloseAudit={() => setAuditOpen(false)}
+      onViewEvidence={viewEvidence}
+    >
+      {content}
+    </Frame>
+  )
 }
 
 // A refusal with a readable draft still gets drawn, because the confidence mark
@@ -35,12 +66,46 @@ function drawable(kase) {
   return Boolean(hasValues) && kase.comparisons.length > 0
 }
 
-function Frame({ meta, children }) {
+function Frame({ meta, kase, auditOpen, onAudit, onCloseAudit, onViewEvidence, children }) {
+  const action = kase && (
+    <button
+      className="thin__audit"
+      type="button"
+      aria-expanded={auditOpen}
+      aria-controls="case-audit"
+      onClick={onAudit}
+    >
+      <span className="thin__auditmark" aria-hidden="true"></span>
+      Audit trail
+    </button>
+  )
   return (
     <>
-      <Bar meta={meta} back="#/" />
+      <Bar meta={meta} back="#/" action={action} title="Document check" />
+      {kase && <CaseBanner kase={kase} />}
       {children}
+      {auditOpen && (
+        <AuditTrail kase={kase} onClose={onCloseAudit} onViewEvidence={onViewEvidence} />
+      )}
     </>
+  )
+}
+
+function CaseBanner({ kase }) {
+  const kind = kindOf(kase)
+  return (
+    <section className="casebanner" aria-labelledby="case-title">
+      <span className={'mk mk--' + kind} aria-hidden="true"></span>
+      <div className="casebanner__body">
+        <span className={'casebanner__status casebanner__status--' + kind}>{KIND_WORD[kind]}</span>
+        <h1 id="case-title">{kase.subject || kase.email_id}</h1>
+        <p>{kase.summary}</p>
+      </div>
+      <dl className="casebanner__meta">
+        <div><dt>Case</dt><dd>{kase.email_id}</dd></div>
+        <div><dt>From</dt><dd>{kase.from_addr || 'not recorded'}</dd></div>
+      </dl>
+    </section>
   )
 }
 
@@ -79,7 +144,6 @@ function NothingToCompare({ kase }) {
 }
 
 function Refused({ kase }) {
-  const [decision, setDecision] = useState(null)
   const si = kase.documents.find(d => d.role === 'SI')
   const bl = kase.documents.find(d => d.role === 'BL')
   return (
@@ -98,18 +162,12 @@ function Refused({ kase }) {
       <span className="grow"></span>
       <div className="quiet">We would rather ask than guess. Nothing here was compared.</div>
     </div>
-    <Actions
-      choices={REFUSAL_CHOICES[kase.wire_review_reason] ?? CHOICES.NEEDS_REVIEW}
-      decision={decision}
-      onDecide={setDecision}
-    />
+    <Actions kase={kase} />
     </>
   )
 }
 
-function Compared({ kase }) {
-  const [selected, setSelected] = useState(null)
-  const [decision, setDecision] = useState(null)
+function Compared({ kase, selected, onSelect }) {
 
   const wrong = kase.comparisons.filter(c => c.verdict === 'MISMATCH')
   const blocked = kase.comparisons.filter(
@@ -118,13 +176,13 @@ function Compared({ kase }) {
   const noted = wrong.length + blocked.length
   const open = kase.comparisons.find(c => c.field === selected)
   const isNoted = [...wrong, ...blocked].some(c => c.field === selected)
-  const close = () => setSelected(null)
+  const close = () => onSelect(null)
 
   return (
     <>
     <div className="stage">
       <div className="sheetwrap">
-        <Sheet kase={kase} selected={selected} onSelect={setSelected} />
+        <Sheet kase={kase} selected={selected} onSelect={onSelect} />
         <p className="sheet__hint">Click any checked field to see the line it came from.</p>
       </div>
       <div className="margin">
@@ -145,11 +203,7 @@ function Compared({ kase }) {
           : <div className="quiet">The other {matched} details match the instruction.</div>}
       </div>
     </div>
-    <Actions
-      choices={CHOICES[kase.status] ?? CHOICES.OK}
-      decision={decision}
-      onDecide={setDecision}
-    />
+    <Actions kase={kase} />
     </>
   )
 }
@@ -183,57 +237,131 @@ function BlockedNote({ c }) {
 
 const CHOICES = {
   MISMATCH: [
-    { label: 'Reject the draft', done: 'Draft rejected.' },
-    { label: 'Send to a person', done: 'Sent to a person.' },
+    { action: 'reject', label: 'Reject the draft', done: 'Draft rejected.' },
+    { action: 'review', label: 'Send to a person', done: 'Sent to a person.' },
   ],
   OK: [
-    { label: 'Approve the draft', done: 'Draft approved.' },
-    { label: 'Send to a person', done: 'Sent to a person.' },
+    { action: 'approve', label: 'Approve the draft', done: 'Draft approved.' },
+    { action: 'review', label: 'Send to a person', done: 'Sent to a person.' },
   ],
   NEEDS_REVIEW: [
-    { label: 'Send to a person', done: 'Sent to a person.' },
-    { label: 'Ask for a complete instruction', done: 'Asked for a complete instruction.' },
+    { action: 'review', label: 'Send to a person', done: 'Sent to a person.' },
+    { action: 'request', label: 'Ask for a complete instruction', done: 'Asked for a complete instruction.' },
   ],
 }
 
-// A refusal reached from the worklist gets the same wording as the same case in
-// the review queue, so the two screens never disagree about what can be done.
-const REFUSAL_CHOICES = {
-  missing_attachment: [
-    { label: 'Ask for the draft', done: 'Asked for the draft.' },
-    { label: 'Dismiss', done: 'Dismissed.' },
-  ],
-  wrong_doc_type: [
-    { label: 'Ask for the right file', done: 'Asked for the right file.' },
-    { label: 'Dismiss', done: 'Dismissed.' },
-  ],
-  unreadable: [
-    { label: 'Retry with OCR', done: 'Queued for another read.' },
-    { label: 'Request a text copy', done: 'Asked for a text copy.' },
-  ],
-  missing_value: [
-    { label: 'Fill it in', done: 'Sent to a person to fill in.' },
-    { label: 'Dismiss', done: 'Dismissed.' },
-  ],
+const CHOICE_IMPACT = {
+  reject: {
+    title: 'Reject this draft?',
+    detail: 'This closes the case as rejected and records your decision in the audit trail. It does not edit the draft or email the sender.',
+    confirm: 'Confirm rejection',
+  },
+  approve: {
+    title: 'Approve this draft?',
+    detail: 'This closes the case as approved and records your decision in the audit trail. It does not send the document onward automatically.',
+    confirm: 'Confirm approval',
+  },
+  review: {
+    title: 'Send this for a second check?',
+    detail: 'This adds the case to the Needs a person queue and records the handoff. It does not send an email or change either document.',
+    confirm: 'Confirm handoff',
+  },
+  request: {
+    title: 'Request a complete instruction?',
+    detail: 'This adds a follow-up item to the Needs a person queue. It records the request but does not email the sender automatically.',
+    confirm: 'Confirm request',
+  },
 }
 
-function Actions({ choices, decision, onDecide }) {
+const DECISION_RESULT = {
+  reject: 'The case is closed as rejected. No email was sent.',
+  approve: 'The case is closed as approved. Nothing was sent automatically.',
+  review: 'The case is now in the Needs a person queue.',
+  request: 'A follow-up item is now in the Needs a person queue.',
+}
+
+function Actions({ kase }) {
+  const [decision, setDecision] = useState(null)
+  const [pendingChoice, setPendingChoice] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+  const choices = CHOICES[kase.status] ?? CHOICES.OK
+
+  useEffect(() => {
+    let live = true
+    getCaseDecision(kase.email_id)
+      .then(value => { if (live) setDecision(value) })
+      .catch(e => { if (live) setError(e.message) })
+    return () => { live = false }
+  }, [kase.email_id])
+
+  async function decide(choice) {
+    setBusy(true)
+    setError(null)
+    try {
+      setDecision(await recordCaseDecision(kase.email_id, choice))
+      setPendingChoice(null)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function undo() {
+    setBusy(true)
+    setError(null)
+    try {
+      await clearCaseDecision(kase.email_id)
+      setDecision(null)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   if (decision) {
     return (
       <div className="fbar">
-        <span className="fbar__done">{decision.done}</span>
+        <span className="fbar__done">
+          <b>{decision.done}</b>
+          <em>{DECISION_RESULT[decision.action]}</em>
+        </span>
         <span className="grow"></span>
-        <button className="btn btn--ghost" type="button" onClick={() => onDecide(null)}>Undo</button>
+        <button className="btn btn--ghost" type="button" disabled={busy} onClick={undo}>Undo</button>
       </div>
     )
   }
+
+  if (pendingChoice) {
+    const impact = CHOICE_IMPACT[pendingChoice.action]
+    return (
+      <div className="fbar fbar--confirm" role="group" aria-label="Confirm case action">
+        <span className="fbar__impact">
+          <b>{impact.title}</b>
+          <span>{impact.detail}</span>
+        </span>
+        <span className="grow"></span>
+        <button className="btn btn--ghost" type="button" disabled={busy} onClick={() => setPendingChoice(null)}>
+          Cancel
+        </button>
+        <button className="btn" type="button" disabled={busy} onClick={() => decide(pendingChoice)}>
+          {busy ? 'Saving…' : impact.confirm}
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="fbar">
+      {error && <span className="fbar__error">{error}</span>}
+      <span className="fbar__prompt">Choose what should happen next. The decision will appear in the audit trail.</span>
       <span className="grow"></span>
-      <button className="btn btn--ghost" type="button" onClick={() => onDecide(choices[1])}>
+      <button className="btn btn--ghost" type="button" disabled={busy} onClick={() => setPendingChoice(choices[1])}>
         {choices[1].label}
       </button>
-      <button className="btn" type="button" onClick={() => onDecide(choices[0])}>
+      <button className="btn" type="button" disabled={busy} onClick={() => setPendingChoice(choices[0])}>
         {choices[0].label}
       </button>
     </div>

@@ -2,6 +2,15 @@
 # Targets Azure Container Apps on the smallest workload profile — this image
 # has no GPU, no background workers and no local model weights, so 0.5 vCPU /
 # 1 GiB is enough and scale-to-zero is safe between demo runs.
+FROM node:22-alpine AS web-build
+
+WORKDIR /web
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+COPY web/ ./
+ENV VITE_API_BASE=/api
+RUN npm run build
+
 FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
@@ -21,6 +30,7 @@ COPY data_refs/ data_refs/
 COPY eval/ eval/
 COPY api/ api/
 COPY sdoc-hackathon-bundle/ sdoc-hackathon-bundle/
+COPY --from=web-build /web/dist web/dist/
 
 EXPOSE 8000
 CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

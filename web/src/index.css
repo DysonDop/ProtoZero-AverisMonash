@@ -76,9 +76,20 @@ body{
              color: var(--on-dark); white-space: nowrap }
 .thin__mark .z{ font-family: var(--mono); font-weight: 700;
                 font-size: 1.06em; color: var(--orange) }
+.thin__divider{ width: 1px; height: 18px; background: rgba(255,255,255,.24) }
+.thin__section{ font-size: var(--fs-small); color: var(--on-dark) }
 .thin__meta{ font-family: var(--mono); font-size: 12px; color: var(--on-dark-dim) }
 .thin__home{ display: flex; align-items: center; gap: 13px;
              color: inherit; text-decoration: none }
+.thin__actions{ margin-left: auto; display: flex; align-items: center }
+.thin__audit{ display: inline-flex; align-items: center; gap: 8px;
+              min-height: 34px; padding: 0 11px;
+              border: 1px solid rgba(255,255,255,.24); border-radius: var(--r-control);
+              background: transparent; color: var(--on-dark);
+              font-family: inherit; font-size: var(--fs-small); cursor: pointer }
+.thin__audit:hover, .thin__audit[aria-expanded="true"]{ background: rgba(255,255,255,.12) }
+.thin__auditmark{ width: 10px; height: 10px; border-radius: 3px;
+                  background: var(--blue-lift); box-shadow: 0 0 0 2px rgba(95,179,232,.18) }
 .thin__back{ display: inline-flex; align-items: center; justify-content: center;
              width: 28px; height: 28px; margin-left: -8px; flex: none;
              border-radius: 6px; color: var(--on-dark); text-decoration: none;
@@ -102,6 +113,61 @@ body{
 .panel{ padding: 24px 34px; max-width: 660px;
         display: flex; flex-direction: column; gap: 14px }
 .state{ padding: 34px; color: var(--muted) }
+.eyebrow{ display: block; color: var(--muted); font-size: var(--fs-label);
+          font-weight: 600; letter-spacing: .13em; text-transform: uppercase }
+
+.welcome{ display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(310px, .75fr);
+          gap: 32px; max-width: 1080px; padding: 26px 28px;
+          background: var(--sheet); border: 1px solid var(--rule);
+          border-top: 3px solid var(--orange); border-radius: var(--r-panel) }
+.welcome__copy h1{ max-width: 650px; margin: 5px 0 8px;
+                    font-size: clamp(22px, 3vw, 32px); font-weight: 500;
+                    line-height: 1.15; letter-spacing: -.02em }
+.welcome__copy p{ max-width: 650px; margin: 0 0 17px; color: var(--muted);
+                  font-size: var(--fs-small); line-height: 1.6 }
+.welcome__copy .btn{ display: inline-flex; align-items: center; text-decoration: none }
+.welcome__steps{ margin: 0; padding: 0 0 0 18px; list-style: none;
+                 border-left: 1px solid var(--rule) }
+.welcome__steps li{ display: flex; align-items: flex-start; gap: 11px; padding: 5px 0 12px }
+.welcome__steps li:last-child{ padding-bottom: 5px }
+.welcome__steps li > b{ display: inline-flex; width: 24px; height: 24px; flex: none;
+                        align-items: center; justify-content: center;
+                        border: 1px solid var(--blue); border-radius: 5px;
+                        color: var(--blue); font-family: var(--mono); font-size: 10px }
+.welcome__steps span{ display: flex; flex-direction: column }
+.welcome__steps strong{ font-size: var(--fs-small); font-weight: 500 }
+.welcome__steps small{ color: var(--muted); font-size: var(--fs-meta); line-height: 1.45 }
+.listhead{ display: flex; align-items: end; gap: 24px; margin-top: 8px; max-width: 1080px }
+.listhead h2, .reviewhead h1{ margin: 3px 0 0; font-size: 19px; font-weight: 500 }
+.listhead p{ max-width: 470px; margin: 0 0 1px auto; color: var(--muted);
+             font-size: var(--fs-small); text-align: right }
+.empty{ display: flex; flex-direction: column; align-items: flex-start; gap: 5px;
+        padding: 24px; background: var(--sheet); border: 1px dashed var(--rule) }
+.empty b{ font-weight: 500 }
+.empty span{ margin-bottom: 8px; color: var(--muted); font-size: var(--fs-small) }
+
+.reviewhead{ max-width: 720px; margin-bottom: 3px }
+.reviewhead p{ margin: 7px 0 0; color: var(--muted); font-size: var(--fs-small); line-height: 1.55 }
+.card__ref{ color: var(--muted); font-family: var(--mono); font-size: 10px }
+
+.casebanner{ display: grid; grid-template-columns: 12px minmax(0, 1fr) minmax(220px, auto);
+             align-items: start; gap: 12px; padding: 15px 34px 14px;
+             background: var(--sheet); border-bottom: 1px solid var(--rule) }
+.casebanner > .mk{ margin-top: 7px }
+.casebanner__status{ display: block; margin-bottom: 1px; font-size: var(--fs-meta); font-weight: 500 }
+.casebanner__status--wrong{ color: var(--wrong) }
+.casebanner__status--review{ color: var(--blue) }
+.casebanner__status--clear{ color: var(--clear) }
+.casebanner__status--none{ color: var(--muted) }
+.casebanner h1{ margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+                font-size: var(--fs-head); font-weight: 500 }
+.casebanner p{ margin: 3px 0 0; color: var(--muted); font-size: var(--fs-small); line-height: 1.4 }
+.casebanner__meta{ margin: 1px 0 0; min-width: 0 }
+.casebanner__meta > div{ display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 8px }
+.casebanner__meta > div + div{ margin-top: 2px }
+.casebanner__meta dt{ color: var(--muted); font-size: var(--fs-meta) }
+.casebanner__meta dd{ margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+                      font-family: var(--mono); font-size: var(--fs-meta) }
 
 /* White on --orange is 2.71:1 and fails AA. Accepted on appearance,
    design_system.md 2.2. Do not copy to other orange surfaces. */
@@ -217,8 +283,23 @@ button.bx--flag:hover{ background: rgba(184,58,40,.10) }
 .ev__none{ font-size: var(--fs-small); color: var(--muted) }
 
 .sheet__hint{ margin: 9px 2px 0; font-size: var(--fs-meta); color: var(--muted) }
-.fbar__done{ font-size: var(--fs-small); font-weight: 500 }
+.fbar__done{ display: flex; flex-direction: column; gap: 2px; font-size: var(--fs-small) }
+.fbar__done b{ font-weight: 500 }
+.fbar__done em{ color: var(--muted); font-size: var(--fs-meta); font-style: normal }
+.fbar__error{ color: var(--wrong); font-size: var(--fs-small) }
+.fbar__prompt{ max-width: 420px; color: var(--muted); font-size: var(--fs-meta) }
+.fbar--confirm{ align-items: center }
+.fbar__impact{ display: flex; flex-direction: column; gap: 3px; max-width: 630px }
+.fbar__impact b{ font-size: var(--fs-small); font-weight: 500 }
+.fbar__impact span{ color: var(--muted); font-size: var(--fs-meta); line-height: 1.4 }
 .intro{ margin: 0; font-size: var(--fs-small); color: var(--muted); max-width: 640px }
+.demojump{ display: flex; align-items: center; gap: var(--gap-md);
+           max-width: 760px; padding: 12px 14px;
+           background: rgba(0,109,174,.055); border-left: 3px solid var(--blue) }
+.demojump > span{ display: flex; flex-direction: column; flex-grow: 1;
+                  font-size: var(--fs-small); color: var(--muted) }
+.demojump b{ color: var(--ink); font-weight: 500 }
+.demojump .btn{ flex: none; display: inline-flex; align-items: center; text-decoration: none }
 .wrow__found{ font-size: var(--fs-body); font-weight: 500 }
 .wrow__found--wrong { color: var(--wrong) }
 .wrow__found--review{ color: var(--blue) }
@@ -269,9 +350,102 @@ button.bx--flag:hover{ background: rgba(184,58,40,.10) }
 .card__evidence em{ font-style: normal; width: 74px; flex: none;
                     font-size: var(--fs-meta); color: var(--muted) }
 .card__evidence span{ font-family: var(--mono); font-size: 12px }
-.card__actions{ display: flex; gap: 9px }
+.card__actions{ display: flex; flex-wrap: wrap; gap: 9px }
+.card__actions .btn{ display: inline-flex; align-items: center; text-decoration: none }
+.reviewnotice{ padding: 10px 12px; border-left: 3px solid var(--clear);
+               background: rgba(46,125,110,.07); color: var(--clear);
+               font-size: var(--fs-small) }
 a.card__title{ color: inherit; text-decoration: none }
 a.card__title:hover{ text-decoration: underline }
+
+.auditback{ position: fixed; z-index: 20; inset: 50px 0 0;
+            border: 0; background: rgba(16,26,36,.36); cursor: default }
+.audit{ position: fixed; z-index: 21; top: 50px; right: 0; bottom: 0;
+        width: min(500px, 100vw); overflow-y: auto;
+        background: var(--paper); border-left: 1px solid rgba(16,26,36,.24);
+        box-shadow: -18px 0 42px rgba(16,26,36,.20); padding: 24px 26px 30px }
+.audit__head{ display: flex; align-items: flex-start; gap: var(--gap-md) }
+.audit__eyebrow{ display: block; margin-bottom: 4px; color: var(--muted);
+                 font-size: var(--fs-label); font-weight: 600;
+                 letter-spacing: .13em; text-transform: uppercase }
+.audit__title{ margin: 0; font-size: 20px; font-weight: 500; line-height: 1.25 }
+.audit__close{ margin-left: auto; width: 34px; height: 34px; flex: none;
+               border: 1px solid var(--rule); border-radius: var(--r-control);
+               background: var(--sheet); color: var(--ink); cursor: pointer;
+               font-size: 20px; line-height: 1 }
+.audit__intro{ margin: 12px 42px 22px 0; color: var(--muted);
+               font-size: var(--fs-small); line-height: 1.55 }
+.audit__overview{ display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px;
+                  margin: -8px 0 22px; padding: 10px 12px;
+                  background: var(--sheet); border: 1px solid var(--rule);
+                  font-size: var(--fs-meta); color: var(--muted) }
+.audit__overview b{ color: var(--ink); font-family: var(--mono); font-weight: 500 }
+.audit__focus{ margin-left: auto; border: 0; border-bottom: 1px solid currentColor;
+               padding: 2px 0; background: transparent; color: var(--blue);
+               font: inherit; cursor: pointer }
+.audit__focus:hover{ color: var(--ink) }
+.audit__stages{ margin: 0; padding: 0; list-style: none }
+.auditstage{ display: grid; grid-template-columns: 30px 1fr; column-gap: 12px }
+.auditstage__rail{ position: relative; display: flex; justify-content: center }
+.auditstage__rail::after{ content: ''; position: absolute; top: 28px; bottom: 0;
+                          width: 1px; background: var(--rule) }
+.auditstage:last-child .auditstage__rail::after{ display: none }
+.auditstage__node{ position: relative; z-index: 1; display: inline-flex;
+                   width: 24px; height: 24px; align-items: center; justify-content: center;
+                   background: var(--sheet); border: 1px solid var(--muted);
+                   color: var(--muted); font-family: var(--mono); font-size: 10px }
+.auditstage--done .auditstage__node{ border-color: var(--clearmark); color: var(--clearmark) }
+.auditstage--attention .auditstage__node{ border-color: var(--blue); color: var(--blue); border-radius: 5px }
+.auditstage--wrong .auditstage__node{ border-color: var(--wrong); color: var(--wrong); border-radius: 50% }
+.auditstage--skipped .auditstage__node{ border-style: dashed }
+.auditstage__body{ min-width: 0; padding: 1px 0 22px }
+.auditstage__top{ display: flex; align-items: baseline; gap: 9px; min-height: 24px }
+.auditstage__name{ font-weight: 600 }
+.auditstage__state{ font-size: var(--fs-meta); color: var(--muted) }
+.auditstage--done .auditstage__state{ color: var(--clear) }
+.auditstage--attention .auditstage__state{ color: var(--blue) }
+.auditstage--wrong .auditstage__state{ color: var(--wrong) }
+.auditstage__time{ margin-left: auto; color: var(--muted);
+                   font-family: var(--mono); font-size: var(--fs-meta) }
+.auditstage__summary{ margin: 4px 0 8px; font-size: var(--fs-small); line-height: 1.5 }
+.auditstage__facts{ margin: 0; padding: 8px 10px; background: rgba(16,26,36,.035);
+                    border-left: 2px solid var(--rule) }
+.auditstage__facts > div{ display: grid; grid-template-columns: 92px 1fr; gap: 8px }
+.auditstage__facts > div + div{ margin-top: 3px }
+.auditstage__facts dt{ color: var(--muted); font-size: var(--fs-meta) }
+.auditstage__facts dd{ margin: 0; overflow-wrap: anywhere;
+                       font-family: var(--mono); font-size: var(--fs-meta) }
+.auditstage__links{ display: flex; flex-wrap: wrap; gap: 7px; margin-top: 9px }
+.auditstage__links button{ border: 1px solid var(--rule); border-radius: var(--r-control);
+                           padding: 6px 9px; background: var(--sheet); color: var(--blue);
+                           font: inherit; font-size: var(--fs-meta); cursor: pointer }
+.auditstage__links button:hover{ border-color: var(--blue); background: rgba(0,109,174,.055) }
+.audit__result{ display: flex; flex-direction: column; gap: 2px;
+                margin: 0 0 12px 42px; padding: 13px 15px;
+                background: var(--sheet); border: 1px solid var(--rule);
+                border-radius: var(--r-control) }
+.audit__result strong{ font-size: var(--fs-small); font-weight: 500 }
+.auditlog{ margin: 18px 0 18px 42px; border-top: 1px solid var(--rule); padding-top: 13px }
+.auditlog summary{ font-size: var(--fs-small); font-weight: 500; cursor: pointer }
+.auditlog summary span{ margin-left: 5px; color: var(--muted); font-family: var(--mono); font-weight: 400 }
+.auditlog ol{ margin: 12px 0 0; padding: 0; list-style: none }
+.auditlog li{ padding: 9px 0 10px; border-bottom: 1px solid var(--hair) }
+.auditlog__meta{ display: block; margin-bottom: 3px; color: var(--muted);
+                 font-family: var(--mono); font-size: 10px }
+.auditlog strong{ display: block; font-size: var(--fs-small); font-weight: 500 }
+.auditlog p{ margin: 2px 0 0; font-size: var(--fs-meta); line-height: 1.45 }
+.auditlog__change{ display: block; margin-top: 5px; padding-left: 8px;
+                   border-left: 2px solid var(--blue); color: var(--muted);
+                   font-family: var(--mono); font-size: var(--fs-meta) }
+.audit__actions{ display: flex; justify-content: flex-end; flex-wrap: wrap;
+                 gap: 8px; margin-left: 42px }
+.audittech{ margin: 20px 0 0 42px; border-top: 1px solid var(--rule); padding-top: 13px }
+.audittech summary{ color: var(--muted); font-size: var(--fs-small); cursor: pointer }
+.audittech dl{ margin: 12px 0 0 }
+.audittech dl > div{ display: grid; grid-template-columns: 110px 1fr; gap: 10px;
+                     padding: 5px 0; border-bottom: 1px solid var(--hair) }
+.audittech dt{ color: var(--muted); font-size: var(--fs-meta) }
+.audittech dd{ margin: 0; font-family: var(--mono); font-size: var(--fs-meta); overflow-wrap: anywhere }
 
 /* The check screen wants the sheet at 700px with the notes beside it. Below
    about 1160px there is no room for both, so the notes drop underneath and the
@@ -288,12 +462,34 @@ a.card__title:hover{ text-decoration: underline }
 @media (max-width: 900px){
   .app .cards{ grid-template-columns: 1fr }
   .app .wmain, .app .rmain{ padding: 18px 20px }
+  .welcome{ grid-template-columns: 1fr }
+  .welcome__steps{ padding: 14px 0 0; border-left: 0; border-top: 1px solid var(--rule) }
+  .casebanner{ grid-template-columns: 12px 1fr }
+  .casebanner__meta{ grid-column: 2; display: flex; gap: 16px }
 }
 
 @media (max-width: 760px){
+  .thin{ padding: 0 14px; gap: 9px }
+  .thin__audit{ padding: 0 9px }
+  .fbar{ flex-wrap: wrap; padding: 12px 16px }
+  .fbar__prompt, .fbar__impact{ width: 100%; max-width: none }
+  .welcome{ padding: 21px 20px }
+  .listhead{ align-items: flex-start; flex-direction: column; gap: 5px }
+  .listhead p{ margin: 0; text-align: left }
+  .casebanner{ padding: 13px 18px }
   .sheet__grid{ grid-template-columns: 1fr }
   .bx{ border-right: 0 }
   .wrow{ align-items: flex-start; padding: 12px 14px; gap: var(--gap-sm); flex-wrap: wrap }
   .wrow__time{ display: none }
   .wrow__note{ width: 100%; padding-left: 22px }
+  .audit{ padding: 20px 18px 26px }
+  .audit__intro{ margin-right: 0 }
+  .audit__result, .audit__actions, .auditlog, .audittech{ margin-left: 0 }
+  .demojump{ align-items: flex-start; flex-direction: column }
+}
+
+@media (max-width: 480px){
+  .thin__meta{ display: none }
+  .thin__section{ max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+  .auditstage__facts > div{ grid-template-columns: 78px 1fr }
 }

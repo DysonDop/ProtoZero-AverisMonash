@@ -4,3 +4,6 @@ __pycache__
 *.pyc
 sdoc-hackathon-docker/
 .env
+web/node_modules
+web/dist
+bundle.zip

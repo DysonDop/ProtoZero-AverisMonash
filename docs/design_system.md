@@ -262,6 +262,47 @@ mockup demonstrates `checked` and `not checked` from real data and shows
 `unsure` only in the specimen strip. A scan-sourced field (`doc_quality` 0.5)
 is the case that will produce it.
 
+### 5.4 Case audit drawer
+
+**Added 21 Sep.** Every case exposes an `Audit trail` action in the existing
+50px shell. It opens a right-hand drawer rather than adding another route or
+navigation surface.
+
+The drawer explains the seven pipeline stages in order: classify, gate,
+extract, normalize, compare, confidence and decide. Each stage carries a word
+and a shape as well as colour: `Completed`, `Needs attention`, `Difference
+found`, or `Not run`. The first sentence is written for a documentation
+executive; durations, pipeline versions and model names stay under collapsed
+`Technical details`.
+
+The stage explanation is reconstructed from the saved `Case`, so it remains
+available in fixture mode. When the live API is connected, the drawer also reads
+`GET /cases/{email_id}/events` and shows the ordered system and reviewer history.
+The two views stay separate: stages explain the current result; events show what
+changed over time.
+
+`Copy audit summary` produces a plain-text handoff for support or a hackathon
+demo. `Download case JSON` exposes the exact saved record behind the explanation.
+When a stage identifies a field with a difference or confidence problem, its
+evidence action closes the drawer and opens that field's highlighted SI and
+draft lines. `Show issues only` is available when the run has an attention or
+difference stage. With the live API connected, a separate activity log shows
+ordered system and reviewer events.
+
+### 5.5 New-user orientation
+
+**Added 21 Sep.** The product's distinctive idea is stated once on the worklist:
+"from inbox to decision, with proof at every step." A three-step explanation
+then teaches the workflow — sort the email, compare seven details, explain the
+decision — without introducing a tour modal or requiring dismissal.
+
+Every route names itself in the dark shell. Case pages lead with one compact
+status banner containing the outcome, email subject, plain-language summary,
+case id and sender. The review queue calls itself a human checkpoint and says
+explicitly that the system stopped instead of guessing. These additions use the
+existing paper/document metaphor and existing tokens only; no new brand or
+status colours were introduced.
+
 ---
 
 ## 6. Layout and density
@@ -415,3 +456,12 @@ component covers all three.
   `#006DAE` is 3.18:1 there. Shell changed to ink with bright content. Screen
   two now leads with the failing details only. Primary buttons take white text
   on the orange as a recorded, accepted AA failure, §2.2.
+- **v3, 21 Sep 2026** — added the case audit drawer, §5.4. It explains all
+  seven pipeline stages from the current `Case`, keeps technical metadata
+  secondary, and remains honest that immutable audit events are not live yet.
+- **v4, 21 Sep 2026** — connected the drawer to the live audit-event endpoint;
+  added issue-only filtering, saved-case JSON export and stage-to-source
+  evidence navigation without changing the established colour system.
+- **v5, 21 Sep 2026** — added the evidence-first welcome path, explicit screen
+  names, case context banner, review-queue explanation and useful empty-filter
+  state for first-time users. Existing status shapes and colours remain intact.
