@@ -47,6 +47,10 @@ can't.
   `.env` (gitignored). Prefer managed identity over keys where the service supports it.
 - **Interface changes get written down before they get coded.** Anything in
   `docs/contracts.md` is load-bearing for Christabel, Gene and seunniee.
+- **Ship code plain.** No banner comment blocks, no section dividers, no
+  per-line rationale. A comment only where the code looks like a mistake and
+  someone would otherwise "fix" it. Reasoning belongs in `docs/`, not in the
+  source.
 
 ## Stack
 
@@ -66,7 +70,7 @@ isn't offered there — check before assuming.
 | Secrets / logs | **Key Vault**, **Application Insights** (structured JSON) |
 | CI/CD | **GitHub Actions**, auto-deploy from `main` |
 | Edge / DNS | **Cloudflare** — custom domain, TLS, static caching in front of the Container App |
-| Frontend | React + Vite + Tailwind, react-pdf, Recharts |
+| Frontend | React + Vite, plain CSS (`web/src/index.css`), react-pdf when the scan path lands |
 
 **Azure OpenAI is called by _deployment name_, not model id** — you create a
 deployment of a model in your resource and call that name. So
@@ -90,9 +94,46 @@ parsers/      txt.py · pdf.py · docx.py · xlsx.py · doctype.py
 data_refs/    unlocode_seaports.csv · synonyms.yaml · company_suffixes.txt
 eval/         run_eval.py · results.csv · golden/
 api/          FastAPI app
-web/          React SPA
-docs/         dataset_facts.md · prd.md · architecture.md · contracts.md · eval_plan.md · spec/
+web/          src/index.css (tokens + components) · mocks/ (API fixtures) · mockups/ (static screens)
+docs/         dataset_facts.md · prd.md · architecture.md · contracts.md · eval_plan.md ·
+              design_system.md · spec/
 ```
+
+## Frontend
+
+**seunniee owns the frontend and the architecture diagram.**
+`docs/design_system.md` is the prose, `web/src/index.css` is the implementation.
+If they disagree, one is a bug — say so rather than patching around it.
+
+- **`web/src/index.css` is the only place colour and type are defined**, and the
+  only place product layout lives. Reference the variables; never restate the
+  values. Tailwind was considered and dropped on 20 Sep: the design is already a
+  set of named components carrying rules (a status mark ships its shape and its
+  colour together, the accepted AA failure is confined to one class), and
+  utilities would make those rules something to remember rather than something
+  the code enforces.
+- **Both host brands, neither altered.** Averis orange `#D88C3D` is chrome: the
+  mark and primary buttons, never a status, never small text on paper. Monash
+  blue `#006DAE` is "needs a person" and active states; on the dark shell it
+  lifts to `#5FB3E8` for *text* only.
+- **Colour is never the only signal.** Every state also carries a shape and a
+  word. Desaturated, the three status colours land on nearly the same grey.
+- **Mono means "this is what the document said".** Anything we wrote is Plex.
+- **One 50px bar is the whole shell.** No sidebar, no search box, no density
+  switcher. Navigation is filter chips above the list. Adding a second
+  navigation surface is a deliberate decision, not a habit.
+- **Say each thing once.** A rejected build announced every problem four times
+  (pill, chip row, marked box, margin card). If a fact is already on screen,
+  it does not get a second home.
+- **Corrections read wrong-then-right**, the wrong value struck through with the
+  correct one beneath it, in the document and in the margin note alike.
+- **`web/mocks/` lets the frontend be built before the API exists.** Real values,
+  real character offsets, every endpoint in `contracts.md` §6.
+
+**One recorded exception:** primary buttons use white on the orange at 2.71:1,
+which fails AA and cannot pass at any size. Chosen on appearance after the
+numbers were raised twice. `docs/design_system.md` §2.2. Do not silently
+"fix" it, and do not copy it to other orange surfaces.
 
 ## Commands
 

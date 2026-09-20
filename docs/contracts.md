@@ -293,8 +293,132 @@ Read access via user-delegation SAS URLs, 1-hour expiry. The bundled dataset is 
 inside the container, not from Blob Storage; this container is for demo uploads and
 render caching.
 
+## 10. Proposed, not ratified
+
+**Raised by seunniee, 20 Sep, from the frontend side. Nothing below is live.**
+Everything in §1–§9 is unchanged. These are the six things the UI needs that do
+not exist yet, written down before they get coded, per `CLAUDE.md`. Gene and
+Christabel: argue with these, then we move them up into the numbered sections
+with a changelog line.
+
+### 10.1 `human_reviewed` on `FieldComparison`
+
+```python
+human_reviewed: bool = False
+```
+
+The UI has no way to show that a person confirmed or fixed a value.
+`ExtractedField.extracted_by` is not it — that records *how* a value was
+extracted, and a reviewer confirming a value the parser already got right does
+not change that.
+
+The flag belongs on `FieldComparison` specifically because **corrections rejoin
+the pipeline at the comparison stage, not extraction**, so the comparison is
+regenerated when a review resolves and the flag is written naturally at that
+point. The audit trail also stays intact, because extraction output is never
+overwritten.
+
+No new endpoint needed: `POST /review/{id}/resolve` already returns a fresh
+`Case`.
+
+Blocks `design_system.md` §5.3. Until it exists the confidence mark shows
+machine confidence only.
+
+### 10.2 `/health` needs detail, for the circuit breaker
+
+Today it returns `{status, cases, version}`. The UI has to be able to say, on
+screen, that the system has dropped to deterministic-only mode after repeated
+model failures. It cannot say that from a single `"ok"`.
+
+```python
+ComponentName = Literal["classifier", "extraction", "deterministic_rules",
+                        "comparison", "audit_log"]
+
+class ComponentHealth(BaseModel):
+    name: ComponentName
+    state: Literal["online", "offline", "degraded"]
+
+class Health(BaseModel):
+    status: Literal["ok", "degraded"]
+    cases: int
+    version: str
+    mode: Literal["full", "deterministic_only"]
+    circuit_breaker: Literal["closed", "open", "half_open"]
+    ai_failures: int
+    components: list[ComponentHealth]
+```
+
+`mode` is the one the UI actually renders. The rest is for the health panel if
+we build one.
+
+### 10.3 `correlation_id` on `Case`
+
+```python
+correlation_id: str
+```
+
+One id per email, threaded through every log line and every audit event, so a
+reviewer asking "what happened to this email" gets one thread rather than a
+search.
+
+### 10.4 Audit events — new container, new endpoint
+
+Nothing today records what happened to a case over time. `Case` holds the
+current state only.
+
+```python
+AuditAction = Literal[
+    "EMAIL_RECEIVED", "DOCUMENT_CLASSIFIED", "EXTRACTION_COMPLETED",
+    "VALIDATION_FAILED", "HUMAN_REVIEW_CREATED", "HUMAN_CORRECTION",
+    "COMPARISON_RERUN", "FINAL_DECISION",
+    "CIRCUIT_BREAKER_OPENED", "CIRCUIT_BREAKER_CLOSED",
+]
+
+class AuditEvent(BaseModel):
+    id: str
+    email_id: str
+    correlation_id: str
+    seq: int                          # monotonic per email, so order never depends on clocks
+    at: datetime
+    actor: Literal["system", "reviewer"]
+    reviewer_id: str | None = None
+    action: AuditAction
+    field: FieldName | None = None
+    previous_value: str | None = None
+    new_value: str | None = None
+    reason: str
+```
+
+| Method | Path | Returns |
+| --- | --- | --- |
+| `GET` | `/cases/{email_id}/events` | `{"items": [AuditEvent]}`, ordered by `seq` |
+
+Cosmos container **`events`**, partition key `/email_id`, so one case's history
+is a single-partition read.
+
+`previous_value` and `new_value` are what make a correction auditable rather
+than just logged.
+
+### 10.5 Two additions to `Metrics`
+
+```python
+avg_processing_ms: int
+top_issues: dict[str, int]        # EscalationReason or FieldName → count, descending
+```
+
+Neither is derivable from the current `Metrics`. `timings_ms` exists per case
+but there is no aggregate, and there is no breakdown of what is being flagged.
+
+### 10.6 Fixture drift to fix on our side
+
+`web/mocks/metrics.json` is missing `parser_pct`, which `Metrics` requires, and
+sets `est_minutes_saved` to `null` where the model says `float`. Frontend's to
+fix, listed here so it is not mistaken for a contract question.
+
 ## Changelog
 
+- **v1.0.1, 20 Sep 2026** — added §10, proposed changes from the frontend.
+  No existing shape changed.
 - **v1, 19 Sep 2026** — initial. `role` / `detected_kind` split and the
   internal→wire reason mapping both come from measured dataset behaviour
   (`docs/dataset_facts.md` §8, §9).

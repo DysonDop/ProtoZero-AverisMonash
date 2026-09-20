@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Protozero SDOC screens</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<!-- The product's real stylesheet. Everything below is mockup-page scaffolding
+     only: the grey backdrop, the captions, the fixed-size frames. If a style
+     belongs to the product, it belongs in index.css, not here. -->
+<link rel="stylesheet" href="../src/index.css">
+
+<style>
+  body{ background:#DEDCD6 }
+  .page{max-width:1420px;margin:0 auto;padding:40px 24px 80px}
+  .lede{margin:0 0 26px;max-width:680px}
+  .lede h1{font-size:24px;font-weight:600;margin:0 0 8px}
+  .lede p{margin:0;color:#3D4650}
+  .spec{display:flex;flex-wrap:wrap;gap:14px 30px;margin:0 0 34px;align-items:baseline}
+  .specitem{display:flex;align-items:baseline;gap:9px}
+  .specitem .bx__label{margin:0;display:inline-flex}
+  .specitem .conf{margin-left:0}
+  .specitem .why{font-size:13px;color:#3D4650}
+  .screen{margin:0 0 44px}
+  .cap{display:flex;align-items:baseline;gap:12px;margin:0 0 10px}
+  .cap b{font-size:16px;font-weight:600}
+  .cap span{font-size:13px;color:#3D4650}
+  .hold{width:1360px;max-width:100%;overflow:auto;border-radius:14px}
+  .frame{width:1360px;height:800px;background:var(--paper);display:flex;flex-direction:column}
+  /* Everything else the screens are made of now lives in index.css. This one
+     offset is mockup-only: it drops the first note down to sit level with the
+     flagged box in these particular fixtures. */
+  .margin{padding-top:118px}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="lede">
+    <h1>Protozero, SDOC verification</h1>
+    <p>One 50px bar is the entire shell. Averis orange <b class="mono">#D88C3D</b> and Monash blue
+       <b class="mono">#006DAE</b>, unaltered. Corrections read wrong-then-right, struck through.
+       All product styling comes from <b class="mono">web/src/index.css</b>.</p>
+  </div>
+
+  <div class="spec">
+    <div class="specitem"><span class="bx__label"><span class="conf">checked</span></span>
+      <span class="why">read on both documents, at or above the review threshold</span></div>
+    <div class="specitem"><span class="bx__label"><span class="conf conf--unsure">unsure</span></span>
+      <span class="why">read, but the score is below it</span></div>
+    <div class="specitem"><span class="bx__label"><span class="conf conf--nocheck">not checked</span></span>
+      <span class="why">could not be read, so it was not compared</span></div>
+  </div>
+
+  <!-- THE CHECK -->
+  <div class="screen">
+    <div class="cap"><b>The check</b><span>email_004, two problems, every field read cleanly</span></div>
+    <div class="hold"><div class="frame">
+      <div class="thin">
+        <span class="thin__mark"></span><span class="thin__name">protozero</span>
+        <span class="thin__meta">email_004</span>
+      </div>
+      <div class="stage">
+        <svg class="wires"></svg>
+        <div class="sheetwrap"><div class="sheet" id="sheet-a"></div></div>
+        <div class="margin">
+          <div class="note" data-target="a-consignee">
+            <span class="note__field">Receiver</span>
+            <span class="note__value note__value--wrong strike">UAB NOVAKOPA</span>
+            <span class="note__value note__value--right">EAST BRIGHT FZ-LLC</span>
+            <div class="note__synonym">Instruction calls this <b>Consignee</b>. Draft calls it <b>To the order of</b>.</div>
+          </div>
+          <div class="note" data-target="a-notify">
+            <span class="note__field">Notify on arrival</span>
+            <span class="note__value note__value--wrong strike">UAB NOVAKOPA</span>
+            <span class="note__value note__value--right">EAST BRIGHT FZ-LLC</span>
+            <div class="note__synonym">Instruction calls this <b>Notify</b>. Draft calls it <b>Notify party</b>.</div>
+          </div>
+          <div class="quiet">The other five details match the instruction.</div>
+        </div>
+      </div>
+      <div class="fbar">
+        <span class="grow"></span>
+        <button class="btn btn--ghost" type="button">Send to a person</button>
+        <button class="btn" type="button">Reject the draft</button>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- THE CHECK, WHEN WE COULD NOT READ EVERYTHING -->
+  <div class="screen">
+    <div class="cap"><b>The check, when we could not read everything</b><span>email_516, three fields we would not compare</span></div>
+    <div class="hold"><div class="frame">
+      <div class="thin">
+        <span class="thin__mark"></span><span class="thin__name">protozero</span>
+        <span class="thin__meta">email_516</span>
+      </div>
+      <div class="stage">
+        <svg class="wires"></svg>
+        <div class="sheetwrap"><div class="sheet" id="sheet-b"></div></div>
+        <div class="margin">
+          <div class="note" data-target="b-shipper">
+            <span class="note__field">Shipper</span>
+            <p class="note__body">We could not find a shipper in the instruction, so there is
+               nothing to compare the draft against.</p>
+          </div>
+          <div class="note" data-target="b-notify">
+            <span class="note__field">Notify on arrival</span>
+            <p class="note__body">The draft gives no notify party we could read. The instruction
+               names <b>KPP-ANTALIS (SINGAPORE) PTE. LTD.</b></p>
+          </div>
+          <div class="note" data-target="b-weight">
+            <span class="note__field">Gross weight</span>
+            <p class="note__body">The instruction gives <b>N/A</b> where the weight should be.
+               A blank is a gap in what we were given, not a disagreement.</p>
+          </div>
+          <div class="quiet">The other four details match the instruction.</div>
+        </div>
+      </div>
+      <div class="fbar">
+        <span class="grow"></span>
+        <button class="btn btn--ghost" type="button">Ask for a complete instruction</button>
+        <button class="btn" type="button">Send to a person</button>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- THE WORKLIST -->
+  <div class="screen">
+    <div class="cap"><b>The worklist</b><span>real subjects, no sidebar</span></div>
+    <div class="hold"><div class="frame">
+      <div class="thin">
+        <span class="thin__mark"></span><span class="thin__name">protozero</span>
+        <span class="thin__meta">520 emails</span>
+      </div>
+      <div class="wmain">
+        <div class="chips">
+          <button class="chip chip--on" type="button" aria-pressed="true"><span class="mk mk--wrong"></span>Differences found<span class="chip__count">46</span></button>
+          <button class="chip" type="button" aria-pressed="false"><span class="mk mk--review"></span>Needs a person<span class="chip__count">20</span></button>
+          <button class="chip" type="button" aria-pressed="false"><span class="mk mk--clear"></span>All clear<span class="chip__count">154</span></button>
+          <button class="chip" type="button" aria-pressed="false"><span class="mk mk--none"></span>Not a check<span class="chip__count">300</span></button>
+        </div>
+        <div class="wtable grow" id="wrows"></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- NEEDS A PERSON -->
+  <div class="screen">
+    <div class="cap"><b>Needs a person</b><span>the cases the system refused to answer</span></div>
+    <div class="hold"><div class="frame">
+      <div class="thin">
+        <span class="thin__mark"></span><span class="thin__name">protozero</span>
+        <span class="thin__meta">20 open</span>
+      </div>
+      <div class="rmain">
+        <div class="cards" id="cards"></div>
+        <span class="grow"></span>
+        <div class="quiet">Whatever a person decides here is remembered, so the same question is not asked twice.</div>
+      </div>
+    </div></div>
+  </div>
+
+</div>
+
+<script>
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function box(o){
+  const cls='bx'+(o.full?' bx--full':'')+(o.flag?' bx--flag':'');
+  const conf=o.conf?'<span class="conf'+(o.conf[0]?' conf--'+o.conf[0]:'')+'">'+esc(o.conf[1])+'</span>':'';
+  let v;
+  if(o.blank) v='<span class="bx__blank">&mdash;</span>';
+  else if(o.fix) v='<span class="bx__value strike">'+esc(o.v)+'</span><span class="fix">'+esc(o.fix)+'</span>';
+  else v='<span class="bx__value">'+esc(o.v)+'</span>';
+  return '<div class="'+cls+'"'+(o.id?' id="'+o.id+'"':'')+'>'
+   +'<span class="bx__label">'+esc(o.k)+conf+'</span>'+v
+   +(o.sub?'<span class="bx__sub">'+esc(o.sub)+'</span>':'')+'</div>';
+}
+
+function sheet(carrier, boxes, foot){
+  return '<div class="sheet__head"><div><h4 class="sheet__title">BILL OF LADING</h4>'
+   +'<div class="sheet__carrier">'+esc(carrier)+'</div></div>'
+   +'<span class="sheet__stamp">DRAFT</span></div>'
+   +'<div class="sheet__grid">'+boxes.map(box).join('')+'</div>'
+   +'<div class="sheet__foot">'+foot.map(function(f){return '<span>'+esc(f)+'</span>'}).join('')+'</div>';
+}
+
+const OK=['','checked'], NO=['nocheck','not checked'];
+
+document.getElementById('sheet-a').innerHTML=sheet(
+ 'ONE Ocean Network Express  ·  SINF88496965',
+ [{k:'Shipper',full:true,conf:OK,v:'APRIL FAR EAST (M) SDN BHD',
+   sub:'TOWER 2, AVENUE 5, LEVEL 6; BANGSAR SOUTH CITY, KUALA LUMPUR'},
+  {k:'To the order of',full:true,flag:true,id:'a-consignee',conf:OK,
+   v:'UAB NOVAKOPA',fix:'EAST BRIGHT FZ-LLC',
+   sub:'RAKEZ AMENITY CENTER; AL HAMRA INDUSTRIAL ZONE, RAK, UAE'},
+  {k:'Notify party',full:true,flag:true,id:'a-notify',conf:OK,
+   v:'UAB NOVAKOPA',fix:'EAST BRIGHT FZ-LLC'},
+  {k:'Port of loading',conf:OK,v:'NANTONG, CHINA',sub:'CNNTG'},
+  {k:'Port of discharge',conf:OK,v:'KARACHI, PAKISTAN',sub:'PKKHI'},
+  {k:'Container count',conf:OK,v:'6 x 40’HC'},
+  {k:'Gross weight (KG)',conf:OK,v:'131,058 KG'},
+  {k:'Export carrier',v:'NAP 914 V.BS007',sub:'Voyage BS012'},
+  {k:'Commodity',v:'COATED IVORY BOARD',sub:'HS 48105900'}],
+ ['BOOKING REF   ONEYSINF32871','FREIGHT   PREPAID']);
+
+document.getElementById('sheet-b').innerHTML=sheet(
+ 'Monterrosa  ·  MCLSIN6123859',
+ [{k:'Shipper',full:true,id:'b-shipper',conf:NO,v:'APRIL FINE PAPER TRADING',
+   sub:'ON BEHALF OF VITAL SOLUTIONS PTE LTD; 77 ROBINSON ROAD, #21-01; SINGAPORE 068896'},
+  {k:'Consignee',full:true,conf:OK,v:'KPP-ANTALIS (SINGAPORE) PTE. LTD.',
+   sub:'8 TEMASEK BOULEVARD; #42-01 SUNTEC TOWER 3; SINGAPORE 038988'},
+  {k:'Notify party',full:true,id:'b-notify',conf:NO,blank:true},
+  {k:'Load port',conf:OK,v:'NHAVA SHEVA, INDIA',sub:'INNSA'},
+  {k:'POD',conf:OK,v:'CONAKRY, GUINEA',sub:'GNCKY'},
+  {k:'Container count',conf:OK,v:'10 x 20’FCL'},
+  {k:'Gross weight (KG)',id:'b-weight',conf:NO,v:'235,550 KG'},
+  {k:'Export carrier',v:'INDO SUKSES 65 V.51NW1',sub:'Voyage 2545E'},
+  {k:'Description',v:'PAPERBOARD'}],
+ ['BOOKING REF   MCLSINJEA2551434','FREIGHT   PREPAID']);
+
+const WL=[
+ {s:'REQUEST BL DRAFT _ PO 26067_ COATED IVORY BOARD__138MT',f:'docs@vitalsolutions.sg',st:'Receiver, notify',k:'wrong',t:'09:14'},
+ {s:'RE_ TO CONFIRM DOCS _ 5RSG-51584 _ HOUSTON_US _ KPP-ANTALIS',f:'shipping@kpp-antalis.com',st:'Wrong document',k:'review',t:'09:11'},
+ {s:'AIE - KARACHI_PAKISTAN - OOCL(OOLU2731884450) - 5ALT-01226',f:'exports@aprilasia.com',st:'Containers',k:'wrong',t:'08:58'},
+ {s:'RE_ AFEMY - CONAKRY_GUINEA - MONTER(MCLSIN6123859) - 5RCY-20871',f:'docs@monterrosa.fr',st:'Blank value',k:'review',t:'08:47'},
+ {s:'TO CONFIRM DOCS _ 5RSG-00133 _ CALLAO_PERU _ MOORIM SP CO.',f:'mitchelle.tan@averis.com',st:'All seven match',k:'clear',t:'08:32'},
+ {s:'RE_ TO CONFIRM DOCS _ 5SUS-40134 _ KOPER_SLOVENIA _ AL GURG',f:'docs@algurg.ae',st:'Will not open',k:'review',t:'08:20'},
+ {s:'Draft BL _ INDO SUKSES 65 _ SINGAPORE _ amend 057',f:'bl.desk@indosukses.co.id',st:'All seven match',k:'clear',t:'08:04'},
+ {s:'RE_ TO CONFIRM DOCS _ 5AAT-03056 _ AQABA_JORDAN _ ROXCEL TRADING',f:'roxcel.docs@roxcel.at',st:'Nothing attached',k:'none',t:'07:52'},
+ {s:'RE_ LOCAL CHARGES FOB - KARGOSMAR - 5AKR-61849 - TELEX RELEASE',f:'billing@kargosmar.com.tr',st:'Invoice query',k:'none',t:'07:41'},
+ {s:'15_01_2026 - UPDATE SUMMARY LE HAVRE V.QI540A',f:'rpa.notify@averis.com',st:'General',k:'none',t:'07:30'}
+];
+const COL={wrong:'var(--wrong)',review:'var(--blue)',clear:'var(--clearmark)',none:'var(--muted)'};
+document.getElementById('wrows').innerHTML=WL.map(function(r){
+ return '<div class="wrow'+(r.k==='none'?' wrow--muted':'')+'">'
+  +'<span class="mk mk--'+r.k+'"></span>'
+  +'<span class="grow" style="min-width:0;display:flex;flex-direction:column;gap:2px">'
+  +'<span class="wrow__subject trunc">'+esc(r.s)+'</span>'
+  +'<span class="wrow__from trunc">'+esc(r.f)+'</span></span>'
+  +'<span style="width:150px;flex:none;font-size:12.5px;color:'+COL[r.k]+(r.k==='wrong'?';font-weight:500':'')+'">'+esc(r.st)+'</span>'
+  +'<span class="wrow__time">'+esc(r.t)+'</span></div>';
+}).join('');
+
+const CARDS=[
+ {t:'Wrong document attached',p:'The file named as the draft bill of lading is a commercial invoice. There is nothing to compare against.',
+  a:'SHIPPING INSTRUCTION',b:'COMMERCIAL INVOICE',p1:'Ask for the right file',p2:'Dismiss'},
+ {t:'A value is blank',p:'The instruction leaves the sender empty. A blank is a gap in what we were given, not a disagreement.',
+  a:'_______',b:'APRIL FINE PAPER TRADING',p1:'Fill it in',p2:'Dismiss'},
+ {t:'The file will not open',p:'The draft is a scan with no text layer. We could not read it, so we are not going to pretend we checked it.',
+  a:'SHIPPING INSTRUCTION',b:'0 characters recovered',p1:'Retry with OCR',p2:'Request a text copy'},
+ {t:'Too close to call',p:'Two company names that are nearly the same. This could be one business or two subsidiaries.',
+  a:'APRIL FINE PAPER TRADING',b:'APRIL FINE PAPER TRADING (MIDDLE EAST) FZE',p1:'Same company',p2:'Different company'}
+];
+document.getElementById('cards').innerHTML=CARDS.map(function(c){
+ return '<div class="card"><span class="card__title">'+esc(c.t)+'</span>'
+  +'<p class="card__body">'+esc(c.p)+'</p>'
+  +'<div class="card__evidence"><div><em>Instruction</em><span>'+esc(c.a)+'</span></div>'
+  +'<div><em>Draft</em><span>'+esc(c.b)+'</span></div></div>'
+  +'<div style="display:flex;gap:9px">'
+  +'<button class="btn" type="button" style="font-size:13px;padding:0 16px">'+esc(c.p1)+'</button>'
+  +'<button class="btn btn--ghost" type="button" style="font-size:13px;padding:0 16px">'+esc(c.p2)+'</button></div></div>';
+}).join('');
+
+function drawWires(){
+  document.querySelectorAll('.stage').forEach(function(stage){
+    const svg=stage.querySelector('.wires');
+    if(!svg) return;
+    const S=stage.getBoundingClientRect();
+    svg.setAttribute('viewBox','0 0 '+S.width+' '+S.height);
+    svg.setAttribute('width',S.width); svg.setAttribute('height',S.height);
+    let out='';
+    stage.querySelectorAll('.note[data-target]').forEach(function(c){
+      const target=stage.querySelector('#'+c.dataset.target);
+      if(!target) return;
+      const B=target.getBoundingClientRect(), C=c.getBoundingClientRect();
+      const x1=B.right-S.left, y1=B.top-S.top+B.height/2;
+      const x2=C.left-S.left,  y2=C.top-S.top+22;
+      const mid=x1+(x2-x1)/2;
+      out+='<path d="M '+x1+' '+y1+' H '+mid+' V '+y2+' H '+x2+'" fill="none" stroke="rgba(16,26,36,.28)" stroke-width="1"/>';
+    });
+    svg.innerHTML=out;
+  });
+}
+window.addEventListener('load',drawWires);
+window.addEventListener('resize',drawWires);
+drawWires();
+</script>
+</body>
+</html>
