@@ -68,9 +68,14 @@ body{
   padding: 0 22px;
   background: var(--ink); color: var(--on-dark);
 }
-.thin__mark{ width: 12px; height: 12px; flex: none; display: block;
-             background: var(--orange); border-radius: 3px }
-.thin__name{ font-size: var(--fs-body); font-weight: 500 }
+/* The zero is a real JetBrains Mono glyph, not a drawn shape: mono is what this
+   app uses to mean "read off a document", so the name carries its own rule. It
+   is sized against the Lato cap height rather than by eye. */
+.thin__mark{ flex: none; font-family: 'Lato', var(--sans); font-weight: 700;
+             font-size: 17px; line-height: 1; letter-spacing: -.012em;
+             color: var(--on-dark); white-space: nowrap }
+.thin__mark .z{ font-family: var(--mono); font-weight: 700;
+                font-size: 1.06em; color: var(--orange) }
 .thin__meta{ font-family: var(--mono); font-size: 12px; color: var(--on-dark-dim) }
 .thin__home{ display: flex; align-items: center; gap: 13px;
              color: inherit; text-decoration: none }

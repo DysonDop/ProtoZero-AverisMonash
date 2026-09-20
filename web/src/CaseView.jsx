@@ -79,9 +79,11 @@ function NothingToCompare({ kase }) {
 }
 
 function Refused({ kase }) {
+  const [decision, setDecision] = useState(null)
   const si = kase.documents.find(d => d.role === 'SI')
   const bl = kase.documents.find(d => d.role === 'BL')
   return (
+    <>
     <div className="rmain">
       <div className="cards">
         <div className="card">
@@ -96,6 +98,12 @@ function Refused({ kase }) {
       <span className="grow"></span>
       <div className="quiet">We would rather ask than guess. Nothing here was compared.</div>
     </div>
+    <Actions
+      choices={REFUSAL_CHOICES[kase.wire_review_reason] ?? CHOICES.NEEDS_REVIEW}
+      decision={decision}
+      onDecide={setDecision}
+    />
+    </>
   )
 }
 
@@ -137,7 +145,11 @@ function Compared({ kase }) {
           : <div className="quiet">The other {matched} details match the instruction.</div>}
       </div>
     </div>
-    <Actions kase={kase} decision={decision} onDecide={setDecision} />
+    <Actions
+      choices={CHOICES[kase.status] ?? CHOICES.OK}
+      decision={decision}
+      onDecide={setDecision}
+    />
     </>
   )
 }
@@ -184,8 +196,28 @@ const CHOICES = {
   ],
 }
 
-function Actions({ kase, decision, onDecide }) {
-  const choices = CHOICES[kase.status] ?? CHOICES.OK
+// A refusal reached from the worklist gets the same wording as the same case in
+// the review queue, so the two screens never disagree about what can be done.
+const REFUSAL_CHOICES = {
+  missing_attachment: [
+    { label: 'Ask for the draft', done: 'Asked for the draft.' },
+    { label: 'Dismiss', done: 'Dismissed.' },
+  ],
+  wrong_doc_type: [
+    { label: 'Ask for the right file', done: 'Asked for the right file.' },
+    { label: 'Dismiss', done: 'Dismissed.' },
+  ],
+  unreadable: [
+    { label: 'Retry with OCR', done: 'Queued for another read.' },
+    { label: 'Request a text copy', done: 'Asked for a text copy.' },
+  ],
+  missing_value: [
+    { label: 'Fill it in', done: 'Sent to a person to fill in.' },
+    { label: 'Dismiss', done: 'Dismissed.' },
+  ],
+}
+
+function Actions({ choices, decision, onDecide }) {
   if (decision) {
     return (
       <div className="fbar">

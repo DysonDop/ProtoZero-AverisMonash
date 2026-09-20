@@ -6,6 +6,9 @@ export default defineConfig({
   // mocks/ is the static root, not public/, because the fixtures are the app's
   // data source until the API exists and they have to ship with the build.
   // Set VITE_API_BASE=/api to read from Gene's API instead.
+  // Everything in here is copied to the site root, so it holds favicon.svg too
+  // and must not hold anything we would not serve publicly. The fixtures README
+  // lives at web/MOCKS.md for exactly that reason.
   publicDir: 'mocks',
   server: { port: 5175 },
 })

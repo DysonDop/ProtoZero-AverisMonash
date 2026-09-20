@@ -54,6 +54,10 @@ export default function Worklist() {
           ))}
         </div>
 
+        {shown.length === 0 && (
+          <div className="state">Nothing in this group. Press the chip again to see every email.</div>
+        )}
+
         <div className="wtable">
           {shown.map(c => {
             const k = kindOf(c)
