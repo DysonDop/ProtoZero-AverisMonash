@@ -8,7 +8,7 @@ export default defineConfig({
   // Set VITE_API_BASE=/api for the single-container production build.
   // Everything in here is copied to the site root, so it holds favicon.svg too
   // and must not hold anything we would not serve publicly. The fixtures README
-  // lives at web/MOCKS.md for exactly that reason.
+  // lives at web/README.md for exactly that reason.
   publicDir: 'mocks',
   server: { port: 5175, proxy: { '/api': 'http://127.0.0.1:8000' } },
 })

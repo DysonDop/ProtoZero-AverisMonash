@@ -51,34 +51,41 @@ Four rules. Everything else in this document follows from them.
 
 | Token | Hex | Use |
 | --- | --- | --- |
-| `--brand` | `#D88C3D` | Averis orange. Header, logo lockup, primary buttons, slide deck |
+| `--brand` | `#E78823` | Averis orange. Header, logo lockup, primary buttons, slide deck |
 
-Sampled from the Averis site, where it is used identically in the hero and both
-buttons.
+**Corrected on 21 Sep.** This token previously held `#D88C3D`, described here as
+"sampled from the Averis site". That sample was wrong. `#E78823` is the value
+the Averis site's own stylesheet uses, 53 times on the homepage, and it is the
+exact fill of the swoosh in `averis-master-logo.svg`, the logo file the site
+itself serves. A near-variant `#EA8B23` appears nine times and looks like drift
+rather than a second brand colour.
 
 **Two hard rules:**
 
-- **Never use it as a status.** It sits at hue 30.6 degrees, six degrees from
+- **Never use it as a status.** It sits at hue 30.9 degrees, six degrees from
   the amber we originally had for "needs a person". Chrome and meaning would be
   indistinguishable.
-- **Never use it for small text on paper.** 2.51:1, fails.
+- **Never use it for small text on paper.** 2.20:1, fails.
 
 **One accepted exception, decided on 19 Sep by seunniee.**
 
-Primary buttons use **white text on `#D88C3D`**. This measures **2.71:1 and
-fails AA**, and it cannot be made to pass at any font size, because even the
-large-text allowance is 3:1. Ink on orange would pass at 6.47:1.
+Primary buttons use **white text on the brand orange**. On the corrected value
+this measures **2.64:1 and fails AA**, marginally worse than the 2.71:1 recorded
+against the old sample. It cannot be made to pass at any font size, because even
+the large-text allowance is 3:1. Ink on orange would pass at 6.65:1.
+
+The correction does not change the decision. The exception was taken knowing the
+number failed; it still fails, by about the same margin.
 
 This was raised twice with the numbers and chosen anyway on appearance. It is
 the one deliberate accessibility failure in the design, it is confined to the
 primary button, and it is written down here so nobody silently "fixes" it or
 silently repeats it somewhere new.
 
-If we ever want white text legally, the orange has to drop to about `#99632B`,
-at which point it is brown and no longer the Averis colour. That trade was
-looked at and rejected.
+If we ever want white text legally, the orange has to darken until it is brown
+and no longer the Averis colour. That trade was looked at and rejected.
 
-It is legible as orange-on-ink (6.47:1), which is how the Averis footer uses it
+It is legible as orange-on-ink (6.65:1), which is how the Averis footer uses it
 and the one genuinely accessible use on their site.
 
 ### 2.3 Status

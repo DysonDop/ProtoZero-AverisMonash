@@ -2,7 +2,7 @@
 
 Hand-off mocks so the frontend can be built before the backend exists.
 
-Every file matches a real endpoint in [`docs/contracts.md`](../../docs/contracts.md) §6,
+Every file matches a real endpoint in [`docs/contracts.md`](../docs/contracts.md) §6,
 shape for shape. When Gene's API is up, swap the fixture path for the real base
 URL and nothing else in the frontend should change.
 

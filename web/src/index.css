@@ -6,7 +6,7 @@
   --rule:       rgba(16,26,36,.13);
   --hair:       rgba(16,26,36,.09);
 
-  --orange:     #D88C3D;
+  --orange:     #E78823;
   --blue:       #006DAE;
   --blue-lift:  #5FB3E8;
 
@@ -69,7 +69,7 @@ body{
 
 .modebanner{ min-height: 42px; display: flex; align-items: center; gap: 10px;
              padding: 8px 22px; background: #FFF7E9; color: var(--ink);
-             border-bottom: 1px solid rgba(216,140,61,.45); font-size: var(--fs-small) }
+             border-bottom: 1px solid rgba(231,136,35,.45); font-size: var(--fs-small) }
 .modebanner__mark{ display: inline-flex; width: 22px; height: 22px; flex: none;
                    align-items: center; justify-content: center;
                    border: 1px solid var(--orange); border-radius: 50%;
@@ -271,7 +271,7 @@ body{
                     font-size: 9px; font-weight: 600; letter-spacing: .08em;
                     text-transform: uppercase }
 .healthpanel__mode--full{ background: rgba(46,125,110,.10); color: var(--clear) }
-.healthpanel__mode--deterministic_only{ background: rgba(216,140,61,.13); color: #8A4B0A }
+.healthpanel__mode--deterministic_only{ background: rgba(231,136,35,.13); color: #8A4B0A }
 .healthlist{ margin: 14px 0; padding: 0; list-style: none }
 .healthlist li{ display: flex; align-items: center; gap: 10px;
                 padding: 5px 0; border-bottom: 1px solid var(--hair);
@@ -694,7 +694,7 @@ button.bx--flag:hover{ background: rgba(184,58,40,.10) }
                    background: #F7F5F0; color: var(--ink); font-family: var(--mono);
                    font-size: 11.5px; line-height: 1.65; white-space: pre-wrap;
                    overflow-wrap: anywhere; tab-size: 2 }
-.docpreview__text mark{ display: inline; padding: 2px 1px; background: rgba(216,140,61,.28);
+.docpreview__text mark{ display: inline; padding: 2px 1px; background: rgba(231,136,35,.28);
                         color: var(--ink); box-shadow: inset 0 -2px 0 var(--orange) }
 .docpreview__empty{ height: 340px; display: flex; align-items: center; justify-content: center;
                     padding: 20px; color: var(--muted); font-size: var(--fs-small) }
@@ -747,7 +747,7 @@ button.bx--flag:hover{ background: rgba(184,58,40,.10) }
            padding: 2px 7px; border-radius: var(--r-pill); font-size: 9px;
            font-weight: 600; letter-spacing: .04em; text-transform: uppercase }
 .priority--urgent{ background: rgba(184,58,40,.10); color: var(--wrong) }
-.priority--high{ background: rgba(216,140,61,.14); color: #8A4B0A }
+.priority--high{ background: rgba(231,136,35,.14); color: #8A4B0A }
 .priority--normal{ background: rgba(0,109,174,.09); color: var(--blue) }
 .priority--routine{ background: rgba(16,26,36,.06); color: var(--muted) }
 .wrow__owner{ width: 112px; flex: none; overflow: hidden; text-overflow: ellipsis;
