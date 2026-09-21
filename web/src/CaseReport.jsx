@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { FIELD_LABEL, FIELD_ORDER, REASON_TITLE } from './status.js'
-import { getCaseReportPdfUrl } from './api.js'
+import { downloadUrl, getCaseReportPdfUrl } from './api.js'
 
 export default function CaseReport({ kase, events }) {
   const documents = kase.documents || []
@@ -24,6 +25,20 @@ export default function CaseReport({ kase, events }) {
     ? `${Math.round(confidenceScores.reduce((sum, value) => sum + value, 0) / confidenceScores.length * 100)}%`
     : 'Not recorded'
   const reportUrl = getCaseReportPdfUrl(kase.email_id)
+  const [building, setBuilding] = useState(false)
+  const [reportError, setReportError] = useState(null)
+
+  async function downloadReport() {
+    setBuilding(true)
+    setReportError(null)
+    try {
+      await downloadUrl(reportUrl, `${kase.email_id}-case-report.pdf`)
+    } catch (e) {
+      setReportError(e.message)
+    } finally {
+      setBuilding(false)
+    }
+  }
 
   return (
     <section className="casereport" aria-labelledby="case-report-title">
@@ -33,16 +48,18 @@ export default function CaseReport({ kase, events }) {
           <h2 id="case-report-title">Decision summary</h2>
         </div>
         <div className="casereport__actions">
-          {reportUrl ? (
-            <a className="casereport__download" href={reportUrl} download>
-              Download PDF
-            </a>
-          ) : (
-            <button className="casereport__download" type="button" disabled title="Connect the live API to download this report">
-              Download PDF
-            </button>
-          )}
+          <button
+            className="casereport__download"
+            type="button"
+            disabled={!reportUrl || building}
+            aria-busy={building}
+            onClick={downloadReport}
+            title={reportUrl ? undefined : 'Connect the live API to download this report'}
+          >
+            {building ? 'Building the report…' : 'Download PDF'}
+          </button>
           <span className={'casereport__result casereport__result--' + resultTone(kase)}>{finalResult}</span>
+          {reportError && <small className="casereport__error">{reportError}</small>}
         </div>
       </div>
 

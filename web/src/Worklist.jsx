@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import Bar from './Bar.jsx'
 import Dashboard from './Dashboard.jsx'
-import { getAllCasesExcelUrl, getCases } from './api.js'
+import { downloadUrl, getAllCasesExcelUrl, getCases } from './api.js'
 import { kindOf, KIND_WORD, FIELD_PLAIN, REASON_TITLE } from './status.js'
 
 const FILTERS = ['wrong', 'review', 'clear', 'none']
@@ -35,6 +35,8 @@ export default function Worklist({ health }) {
   const [exportPeriod, setExportPeriod] = useState('all')
   const [exportMonth, setExportMonth] = useState(currentMonthValue)
   const [exportYear, setExportYear] = useState(String(reportYear))
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState(null)
 
   function loadCases() {
     setItems(null)
@@ -102,6 +104,18 @@ export default function Worklist({ health }) {
     exportHelp = `${shortUtcDate(last30DaysStart)} to ${reportEnd} UTC.`
   }
   const excelExportUrl = getAllCasesExcelUrl(exportOptions)
+
+  async function downloadExcel() {
+    setExporting(true)
+    setExportError(null)
+    try {
+      await downloadUrl(excelExportUrl, 'protozero-cases.xlsx')
+    } catch (e) {
+      setExportError(e.message)
+    } finally {
+      setExporting(false)
+    }
+  }
 
   function changePage(nextPage) {
     setPage(Math.max(1, Math.min(nextPage, pageCount)))
@@ -196,23 +210,20 @@ export default function Worklist({ health }) {
               </div>
               <div className="workexport-foot">
                 <small>
-                  {exportHelp} Uses the received date, or first processed date when missing.
-                  Search and filters do not affect the download.
+                  {exportError
+                    ? exportError
+                    : `${exportHelp} Uses the received date, or first processed date when missing. Search and filters do not affect the download.`}
                 </small>
-                {excelExportUrl ? (
-                  <a
-                    className="btn btn--ghost btn--small workexport"
-                    href={excelExportUrl}
-                    download
-                    title="The export is independent of the worklist search, filters and current page"
-                  >
-                    Download Excel
-                  </a>
-                ) : (
-                  <button className="btn btn--ghost btn--small workexport" type="button" disabled>
-                    Download Excel
-                  </button>
-                )}
+                <button
+                  className="btn btn--ghost btn--small workexport"
+                  type="button"
+                  disabled={!excelExportUrl || exporting}
+                  aria-busy={exporting}
+                  onClick={downloadExcel}
+                  title="The export is independent of the worklist search, filters and current page"
+                >
+                  {exporting ? 'Building the workbook…' : 'Download Excel'}
+                </button>
               </div>
             </div>
           </div>

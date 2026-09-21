@@ -72,6 +72,20 @@ export function getAllCasesExcelUrl({ period = 'all', year, month } = {}) {
   return BASE + '/cases/export.xlsx?' + params.toString()
 }
 
+// No REQUEST_TIMEOUT_MS here on purpose: the server builds the whole workbook
+// before it sends a byte, and a big export outlives the 15s the JSON calls use.
+export async function downloadUrl(url, fallbackName) {
+  const res = await fetch(url)
+  if (!res.ok) throw new Error('The download failed (' + res.status + '). Check that the backend is running.')
+  const name = /filename="?([^"]+)"?/.exec(res.headers.get('content-disposition') || '')?.[1] || fallbackName
+  const objectUrl = URL.createObjectURL(await res.blob())
+  const link = document.createElement('a')
+  link.href = objectUrl
+  link.download = name
+  link.click()
+  URL.revokeObjectURL(objectUrl)
+}
+
 export async function resolveReview(id, body) {
   if (mock) return { ok: true }
   const res = await fetch(BASE + '/review/' + id + '/resolve', {

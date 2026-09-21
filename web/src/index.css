@@ -355,6 +355,7 @@ body{
                        cursor: pointer }
 .casereport__download:hover{ border-color: var(--blue); background: rgba(0,109,174,.045) }
 .casereport__download:disabled{ color: var(--muted); cursor: not-allowed; opacity: .65 }
+.casereport__error{ flex: 1 1 100%; text-align: right; color: var(--wrong) }
 .casereport__result{ flex: none; padding: 4px 9px; border: 1px solid currentColor;
                      border-radius: var(--r-control); font-family: var(--mono);
                      font-size: 10px; font-weight: 600; letter-spacing: .08em }
