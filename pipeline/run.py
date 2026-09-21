@@ -229,6 +229,7 @@ def process_email(
 
 def _hold_scanned_case(case: Case, scanned, si, bl, now, started):
     candidates = [c.field for c in case.comparisons if c.verdict == "MISMATCH"]
+    unread = [c.field for c in case.comparisons if c.verdict in ("ABSENT", "REVIEW")]
     confidences = [
         d.ocr_confidence
         for d in (si, bl)
@@ -246,14 +247,23 @@ def _hold_scanned_case(case: Case, scanned, si, bl, now, started):
     case.wire_review_reason = to_wire_reason(case.escalation_reasons)
     case.lifecycle = "in_review"
     conf_note = f" (OCR confidence {ocr_conf:.0%})" if ocr_conf is not None else ""
+    notes = []
     if candidates:
-        diff_note = "OCR reads a possible difference on " + ", ".join(
-            _FIELD_LABEL[f] for f in candidates
-        ) + "."
+        notes.append(
+            "reads a possible difference on "
+            + ", ".join(_FIELD_LABEL[f] for f in candidates)
+        )
+    if unread:
+        notes.append("could not read " + ", ".join(_FIELD_LABEL[f] for f in unread))
+    if not notes:
+        notes.append(f"reads all {len(case.comparisons)} fields as matching")
+    diff_note = "OCR " + "; ".join(notes) + "."
+    if len(scanned) == 1:
+        doc_note = f"The {which} is a scanned image"
     else:
-        diff_note = "OCR reads all seven fields as matching."
+        doc_note = f"The {which} are scanned images"
     case.summary = (
-        f"The {which} is a scanned image, read by Document Intelligence{conf_note}. "
+        f"{doc_note}, read by Document Intelligence{conf_note}. "
         f"{diff_note} A person should confirm against the scan before acting."
     )
     case.timings_ms = {"total": int((time.perf_counter() - started) * 1000)}

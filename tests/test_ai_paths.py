@@ -140,6 +140,30 @@ def test_scanned_case_with_differences_reports_them_as_candidates_only():
         assert "possible difference" in case.summary
 
 
+def test_scanned_case_never_claims_a_field_ocr_could_not_read():
+    def fallback(attachments, documents, read_bytes):
+        out = _fake_ocr_from("email_499")(attachments, documents, read_bytes)
+        for doc in (out or {}).values():
+            doc.fields.shipper.value = None
+            doc.fields.shipper.evidence = None
+        return out
+
+    case, _ = process_email(
+        _email("email_513"), inbox.read_bytes, extract_fallback=fallback
+    )
+    assert any(c.field == "shipper" and c.verdict == "ABSENT" for c in case.comparisons)
+    assert "as matching" not in case.summary
+    assert "could not read shipper" in case.summary
+
+
+def test_two_scanned_documents_are_described_in_the_plural():
+    case, _ = process_email(
+        _email("email_513"), inbox.read_bytes, extract_fallback=_fake_ocr_from("email_499")
+    )
+    assert "are scanned images" in case.summary
+    assert " is a scanned image" not in case.summary
+
+
 def test_truncated_pdf_is_never_sent_to_ocr():
     called = []
 
