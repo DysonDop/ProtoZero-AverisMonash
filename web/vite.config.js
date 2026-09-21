@@ -10,5 +10,5 @@ export default defineConfig({
   // and must not hold anything we would not serve publicly. The fixtures README
   // lives at web/MOCKS.md for exactly that reason.
   publicDir: 'mocks',
-  server: { port: 5175 },
+  server: { port: 5175, proxy: { '/api': 'http://127.0.0.1:8000' } },
 })

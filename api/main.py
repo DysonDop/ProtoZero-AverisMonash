@@ -403,10 +403,12 @@ def get_raw_document(email_id: str, role: Literal["SI", "BL"]) -> Response:
         "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     }.get(source.fmt, "application/octet-stream")
     filename = Path(source.attachment_path).name.replace('"', "")
+    # only txt and pdf render in a browser tab; inline on xlsx/docx gives a blank tab
+    disposition = "inline" if source.fmt in ("txt", "pdf", "scan_pdf") else "attachment"
     return Response(
         content=content,
         media_type=media_type,
-        headers={"Content-Disposition": f'inline; filename="{filename}"'},
+        headers={"Content-Disposition": f'{disposition}; filename="{filename}"'},
     )
 
 
