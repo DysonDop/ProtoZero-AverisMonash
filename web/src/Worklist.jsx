@@ -92,9 +92,13 @@ export default function Worklist({ health }) {
   )
   if (!items) return <Shell meta="worklist"><div className="state">Reading the inbox and preparing the checks.</div></Shell>
 
-  const periodItems = items.filter(item => matchesReportPeriod(
-    item, exportPeriod, exportMonth, exportYear, reportNow
-  ))
+  // The dataset carries no sent/received timestamp, so every date-driven
+   // control is hidden rather than shown empty. Restores itself the moment a
+   // mail connector supplies received_at.
+  const hasDates = items.some(item => caseDate(item) != null)
+  const periodItems = hasDates
+    ? items.filter(item => matchesReportPeriod(item, exportPeriod, exportMonth, exportYear, reportNow))
+    : items
   const counts = {}
   for (const k of FILTERS) counts[k] = periodItems.filter(c => kindOf(c) === k).length
 
@@ -119,7 +123,7 @@ export default function Worklist({ health }) {
       || (inboxView === 'incoming' ? isIncoming(c) : !isIncoming(c))
     const matchesStatus = selectedResults.length === 0 || selectedResults.includes(kindOf(c))
     const matchesType = selectedTypes.length === 0 || selectedTypes.includes(c.category)
-    const matchesWhen = matchesDate(c, dateFilter, dateFrom, dateTo, reportNow)
+    const matchesWhen = !hasDates || matchesDate(c, dateFilter, dateFrom, dateTo, reportNow)
     const matchesChart = !chartFilter || matchesDashboardFilter(c, chartFilter)
     const matchesQuery = !needle || [
       c.email_id, c.subject, c.from_addr, c.summary,
@@ -245,7 +249,7 @@ export default function Worklist({ health }) {
         <Dashboard
           health={health}
           items={periodItems}
-          periodLabel={exportPeriod === 'all' ? 'Full register' : exportHelp}
+          periodLabel={!hasDates || exportPeriod === 'all' ? 'Full register' : exportHelp}
           onDrillDown={drillDown}
         />
 
@@ -271,7 +275,7 @@ export default function Worklist({ health }) {
               <small>Searches the case ID, subject, sender, email type and summary.</small>
             </label>
             <div className="workexport-group">
-              <label htmlFor="export-period">Worklist period &amp; Excel export</label>
+              <label htmlFor="export-period">{hasDates ? 'Worklist period & Excel export' : 'Excel export period'}</label>
               <div className="workexport-row">
                 <div className={`workexport-options${exportPeriod === 'month' || exportPeriod === 'year' ? ' workexport-options--dated' : ''}`}>
                   <select
@@ -308,7 +312,9 @@ export default function Worklist({ health }) {
                 <small>
                   {exportError
                     ? exportError
-                    : `${exportHelp} The worklist and workbook use this period. Search and advanced filters narrow the worklist only.`}
+                    : hasDates
+                      ? `${exportHelp} The worklist and workbook use this period. Search and advanced filters narrow the worklist only.`
+                      : `${exportHelp} Scopes the workbook only — the worklist is unaffected while the inbox carries no received dates.`}
                 </small>
                 <button
                   className="btn btn--ghost btn--small workexport"
@@ -325,10 +331,12 @@ export default function Worklist({ health }) {
           </div>
 
           <dl className="inboxpulse" aria-label="Email worklist summary">
-            <div>
-              <dt>{exportPeriod === 'all' ? 'Added today' : 'In selected period'}</dt>
-              <dd>{exportPeriod === 'all' ? addedToday : periodItems.length}</dd>
-            </div>
+            {hasDates && (
+              <div>
+                <dt>{exportPeriod === 'all' ? 'Added today' : 'In selected period'}</dt>
+                <dd>{exportPeriod === 'all' ? addedToday : periodItems.length}</dd>
+              </div>
+            )}
             <div><dt>Incoming</dt><dd>{incomingItems.length}</dd></div>
             <div><dt>Need action</dt><dd>{actionNeeded}</dd></div>
             <div><dt>Currently showing</dt><dd>{shown.length}</dd></div>
@@ -351,7 +359,7 @@ export default function Worklist({ health }) {
                 <span>Sort</span>
                 <select value={sortBy} onChange={event => setSortBy(event.target.value)}>
                   <option value="priority">Priority first</option>
-                  <option value="newest">Newest first</option>
+                  {hasDates && <option value="newest">Newest first</option>}
                   <option value="case_id">Case ID</option>
                 </select>
               </label>
@@ -384,7 +392,7 @@ export default function Worklist({ health }) {
             </div>
 
             {filtersOpen && (
-              <div className="filtermenu__panel">
+              <div className={`filtermenu__panel${hasDates ? '' : ' filtermenu__panel--nodates'}`}>
                 <fieldset>
                   <legend>Result <small>Select multiple</small></legend>
                   <div className="filtermenu__choices filtermenu__choices--results">
@@ -408,6 +416,7 @@ export default function Worklist({ health }) {
                     ))}
                   </div>
                 </fieldset>
+                {hasDates && (
                 <div className="filtermenu__dates">
                   <label htmlFor="email-date-filter">Received date</label>
                   <select id="email-date-filter" value={dateFilter} onChange={event => setDateFilter(event.target.value)}>
@@ -421,6 +430,7 @@ export default function Worklist({ health }) {
                   )}
                   <small>Uses the received date, or first processed date when missing.</small>
                 </div>
+                )}
                 <div className="filtermenu__actions">
                   <button type="button" disabled={!hasSearchOrFilters} onClick={() => clearWorklistFilters()}>Reset filters</button>
                   <button type="button" onClick={() => setFiltersOpen(false)}>Done</button>
@@ -456,7 +466,7 @@ export default function Worklist({ health }) {
                         <span className="wrow__ref trunc">{c.subject} &nbsp;&middot;&nbsp; {c.from_addr}</span>
                       </span>
                       {c.assigned_to && <span className="wrow__owner">{c.assigned_to}</span>}
-                      <span className="wrow__time">{formatInboxDate(caseDate(c), reportNow)}</span>
+                      {hasDates && <span className="wrow__time">{formatInboxDate(caseDate(c), reportNow)}</span>}
                       <span className="wrow__id">{c.email_id}</span>
                       <span className="wrow__open" aria-hidden="true">&rarr;</span>
                     </a>

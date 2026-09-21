@@ -61,8 +61,13 @@ body{
   outline-offset: 2px;
 }
 
+/* Reduced motion keeps the feedback and drops the travel: colour and opacity
+   still confirm a press, transforms and shadows do not move. */
 @media (prefers-reduced-motion: reduce){
-  *{ animation-duration: .01ms !important; transition-duration: .01ms !important }
+  *{ animation-duration: .01ms !important }
+  *{ transition-property: background-color, border-color, color, opacity !important;
+     transition-duration: 120ms !important }
+  *{ transform: none !important }
 }
 
 .app{ min-height: 100vh; display: flex; flex-direction: column }
@@ -126,10 +131,13 @@ body{
 .margin{ min-width: 0;
          display: flex; flex-direction: column; gap: var(--gap-md);
          position: relative; z-index: 1 }
-.wmain{ width: 100%; max-width: 1380px; margin-inline: auto; flex-grow: 1; min-height: 0;
-        padding: 28px clamp(20px, 3vw, 42px) 42px;
+.wmain{ width: 100%; margin-inline: auto; flex-grow: 1; min-height: 0;
+        max-width: calc(var(--case-content-max) + var(--case-gutter) + var(--case-gutter));
+        padding: 28px var(--case-gutter) 42px;
         display: flex; flex-direction: column; gap: 18px }
-.rmain{ flex-grow: 1; min-height: 0; padding: 22px 34px;
+.rmain{ width: 100%; margin-inline: auto; flex-grow: 1; min-height: 0;
+        max-width: calc(var(--case-content-max) + var(--case-gutter) + var(--case-gutter));
+        padding: 22px var(--case-gutter);
         display: flex; flex-direction: column; gap: 14px }
 .chips{ display: flex; gap: 8px; flex-wrap: wrap }
 .review-sort{ display: flex; align-items: center; gap: 8px; margin-left: auto;
@@ -391,6 +399,11 @@ body{
   from{ opacity: 0; transform: translateY(-4px) }
   to{ opacity: 1; transform: translateY(0) }
 }
+/* With no received dates the third fieldset is gone, so the panel must not keep
+   reserving its track. Both groups then read as parallel single-column lists,
+   which also removes the orphaned fifth box the 2-up type grid left behind. */
+.filtermenu__panel--nodates{ grid-template-columns: minmax(260px, 1fr) minmax(340px, 1fr) }
+.filtermenu__panel--nodates .filtermenu__choices{ grid-template-columns: minmax(0, 1fr) }
 .filtermenu fieldset{ min-width: 0; margin: 0; padding: 0; border: 0 }
 .filtermenu__panel > fieldset:nth-child(2), .filtermenu__dates{
                     margin-left: 20px; padding-left: 20px; border-left: 1px solid var(--rule) }
@@ -932,7 +945,7 @@ a.card__title:hover{ text-decoration: underline }
   .ops__body{ grid-template-columns: 1fr }
   .workflow__controls{ grid-template-columns: repeat(2, minmax(0, 1fr)) }
   .workflow__actions{ grid-column: 1 / -1; justify-content: flex-end }
-  .casebanner{ grid-template-columns: 12px 1fr }
+  .casebanner{ grid-template-columns: 12px minmax(0, 1fr) }
   .casebanner__meta{ grid-column: 2; display: flex; gap: 16px }
   .reportgrid{ grid-template-columns: repeat(2, minmax(0, 1fr)) }
   .reportfact--evidence{ grid-column: span 1 }
@@ -1013,4 +1026,46 @@ a.card__title:hover{ text-decoration: underline }
   .casereport__head{ align-items: stretch; flex-direction: column }
   .casereport__actions{ justify-content: space-between }
   .wrow__id{ display: none }
+}
+
+/* Press feedback. 22 :hover rules and no :active meant a touch device got no
+   response at all until the page changed. Pressed state is instant on the way
+   in and eases on the way out, so a press reads as contact, not as animation. */
+.btn, .pagination__button, .filtermenu__toggle, .filtermenu__actions button,
+.casereport__download, .workexport, .auditstage__links button,
+.outcomelegend button, .chartbars__button, .inboxnav__tabs button,
+.thin__audit, .thin__queue, .thin__back, .thin__home, button.bx,
+.ops__summary, .wrow--link, .chip{
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color .16s ease, border-color .16s ease, color .16s ease,
+              transform .16s ease, box-shadow .16s ease;
+}
+.btn:active:not(:disabled), .pagination__button:active:not(:disabled),
+.filtermenu__toggle:active, .filtermenu__actions button:active:not(:disabled),
+.casereport__download:active:not(:disabled), .workexport:active:not(:disabled),
+.auditstage__links button:active, .outcomelegend button:active,
+.chartbars__button:active, .inboxnav__tabs button:active,
+.thin__audit:active, .thin__queue:active, .thin__back:active, .thin__home:active,
+button.bx:active, .ops__summary:active, .wrow--link:active, .chip:active{
+  transform: scale(.985);
+  box-shadow: none;
+  transition-duration: 0s;
+}
+.wrow--link:active{ transform: none; background: rgba(16,26,36,.06) }
+.thin__audit:active, .thin__queue:active, .thin__back:active, .thin__home:active{
+  background: rgba(255,255,255,.2) }
+
+/* Fingers, not cursors. Desktop density is deliberate for a dense worklist, so
+   the larger targets apply only where the pointer is coarse. */
+@media (pointer: coarse){
+  .btn, .pagination__button, .filtermenu__toggle, .filtermenu__actions button,
+  .casereport__download, .workexport, .auditstage__links button,
+  .inboxnav__tabs button, .thin__audit, .thin__queue, .thin__back,
+  .listsort select, .filtermenu__dates select, .workexport-row select,
+  .workexport-row input{ min-height: var(--tap) }
+  .outcomelegend button{ min-height: var(--tap) }
+  /* .chartbars__button stays at its density: 16 bars at 44px would make the
+     chart 700px tall on a phone. Secondary drill-down inside a closed panel. */
+  .thin__home{ min-width: 32px; min-height: 32px }
+  .filtermenu__choices label{ min-height: var(--tap); align-items: center }
 }
