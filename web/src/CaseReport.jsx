@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { FIELD_LABEL, FIELD_ORDER, REASON_TITLE } from './status.js'
 import { downloadUrl, getCaseReportPdfUrl } from './api.js'
 
+const DASH = '—'
+
 export default function CaseReport({ kase, events }) {
   const documents = kase.documents || []
   const comparisons = kase.comparisons || []
@@ -27,6 +29,43 @@ export default function CaseReport({ kase, events }) {
   const reportUrl = getCaseReportPdfUrl(kase.email_id)
   const [building, setBuilding] = useState(false)
   const [reportError, setReportError] = useState(null)
+  const [copied, setCopied] = useState(false)
+
+  const amendments = comparisons
+    .filter(value => value.verdict === 'MISMATCH' || value.verdict === 'REVIEW')
+    .map(value => ({
+      field: value.field,
+      label: FIELD_LABEL[value.field] || value.field,
+      draft: value.bl?.value,
+      instruction: value.si?.value,
+      certain: value.verdict === 'MISMATCH',
+    }))
+
+  async function copyAmendments() {
+    const lines = [
+      `Draft BL amendments - ${kase.email_id}`,
+      kase.subject || '',
+      '',
+      ...amendments.flatMap(item => [
+        `${item.label}${item.certain ? '' : ' (please confirm)'}`,
+        `  draft reads:  ${item.draft ?? DASH}`,
+        `  should read:  ${item.instruction ?? DASH}`,
+      ]),
+      '',
+      ...corrections.map(event =>
+        `Amended by ${event.reviewer_id || 'reviewer'}: ${FIELD_LABEL[event.field] || event.field}`
+        + ` - was ${event.previous_value ?? DASH}, now ${event.new_value ?? DASH}`),
+      `Checked against the Shipping Instruction. ${amendments.length} field`
+      + `${amendments.length === 1 ? '' : 's'} to amend.`,
+    ].filter(line => line !== null)
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'))
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1800)
+    } catch {
+      setCopied(false)
+    }
+  }
 
   async function downloadReport() {
     setBuilding(true)
@@ -59,6 +98,11 @@ export default function CaseReport({ kase, events }) {
             {building ? 'Building the report…' : 'Download PDF'}
           </button>
           <span className={'casereport__result casereport__result--' + resultTone(kase)}>{finalResult}</span>
+          {amendments.length > 0 && (
+            <button className="casereport__download" type="button" onClick={copyAmendments}>
+              {copied ? 'Copied' : 'Copy amendments'}
+            </button>
+          )}
           {reportError && <small className="casereport__error">{reportError}</small>}
         </div>
       </div>

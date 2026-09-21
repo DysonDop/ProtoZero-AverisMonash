@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Bar from './Bar.jsx'
 import Dashboard from './Dashboard.jsx'
+import Pipeline from './Pipeline.jsx'
 import { downloadUrl, getAllCasesExcelUrl, getCases } from './api.js'
 import { kindOf, FIELD_PLAIN, REASON_TITLE, priorityOf } from './status.js'
 
@@ -236,14 +237,10 @@ export default function Worklist({ health }) {
               </a>
             )}
           </div>
-          <div className="welcome__path">
-            <span className="eyebrow">Verification path</span>
-            <ol className="welcome__steps" aria-label="How ProtoZero works">
-              <li><b>01</b><span><strong>Understand the request</strong><small>Separate real document checks from inbox noise.</small></span></li>
-              <li><b>02</b><span><strong>Compare seven fields</strong><small>Read both documents using deterministic rules first.</small></span></li>
-              <li><b>03</b><span><strong>Prove the result</strong><small>Show exact source evidence or stop for a person.</small></span></li>
-            </ol>
-          </div>
+          <Pipeline items={periodItems} onSelect={value => {
+            setSelectedResults([value])
+            document.getElementById('email-checks-heading')?.scrollIntoView({ block: 'start' })
+          }} />
         </section>
 
         <Dashboard
@@ -260,7 +257,6 @@ export default function Worklist({ health }) {
               <h2 id="email-checks-heading">Email checks</h2>
               <p>Start with an exception, or find a specific case from the inbox.</p>
             </div>
-            <span className="workbench__total"><b>{items.length}</b> cases in the register</span>
           </div>
 
           <div className="worktools">
@@ -329,18 +325,6 @@ export default function Worklist({ health }) {
               </div>
             </div>
           </div>
-
-          <dl className="inboxpulse" aria-label="Email worklist summary">
-            {hasDates && (
-              <div>
-                <dt>{exportPeriod === 'all' ? 'Added today' : 'In selected period'}</dt>
-                <dd>{exportPeriod === 'all' ? addedToday : periodItems.length}</dd>
-              </div>
-            )}
-            <div><dt>Incoming</dt><dd>{incomingItems.length}</dd></div>
-            <div><dt>Need action</dt><dd>{actionNeeded}</dd></div>
-            <div><dt>Currently showing</dt><dd>{shown.length}</dd></div>
-          </dl>
 
           <div className="inboxnav">
             <div className="inboxnav__tabs" role="tablist" aria-label="Choose email view">

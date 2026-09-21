@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useRoute } from './route.js'
-import { getHealth } from './api.js'
+import { getHealth, offlineMode } from './api.js'
 import Worklist from './Worklist.jsx'
 import Review from './Review.jsx'
 import CaseView from './CaseView.jsx'
@@ -24,6 +24,16 @@ export default function App() {
 
   return (
     <div className="app">
+      {offlineMode && (
+        <div className="modebanner" role="status">
+          <span className="modebanner__mark" aria-hidden="true">!</span>
+          <span>
+            <b>Sample data</b>
+            {' The case service is not connected, so figures and documents are fixtures'
+             + ' and anything that writes back is switched off.'}
+          </span>
+        </div>
+      )}
       {health?.circuit_breaker === 'open' && (
         <div className="modebanner" role="status">
           <span className="modebanner__mark" aria-hidden="true">!</span>

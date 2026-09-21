@@ -39,3 +39,20 @@ def test_reminder_mentioning_si_is_general():
         "_Reminder_Paper - Submit SI & AED_26-01-2026", "", "hr@april.com.my", 0
     )
     assert cat == "GENERAL"
+
+
+def test_underscore_separator_does_not_defeat_the_si_rule():
+    cat, by, _ = classify(
+        "RE_ SI NEEDED_ 5APH-26773 _ UAB NOVAKOPA _ PO_25_2186 _ MERSIN",
+        "",
+        "docs@aprilasia.com",
+        0,
+    )
+    assert cat == "SI_REQUEST" and by == "rule"
+
+
+def test_si_rule_still_rejects_a_longer_word():
+    cat, _, _ = classify(
+        "NEW SIGNATURE REQUIRED FOR PO_25_2186", "", "docs@aprilasia.com", 0
+    )
+    assert cat != "SI_REQUEST"

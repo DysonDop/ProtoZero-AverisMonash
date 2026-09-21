@@ -89,13 +89,18 @@ _GENERAL_SUBJECT = re.compile(
 )
 
 _COMPARISON_SUBJECT = re.compile(
-    r"^(TO CONFIRM DOCS|REQUEST BL DRAFT|DRAFT BL\b|CONFIRM DRAFT BL|CHECK DOCS)",
+    r"^(TO CONFIRM DOCS|REQUEST BL DRAFT|DRAFT BL(?![A-Za-z0-9])|CONFIRM DRAFT BL|CHECK DOCS)",
     re.I,
 )
 # The coded carrier form: AIE - <POD> - <CARRIER>(<BL#>) - ...
 _COMPARISON_CODED = re.compile(r"^(AIE|AFEMY|AFRT|AFPTME|AF[A-Z]{2,})\s*-\s*", re.I)
 
-_SI_REQUEST_SUBJECT = re.compile(r"^(CUST SI|REQUEST SI|SI NEEDED|NEW SI)\b", re.I)
+# Not \b: '_' is a word character, and it is this corpus's field separator, so
+# \b never matches in "SI NEEDED_ 5APH-26773". The lookahead still rejects a
+# longer word ("NEW SIGNATURE").
+_SI_REQUEST_SUBJECT = re.compile(
+    r"^(CUST SI|REQUEST SI|SI NEEDED|NEW SI)(?![A-Za-z0-9])", re.I
+)
 _SI_REQUEST_CODED = re.compile(r"^SI\s*-\s*\S+\s*-\s*DIRECT\s*\(", re.I)
 
 _INVOICE_SUBJECT = re.compile(

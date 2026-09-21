@@ -187,6 +187,34 @@ body{
 .welcome__steps span{ display: flex; flex-direction: column }
 .welcome__steps strong{ padding-top: 1px; font-size: var(--fs-small); font-weight: 600 }
 .welcome__steps small{ margin-top: 2px; color: var(--muted); font-size: var(--fs-meta); line-height: 1.45 }
+.pipeline{ display: flex; flex-direction: column; gap: 13px;
+           min-width: 0; padding: 20px 22px;
+           border: 1px solid var(--rule); border-radius: var(--r-panel); background: #FCFBF8 }
+.pipeline__caption{ margin: 0 0 8px; color: var(--muted); font-size: var(--fs-small) }
+.pipeline__caption b{ color: var(--ink); font-family: var(--mono); font-weight: 500 }
+.pipeline__split{ display: flex; gap: 2px; height: 34px; overflow: hidden;
+                  border-radius: var(--r-control) }
+.pipeline__seg{ display: flex; min-width: 0; align-items: center; justify-content: center;
+                gap: 5px; padding: 0 8px; overflow: hidden;
+                font-size: var(--fs-meta); white-space: nowrap }
+.pipeline__seg b{ font-family: var(--mono); font-weight: 500 }
+.pipeline__seg--checks{ background: rgba(16,26,36,.82); color: var(--on-dark) }
+.pipeline__seg--routed{ background: rgba(16,26,36,.07); color: var(--muted) }
+.pipeline__outcomes{ display: flex; flex-direction: column; gap: 5px;
+                     margin: 0; padding: 0; list-style: none }
+.pipeline__outcomes button{ display: grid; width: 100%; min-height: 40px;
+                            grid-template-columns: 10px minmax(0, 1fr) auto;
+                            align-items: center; gap: 11px; padding: 6px 11px;
+                            border: 1px solid var(--rule); border-radius: var(--r-control);
+                            background: var(--sheet); color: var(--ink);
+                            font: inherit; text-align: left; cursor: pointer }
+.pipeline__outcomes button:disabled{ opacity: .5; cursor: default }
+.pipeline__outcomes button:hover:not(:disabled){ border-color: var(--blue) }
+.pipeline__label{ display: flex; min-width: 0; flex-direction: column }
+.pipeline__label strong{ font-size: var(--fs-small); font-weight: 500 }
+.pipeline__label small{ color: var(--muted); font-size: var(--fs-meta) }
+.pipeline__count{ font-family: var(--mono); font-size: 17px; font-weight: 500 }
+
 .ops{ overflow: hidden; background: var(--sheet);
       border: 1px solid var(--rule); border-radius: 12px }
 .ops__summary{ position: relative; min-height: 68px; display: flex; align-items: center; gap: 20px;
