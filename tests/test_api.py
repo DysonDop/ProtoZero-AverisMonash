@@ -32,6 +32,8 @@ def test_live_frontend_contract() -> None:
         assert len(second_page.json()["items"]) == 20
         assert "created_at" in second_page.json()["items"][0]
         assert "category_confidence" in second_page.json()["items"][0]
+        assert "assigned_to" in second_page.json()["items"][0]
+        assert "review_status" in second_page.json()["items"][0]
 
         excel = client.get("/api/cases/export.xlsx")
         assert excel.status_code == 200
@@ -140,6 +142,41 @@ def test_live_frontend_contract() -> None:
 
         for trap_id in ["email_004", "email_506", "email_503", "email_300", "email_513"]:
             assert client.get(f"/api/cases/{trap_id}").status_code == 200
+
+
+def test_assignment_and_review_status_are_audited_and_survive_rerun() -> None:
+    with TestClient(app) as client:
+        email_id = "email_010"
+        assigned = client.patch(
+            f"/api/cases/{email_id}/workflow",
+            json={
+                "assigned_to": "api-test",
+                "review_status": "in_progress",
+                "reviewer_id": "api-test",
+            },
+        )
+        assert assigned.status_code == 200
+        assert assigned.json()["case"]["assigned_to"] == "api-test"
+        assert assigned.json()["case"]["review_status"] == "in_progress"
+
+        rerun = client.post(f"/api/cases/{email_id}/rerun")
+        assert rerun.status_code == 200
+        assert rerun.json()["assigned_to"] == "api-test"
+        assert rerun.json()["review_status"] == "in_progress"
+
+        events = client.get(f"/api/cases/{email_id}/events").json()["items"]
+        assert any(event["action"] == "CASE_ASSIGNED" for event in events)
+        assert any(event["action"] == "REVIEW_STATUS_CHANGED" for event in events)
+
+        cleared = client.patch(
+            f"/api/cases/{email_id}/workflow",
+            json={
+                "assigned_to": None,
+                "review_status": "unassigned",
+                "reviewer_id": "api-test",
+            },
+        )
+        assert cleared.status_code == 200
 
 
 def test_correction_rejoins_at_comparison_without_rewriting_extraction() -> None:

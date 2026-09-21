@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import Bar from './Bar.jsx'
 import Dashboard from './Dashboard.jsx'
 import { downloadUrl, getAllCasesExcelUrl, getCases } from './api.js'
-import { kindOf, FIELD_PLAIN, REASON_TITLE } from './status.js'
+import { kindOf, FIELD_PLAIN, REASON_TITLE, priorityOf } from './status.js'
 
 const FILTERS = ['wrong', 'review', 'clear', 'none']
 const RANK = { wrong: 0, review: 1, clear: 2, none: 3 }
@@ -56,6 +56,8 @@ export default function Worklist({ health }) {
   const [dateFilter, setDateFilter] = useState('all')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [chartFilter, setChartFilter] = useState(null)
+  const [sortBy, setSortBy] = useState('priority')
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [page, setPage] = useState(1)
   const [exportPeriod, setExportPeriod] = useState('all')
@@ -77,7 +79,7 @@ export default function Worklist({ health }) {
   useEffect(() => {
     setPage(1)
   }, [inboxView, selectedResults, selectedTypes, dateFilter, dateFrom, dateTo, query,
-    exportPeriod, exportMonth, exportYear])
+    chartFilter, sortBy, exportPeriod, exportMonth, exportYear])
 
   if (error) return (
     <Shell meta="worklist">
@@ -104,8 +106,12 @@ export default function Worklist({ health }) {
     TYPE_OPTIONS.map(option => [option.value, periodItems.filter(item => item.category === option.value).length])
   )
   const ordered = [...periodItems].sort((a, b) => {
-    const rankDifference = RANK[kindOf(a)] - RANK[kindOf(b)]
-    return rankDifference || (caseDate(b)?.getTime() || 0) - (caseDate(a)?.getTime() || 0)
+    if (sortBy === 'case_id') return a.email_id.localeCompare(b.email_id, undefined, { numeric: true })
+    const dateDifference = (caseDate(b)?.getTime() || 0) - (caseDate(a)?.getTime() || 0)
+    if (sortBy === 'newest') return dateDifference || a.email_id.localeCompare(b.email_id)
+    const priorityDifference = priorityOf(a).rank - priorityOf(b).rank
+    const resultDifference = RANK[kindOf(a)] - RANK[kindOf(b)]
+    return priorityDifference || resultDifference || dateDifference || a.email_id.localeCompare(b.email_id)
   })
   const needle = query.trim().toLowerCase()
   const shown = ordered.filter(c => {
@@ -114,15 +120,16 @@ export default function Worklist({ health }) {
     const matchesStatus = selectedResults.length === 0 || selectedResults.includes(kindOf(c))
     const matchesType = selectedTypes.length === 0 || selectedTypes.includes(c.category)
     const matchesWhen = matchesDate(c, dateFilter, dateFrom, dateTo, reportNow)
+    const matchesChart = !chartFilter || matchesDashboardFilter(c, chartFilter)
     const matchesQuery = !needle || [
       c.email_id, c.subject, c.from_addr, c.summary,
       TYPE_OPTIONS.find(option => option.value === c.category)?.label,
     ]
       .some(value => String(value || '').toLowerCase().includes(needle))
-    return matchesView && matchesStatus && matchesType && matchesWhen && matchesQuery
+    return matchesView && matchesStatus && matchesType && matchesWhen && matchesChart && matchesQuery
   })
   const activeFilterCount = selectedResults.length + selectedTypes.length
-    + (dateFilter === 'all' ? 0 : 1)
+    + (dateFilter === 'all' ? 0 : 1) + (chartFilter ? 1 : 0)
   const hasSearchOrFilters = Boolean(query.trim()) || activeFilterCount > 0
   const pageCount = Math.max(1, Math.ceil(shown.length / PAGE_SIZE))
   const currentPage = Math.min(page, pageCount)
@@ -168,6 +175,7 @@ export default function Worklist({ health }) {
     setDateFilter('all')
     setDateFrom('')
     setDateTo('')
+    setChartFilter(null)
     if (includeView) setInboxView('all')
   }
 
@@ -192,6 +200,18 @@ export default function Worklist({ health }) {
     setPage(Math.max(1, Math.min(nextPage, pageCount)))
     window.requestAnimationFrame(() => {
       document.getElementById('email-checks-heading')?.scrollIntoView({ block: 'start' })
+    })
+  }
+
+  function drillDown(filter) {
+    setQuery('')
+    setInboxView('all')
+    setSelectedResults(filter.kind === 'result' ? [filter.value] : [])
+    setSelectedTypes(filter.kind === 'category' ? [filter.value] : [])
+    setChartFilter(['field', 'reason'].includes(filter.kind) ? filter : null)
+    setFiltersOpen(false)
+    window.requestAnimationFrame(() => {
+      document.getElementById('email-checks-heading')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     })
   }
 
@@ -226,6 +246,7 @@ export default function Worklist({ health }) {
           health={health}
           items={periodItems}
           periodLabel={exportPeriod === 'all' ? 'Full register' : exportHelp}
+          onDrillDown={drillDown}
         />
 
         <section className="workbench" aria-labelledby="email-checks-heading">
@@ -325,10 +346,20 @@ export default function Worklist({ health }) {
                 All records <span>{periodItems.length}</span>
               </button>
             </div>
-            <div className="inboxnav__summary" aria-live="polite">
-              {shown.length === 0
-                ? (periodItems.length === 0 ? 'No emails in this period' : 'No matching emails')
-                : `Showing ${pageStart + 1}-${pageEnd} of ${shown.length}`}
+            <div className="inboxnav__right">
+              <label className="listsort">
+                <span>Sort</span>
+                <select value={sortBy} onChange={event => setSortBy(event.target.value)}>
+                  <option value="priority">Priority first</option>
+                  <option value="newest">Newest first</option>
+                  <option value="case_id">Case ID</option>
+                </select>
+              </label>
+              <div className="inboxnav__summary" aria-live="polite">
+                {shown.length === 0
+                  ? (periodItems.length === 0 ? 'No emails in this period' : 'No matching emails')
+                  : `Showing ${pageStart + 1}-${pageEnd} of ${shown.length}`}
+              </div>
             </div>
           </div>
 
@@ -346,6 +377,7 @@ export default function Worklist({ health }) {
                       {selectedResults.length > 0 && <span>{selectedResults.length} result{selectedResults.length === 1 ? '' : 's'}</span>}
                       {selectedTypes.length > 0 && <span>{selectedTypes.length} email type{selectedTypes.length === 1 ? '' : 's'}</span>}
                       {dateFilter !== 'all' && <span>{DATE_OPTIONS.find(option => option.value === dateFilter)?.label}</span>}
+                      {chartFilter && <span>{dashboardFilterLabel(chartFilter)}</span>}
                     </>}
               </div>
               {hasSearchOrFilters && <button className="filtermenu__clear" type="button" onClick={() => clearWorklistFilters()}>Clear all</button>}
@@ -410,13 +442,20 @@ export default function Worklist({ health }) {
                 <div className="wtable">
                 {visible.map(c => {
                   const k = kindOf(c)
+                  const priority = priorityOf(c)
                   return (
                     <a className={'wrow wrow--link' + (k === 'none' ? ' wrow--muted' : '')} key={c.email_id} href={'#/case/' + c.email_id}>
                       <span className={'mk mk--' + k}></span>
                       <span className="wrow__body">
-                        <span className={'wrow__found wrow__found--' + k}>{headline(c)}</span>
+                        <span className="wrow__headline">
+                          <span className={'wrow__found wrow__found--' + k}>{headline(c)}</span>
+                          {priority.key !== 'routine' && (
+                            <span className={'priority priority--' + priority.key} title={priority.reason}>{priority.label}</span>
+                          )}
+                        </span>
                         <span className="wrow__ref trunc">{c.subject} &nbsp;&middot;&nbsp; {c.from_addr}</span>
                       </span>
+                      {c.assigned_to && <span className="wrow__owner">{c.assigned_to}</span>}
                       <span className="wrow__time">{formatInboxDate(caseDate(c), reportNow)}</span>
                       <span className="wrow__id">{c.email_id}</span>
                       <span className="wrow__open" aria-hidden="true">&rarr;</span>
@@ -484,6 +523,18 @@ function matchesDate(item, filter, from, to, now) {
   const start = from ? new Date(`${from}T00:00:00Z`) : null
   const end = to ? new Date(`${to}T23:59:59.999Z`) : null
   return (!start || date >= start) && (!end || date <= end)
+}
+
+function matchesDashboardFilter(item, filter) {
+  if (filter.kind === 'field') return (item.defect_fields || []).includes(filter.value)
+  if (filter.kind === 'reason') return item.wire_review_reason === filter.value
+  return true
+}
+
+function dashboardFilterLabel(filter) {
+  if (filter.kind === 'field') return `${FIELD_PLAIN[filter.value] || filter.value} differences`
+  if (filter.kind === 'reason') return REASON_TITLE[filter.value] || filter.value
+  return 'Dashboard selection'
 }
 
 function formatInboxDate(date, now) {

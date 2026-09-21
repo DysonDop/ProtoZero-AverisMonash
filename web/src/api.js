@@ -131,3 +131,17 @@ export async function clearCaseDecision(emailId) {
   if (!res.ok) throw new Error('undo for ' + emailId + ' returned ' + res.status)
   return res.json()
 }
+
+export async function updateCaseWorkflow(emailId, workflow) {
+  if (mock) return { case: { email_id: emailId, ...workflow } }
+  const res = await fetch(BASE + '/cases/' + emailId + '/workflow', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...workflow, reviewer_id: reviewerId }),
+  })
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null)
+    throw new Error(detail?.detail?.message || 'Could not update the review workflow.')
+  }
+  return res.json()
+}

@@ -88,6 +88,12 @@ class CaseDecisionRequest(BaseModel):
     reviewer_id: str = "review-desk"
 
 
+class CaseWorkflowRequest(BaseModel):
+    assigned_to: str | None = None
+    review_status: Literal["unassigned", "assigned", "in_progress", "completed"]
+    reviewer_id: str = "review-desk"
+
+
 # Set when the warm start fails. Surfaced in `/` and `/api/health` because
 # log streaming is unavailable on Container Apps express environments — if
 # something goes wrong at boot, the response body has to say so.
@@ -194,6 +200,7 @@ def ingest(req: IngestRequest) -> dict:
 
     for email in emails:
         breaker_before = AI_BREAKER.state
+        previous_case = STORE.get_case(email["email_id"])
         case, reviews = process_email(
             email,
             _inbox.read_bytes,
@@ -201,6 +208,7 @@ def ingest(req: IngestRequest) -> dict:
             extract_fallback=_extract_fallback if ENABLE_DOCINTEL else None,
             circuit_breaker=AI_BREAKER,
         )
+        _preserve_workflow(case, previous_case)
         first_run = not STORE.list_events(case.email_id)
         STORE.put_case(case)
         STORE.replace_reviews(case.email_id, reviews)
@@ -252,6 +260,8 @@ def list_cases(
                 "wire_review_reason": c.wire_review_reason,
                 "summary": c.summary,
                 "lifecycle": c.lifecycle,
+                "assigned_to": c.assigned_to,
+                "review_status": c.review_status,
                 "received_at": c.received_at,
                 "created_at": c.created_at,
                 "updated_at": c.updated_at,
@@ -450,6 +460,51 @@ def get_case_decision(email_id: str) -> dict:
     return {"decision": decision.model_dump(mode="json") if decision else None}
 
 
+@app.patch("/api/cases/{email_id}/workflow")
+def update_case_workflow(email_id: str, req: CaseWorkflowRequest) -> dict:
+    """Assign a case and move it through the human review workflow."""
+    ensure_loaded()
+    case = _case_or_404(email_id)
+    assigned_to = (req.assigned_to or "").strip() or None
+    if req.review_status in {"assigned", "in_progress"} and not assigned_to:
+        raise HTTPException(
+            422,
+            {"code": "assignee_required", "message": "Assigned and in-progress cases need an owner."},
+        )
+
+    previous_assignee = case.assigned_to
+    previous_status = case.review_status
+    case.assigned_to = assigned_to
+    case.review_status = req.review_status
+    case.lifecycle = "resolved" if req.review_status == "completed" else (
+        "in_review" if req.review_status in {"assigned", "in_progress"} else "new"
+    )
+    case.updated_at = datetime.now(timezone.utc)
+    STORE.put_case(case)
+
+    if previous_assignee != assigned_to:
+        _add_event(
+            case,
+            "CASE_ASSIGNED",
+            "The case owner changed.",
+            actor="reviewer",
+            reviewer_id=req.reviewer_id,
+            previous_value=previous_assignee or "Unassigned",
+            new_value=assigned_to or "Unassigned",
+        )
+    if previous_status != req.review_status:
+        _add_event(
+            case,
+            "REVIEW_STATUS_CHANGED",
+            "The human review status changed.",
+            actor="reviewer",
+            reviewer_id=req.reviewer_id,
+            previous_value=previous_status,
+            new_value=req.review_status,
+        )
+    return {"case": case.model_dump(mode="json")}
+
+
 @app.post("/api/cases/{email_id}/decision")
 def set_case_decision(email_id: str, req: CaseDecisionRequest) -> dict:
     ensure_loaded()
@@ -458,6 +513,10 @@ def set_case_decision(email_id: str, req: CaseDecisionRequest) -> dict:
     decision = CaseDecision(email_id=email_id, recorded_at=now, **req.model_dump())
     STORE.put_decision(decision)
     case.lifecycle = "in_review" if req.action in {"review", "request"} else "resolved"
+    if req.action in {"approve", "reject"}:
+        case.review_status = "completed"
+    elif case.assigned_to and case.review_status == "unassigned":
+        case.review_status = "assigned"
     case.updated_at = now
     STORE.put_case(case)
     manual_review_id = f"{email_id}:manual"
@@ -506,6 +565,7 @@ def delete_case_decision(email_id: str, reviewer_id: str = "review-desk") -> dic
     STORE.delete_decision(email_id)
     STORE.delete_review(f"{email_id}:manual")
     case.lifecycle = "in_review" if case.status == "NEEDS_REVIEW" else "new"
+    case.review_status = "assigned" if case.assigned_to else "unassigned"
     case.updated_at = datetime.now(timezone.utc)
     STORE.put_case(case)
     if previous:
@@ -527,6 +587,7 @@ def rerun(email_id: str) -> dict:
     except StopIteration:
         raise HTTPException(404, {"code": "not_found", "message": email_id}) from None
     breaker_before = AI_BREAKER.state
+    previous_case = STORE.get_case(email_id)
     case, reviews = process_email(
         email,
         _inbox.read_bytes,
@@ -534,6 +595,7 @@ def rerun(email_id: str) -> dict:
         extract_fallback=_extract_fallback if ENABLE_DOCINTEL else None,
         circuit_breaker=AI_BREAKER,
     )
+    _preserve_workflow(case, previous_case)
     STORE.put_case(case)
     STORE.replace_reviews(email_id, reviews)
     _add_event(case, "COMPARISON_RERUN", "The pipeline reran this case.")
@@ -547,7 +609,14 @@ def review_queue(state: str = "open", limit: int = Query(50, le=500)) -> dict:
     ensure_loaded()
     items = STORE.list_reviews(state=state, limit=limit)
     return {
-        "items": [r.model_dump(mode="json") for r in items],
+        "items": [
+            {
+                **r.model_dump(mode="json"),
+                "assigned_to": STORE.get_case(r.email_id).assigned_to if STORE.get_case(r.email_id) else None,
+                "review_status": STORE.get_case(r.email_id).review_status if STORE.get_case(r.email_id) else "unassigned",
+            }
+            for r in items
+        ],
         "open_count": STORE.open_count(),
     }
 
@@ -626,6 +695,9 @@ def resolve_review(review_id: str, req: ResolveReviewRequest) -> dict:
         if review.email_id == item.email_id
     ]
     case.lifecycle = "in_review" if remaining else "resolved"
+    case.review_status = "in_progress" if remaining and case.assigned_to else (
+        "assigned" if remaining else "completed"
+    )
     case.updated_at = now
     STORE.put_case(case)
     _add_event(
@@ -670,6 +742,7 @@ def retry_review(review_id: str, req: RetryReviewRequest) -> dict:
     if req.force_llm:
         AI_BREAKER.begin_probe()
     breaker_before = AI_BREAKER.state
+    previous_case = STORE.get_case(item.email_id)
     case, reviews = process_email(
         email,
         _inbox.read_bytes,
@@ -677,6 +750,7 @@ def retry_review(review_id: str, req: RetryReviewRequest) -> dict:
         extract_fallback=_extract_fallback if ENABLE_DOCINTEL else None,
         circuit_breaker=AI_BREAKER,
     )
+    _preserve_workflow(case, previous_case)
     STORE.put_case(case)
     STORE.replace_reviews(item.email_id, reviews)
     _add_event(
@@ -709,6 +783,15 @@ def _case_or_404(email_id: str) -> Case:
     if case is None:
         raise HTTPException(404, {"code": "not_found", "message": email_id})
     return case
+
+
+def _preserve_workflow(case: Case, previous: Case | None) -> None:
+    """Pipeline reruns replace technical results, never human ownership."""
+    if previous is None:
+        return
+    case.assigned_to = previous.assigned_to
+    case.review_status = previous.review_status
+    case.lifecycle = previous.lifecycle
 
 
 def _email_or_404(email_id: str) -> dict:

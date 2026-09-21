@@ -65,7 +65,11 @@ Three screens, one for each person who uses it.
 The worklist also carries an expandable, period-aware analytics dashboard and
 live component health. It reports workload by email type, outcomes for genuine
 document-comparison cases, fields with differences and the primary reasons for
-human review. Every chart includes its counts and explains its scope; the
+human review. Every chart includes its counts and explains its scope; selecting
+a chart row opens the matching cases in the worklist. Explainable priority
+labels and priority-first sorting bring blocking cases to the top. Cases can be
+assigned, moved from assigned to in progress, and completed through the existing
+review decisions; ownership and status changes are retained in the audit trail. The
 month, year, last-30-days and full-history selector updates the dashboard,
 worklist and workbook together. Flagged fields explain the two values,
 similarity and review status in plain language; one click opens both source

@@ -146,6 +146,8 @@ class Case(BaseModel):
 
     summary: str                      # human sentence for the case list
     lifecycle: Literal["new", "in_review", "resolved", "archived"] = "new"
+    assigned_to: str | None = None
+    review_status: Literal["unassigned", "assigned", "in_progress", "completed"] = "unassigned"
     pipeline_version: str             # git sha
     prompt_version: str
     models: dict[str, str]            # {"classify": "...", "extract": "..."}
@@ -226,6 +228,7 @@ downloads. Errors are
 | `GET` | `/cases/{email_id}/decision` | — | `{"decision":CaseDecision\|null}` |
 | `POST` | `/cases/{email_id}/decision` | case decision and reviewer | `{"decision":CaseDecision,"case":Case}` |
 | `DELETE` | `/cases/{email_id}/decision` | — | `{"ok":true,"case":Case}` |
+| `PATCH` | `/cases/{email_id}/workflow` | `{"assigned_to":str\|null,"review_status":str,"reviewer_id":str}` | `{"case":Case}` and append-only workflow audit events |
 | `GET` | `/review` | `?state=open&limit=50` | `{"items":[ReviewItem],"open_count":int}` |
 | `POST` | `/review/{id}/resolve` | `{"action":"confirm"\|"correct","field":FieldName\|null,"correct_value":str\|null,"reviewer_id":str}` | `{"review_item":ReviewItem,"case":Case}` |
 | `POST` | `/review/{id}/retry` | `{"force_llm": bool}` | `{"review_item":ReviewItem,"case":Case}` |
@@ -243,6 +246,8 @@ class CaseSummary(BaseModel):     # the list view — deliberately small
     has_defect: bool
     defect_fields: list[FieldName]
     lifecycle: str
+    assigned_to: str | None
+    review_status: Literal["unassigned", "assigned", "in_progress", "completed"]
     received_at: datetime | None
     created_at: datetime | None
     updated_at: datetime | None
@@ -388,6 +393,7 @@ AuditAction = Literal[
     "VALIDATION_FAILED", "HUMAN_REVIEW_CREATED", "HUMAN_CORRECTION",
     "COMPARISON_RERUN", "FINAL_DECISION",
     "CIRCUIT_BREAKER_OPENED", "CIRCUIT_BREAKER_CLOSED",
+    "CASE_ASSIGNED", "REVIEW_STATUS_CHANGED",
 ]
 
 class AuditEvent(BaseModel):
@@ -436,6 +442,9 @@ frontend mode demonstrates the same layout without presenting live health.
 
 ## Changelog
 
+- **v1.3, 21 Sep 2026** — added auditable case assignment and human-review
+  status fields plus the workflow update endpoint used by the worklist and
+  review desk.
 - **v1.2, 21 Sep 2026** — implemented detailed health, correlation IDs,
   comparison-stage corrections, dashboard metrics and the full event ledger.
 - **v1.1, 21 Sep 2026** — implemented §10.1 and §10.4 in the local FastAPI

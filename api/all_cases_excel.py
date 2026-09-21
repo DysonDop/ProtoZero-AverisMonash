@@ -170,7 +170,7 @@ def _build_all_cases_sheet(workbook: Workbook, cases: list[Case], decisions):
     headers = [
         "Case ID", "Correlation ID", "Received (UTC)", "Sender", "Subject", "Category",
         "Category confidence", "Result", "Has defect", "Defect fields", "Escalation reasons",
-        "Lifecycle", "Summary", "Reviewer decision", "Decision label", "Decision reviewer",
+        "Lifecycle", "Assigned to", "Review status", "Summary", "Reviewer decision", "Decision label", "Decision reviewer",
         "Decision recorded (UTC)", "Documents", "Comparisons", "Pipeline version",
         "Prompt version", "Models", "Timings (ms)", "Created (UTC)", "Updated (UTC)",
     ]
@@ -181,7 +181,8 @@ def _build_all_cases_sheet(workbook: Workbook, cases: list[Case], decisions):
             case.email_id, case.correlation_id, _excel_datetime(case.received_at), case.from_addr,
             case.subject, case.category, case.category_confidence, case.status, case.has_defect,
             ", ".join(case.defect_fields), ", ".join(case.escalation_reasons), case.lifecycle,
-            case.summary, decision.action if decision else None, decision.label if decision else None,
+            case.assigned_to, case.review_status, case.summary,
+            decision.action if decision else None, decision.label if decision else None,
             decision.reviewer_id if decision else None,
             _excel_datetime(decision.recorded_at) if decision else None,
             len(case.documents), len(case.comparisons), case.pipeline_version, case.prompt_version,
@@ -189,9 +190,9 @@ def _build_all_cases_sheet(workbook: Workbook, cases: list[Case], decisions):
             _excel_datetime(case.created_at), _excel_datetime(case.updated_at),
         ])
     sheet = _data_sheet(workbook, "All Cases", headers, rows, freeze="A2", table_name="AllCasesTable")
-    _set_widths(sheet, [15, 38, 20, 28, 52, 22, 20, 20, 12, 30, 32, 15, 64, 18, 26, 22, 22, 12, 14, 18, 16, 30, 30, 20, 20])
+    _set_widths(sheet, [15, 38, 20, 28, 52, 22, 20, 20, 12, 30, 32, 15, 22, 18, 64, 18, 26, 22, 22, 12, 14, 18, 16, 30, 30, 20, 20])
     for row in range(2, sheet.max_row + 1):
-        for column in (3, 17, 24, 25):
+        for column in (3, 19, 26, 27):
             sheet.cell(row, column).number_format = "yyyy-mm-dd hh:mm:ss"
         sheet.cell(row, 7).number_format = "0%"
     if sheet.max_row > 1:

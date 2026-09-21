@@ -6,8 +6,9 @@ import AuditTrail from './AuditTrail.jsx'
 import CaseReport from './CaseReport.jsx'
 import {
   clearCaseDecision, getAuditEvents, getCase, getCaseDecision, recordCaseDecision,
+  reviewerId, updateCaseWorkflow,
 } from './api.js'
-import { FIELD_PLAIN, KIND_WORD, REASON_TITLE, confidencePercent, kindOf } from './status.js'
+import { FIELD_PLAIN, KIND_WORD, REASON_TITLE, confidencePercent, kindOf, priorityOf } from './status.js'
 
 const DASH = '—'
 
@@ -64,6 +65,7 @@ export default function CaseView({ id }) {
       onViewEvidence={viewEvidence}
       events={events}
     >
+      <WorkflowPanel kase={kase} onChanged={refreshCase} />
       {content}
     </Frame>
   )
@@ -265,6 +267,90 @@ function MismatchNote({ c, selected, onSelect }) {
         {selected ? 'Hide source evidence' : 'View highlighted source evidence'}
       </button>
     </article>
+  )
+}
+
+const WORKFLOW_STATUS = {
+  unassigned: 'Unassigned',
+  assigned: 'Assigned',
+  in_progress: 'In progress',
+}
+
+function WorkflowPanel({ kase, onChanged }) {
+  const [assignee, setAssignee] = useState(kase.assigned_to || '')
+  const [status, setStatus] = useState(kase.review_status || 'unassigned')
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState(null)
+  const priority = priorityOf(kase)
+
+  useEffect(() => {
+    setAssignee(kase.assigned_to || '')
+    setStatus(kase.review_status || 'unassigned')
+  }, [kase.assigned_to, kase.review_status])
+
+  async function save(nextAssignee = assignee, nextStatus = status) {
+    if (['assigned', 'in_progress'].includes(nextStatus) && !nextAssignee.trim()) {
+      setMessage({ type: 'error', text: 'Add an owner before marking this case assigned or in progress.' })
+      return
+    }
+    setBusy(true)
+    setMessage(null)
+    try {
+      await updateCaseWorkflow(kase.email_id, {
+        assigned_to: nextAssignee.trim() || null,
+        review_status: nextStatus,
+      })
+      await onChanged()
+      setMessage({ type: 'ok', text: 'Assignment saved and added to the audit trail.' })
+    } catch (error) {
+      setMessage({ type: 'error', text: error.message })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function assignToMe() {
+    setAssignee(reviewerId)
+    setStatus('assigned')
+    await save(reviewerId, 'assigned')
+  }
+
+  const unchanged = assignee.trim() === (kase.assigned_to || '')
+    && status === (kase.review_status || 'unassigned')
+
+  return (
+    <section className="workflow" aria-labelledby="workflow-title">
+      <div className="workflow__head">
+        <div>
+          <span className="eyebrow">Review ownership</span>
+          <h2 id="workflow-title">Assign and track this case</h2>
+        </div>
+        <span className={'priority priority--' + priority.key} title={priority.reason}>{priority.label} priority</span>
+      </div>
+      <div className="workflow__controls">
+        <label>
+          <span>Assigned to</span>
+          <input value={assignee} onChange={event => setAssignee(event.target.value)} placeholder="Reviewer name or team" />
+        </label>
+        <label>
+          <span>Review status</span>
+          <select value={status} onChange={event => setStatus(event.target.value)}>
+            {Object.entries(WORKFLOW_STATUS).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+            {status === 'completed' && <option value="completed">Completed</option>}
+          </select>
+        </label>
+        <div className="workflow__actions">
+          <button className="btn btn--ghost btn--small" type="button" disabled={busy} onClick={assignToMe}>Assign to me</button>
+          <button className="btn btn--small" type="button" disabled={busy || unchanged} onClick={() => save()}>
+            {busy ? 'Saving…' : 'Save workflow'}
+          </button>
+        </div>
+      </div>
+      {message && <p className={'workflow__message workflow__message--' + message.type} role="status">{message.text}</p>}
+      <p className="workflow__note">{priority.reason} Changes are recorded with the reviewer, previous value and new value in the audit trail.</p>
+    </section>
   )
 }
 

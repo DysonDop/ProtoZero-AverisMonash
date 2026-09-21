@@ -61,6 +61,27 @@ export const REASON_TITLE = {
   missing_value: 'A value is blank',
 }
 
+export const PRIORITY = {
+  urgent: { label: 'Urgent', rank: 0 },
+  high: { label: 'High', rank: 1 },
+  normal: { label: 'Normal', rank: 2 },
+  routine: { label: 'Routine', rank: 3 },
+}
+
+export function priorityOf(c) {
+  if (['resolved', 'archived'].includes(c.lifecycle) || c.review_status === 'completed'
+      || c.category !== 'BL_COMPARISON' || c.status === 'OK') {
+    return { key: 'routine', ...PRIORITY.routine, reason: 'No human action is currently required.' }
+  }
+  if (['missing_attachment', 'unreadable', 'wrong_doc_type'].includes(c.wire_review_reason)) {
+    return { key: 'urgent', ...PRIORITY.urgent, reason: 'Processing is blocked by a document problem.' }
+  }
+  if (c.status === 'NEEDS_REVIEW' || (c.defect_fields || []).length > 1) {
+    return { key: 'high', ...PRIORITY.high, reason: 'Human judgement or several field differences need attention.' }
+  }
+  return { key: 'normal', ...PRIORITY.normal, reason: 'One confirmed difference needs action.' }
+}
+
 // Ports arrive as "NHAVA SHEVA, INDIA (INNSA)". The code is a validity check
 // only and never part of the comparison, so it is shown as a subordinate line.
 export function splitPort(value) {

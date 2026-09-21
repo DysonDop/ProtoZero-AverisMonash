@@ -31,7 +31,7 @@ const REVIEW_LABEL = {
   missing_value: 'Missing or uncertain field',
 }
 
-export default function Dashboard({ health, items, periodLabel = 'Full register' }) {
+export default function Dashboard({ health, items, periodLabel = 'Full register', onDrillDown }) {
   const comparisonCases = items.filter(item => item.category === 'BL_COMPARISON')
   const cleared = comparisonCases.filter(item => item.status === 'OK').length
   const mismatches = comparisonCases.filter(item => item.status === 'MISMATCH').length
@@ -101,19 +101,26 @@ export default function Dashboard({ health, items, periodLabel = 'Full register'
               rows={workload}
               tone="neutral"
               total={items.length}
+              onSelect={key => onDrillDown?.({ kind: 'category', value: key })}
             />
-            <OutcomeChart rows={outcomes} total={comparisonCases.length} />
+            <OutcomeChart
+              rows={outcomes}
+              total={comparisonCases.length}
+              onSelect={value => onDrillDown?.({ kind: 'result', value })}
+            />
             <BarChart
               title="Fields with differences"
               subtitle="One case can contain more than one difference"
               rows={mismatchFields}
               tone="wrong"
+              onSelect={key => onDrillDown?.({ kind: 'field', value: key })}
             />
             <BarChart
               title="Why a person is needed"
               subtitle="Primary reason for each human-review case"
               rows={reviewReasons}
               tone="review"
+              onSelect={key => onDrillDown?.({ kind: 'reason', value: key })}
             />
           </div>
         </section>
@@ -128,7 +135,7 @@ function Metric({ label, value }) {
   return <div><dt>{label}</dt><dd>{value}</dd></div>
 }
 
-function BarChart({ title, subtitle, rows, tone, total }) {
+function BarChart({ title, subtitle, rows, tone, total, onSelect }) {
   const largest = Math.max(0, ...rows.map(row => row.value))
   const scale = total > 0 ? total : largest
 
@@ -142,19 +149,21 @@ function BarChart({ title, subtitle, rows, tone, total }) {
         ? <ol className="chartbars" aria-label={`${title}: ${rows.map(row => `${row.label} ${row.value}`).join(', ')}`}>
             {rows.map(row => (
               <li key={row.label}>
-                <div className="chartbars__label">
-                  <span>{row.label}</span>
-                  <span className="chartbars__value">
-                    <b>{row.value}</b>
-                    {total > 0 && <small>{percent(row.value, total)}</small>}
+                <button className="chartbars__button" type="button" onClick={() => onSelect?.(row.key)}>
+                  <span className="chartbars__label">
+                    <span>{row.label}</span>
+                    <span className="chartbars__value">
+                      <b>{row.value}</b>
+                      {total > 0 && <small>{percent(row.value, total)}</small>}
+                    </span>
                   </span>
-                </div>
-                <span className="chartbars__track" aria-hidden="true">
-                  <i
-                    className={'chartbars__fill chartbars__fill--' + tone}
-                    style={{ width: `${scale > 0 ? Math.max(3, row.value / scale * 100) : 0}%` }}
-                  ></i>
-                </span>
+                  <span className="chartbars__track" aria-hidden="true">
+                    <i
+                      className={'chartbars__fill chartbars__fill--' + tone}
+                      style={{ width: `${scale > 0 ? Math.max(3, row.value / scale * 100) : 0}%` }}
+                    ></i>
+                  </span>
+                </button>
               </li>
             ))}
           </ol>
@@ -163,7 +172,7 @@ function BarChart({ title, subtitle, rows, tone, total }) {
   )
 }
 
-function OutcomeChart({ rows, total }) {
+function OutcomeChart({ rows, total, onSelect }) {
   return (
     <section className="chartpanel">
       <header className="chartpanel__head">
@@ -189,10 +198,12 @@ function OutcomeChart({ rows, total }) {
             <ul className="outcomelegend">
               {rows.map(row => (
                 <li key={row.label}>
-                  <i className={'outcomelegend__mark outcomelegend__mark--' + row.tone} aria-hidden="true"></i>
-                  <span>{row.label}</span>
-                  <b>{row.value}</b>
-                  <small>{percent(row.value, total)}</small>
+                  <button type="button" onClick={() => onSelect?.(row.tone)}>
+                    <i className={'outcomelegend__mark outcomelegend__mark--' + row.tone} aria-hidden="true"></i>
+                    <span>{row.label}</span>
+                    <b>{row.value}</b>
+                    <small>{percent(row.value, total)}</small>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -251,7 +262,7 @@ function countRows(items, getKey, labels) {
     if (labels[key]) counts.set(key, (counts.get(key) || 0) + 1)
   }
   return [...counts]
-    .map(([key, value]) => ({ label: labels[key], value }))
+    .map(([key, value]) => ({ key, label: labels[key], value }))
     .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label))
 }
 

@@ -57,6 +57,8 @@ AuditAction = Literal[
     "FINAL_DECISION",
     "CIRCUIT_BREAKER_OPENED",
     "CIRCUIT_BREAKER_CLOSED",
+    "CASE_ASSIGNED",
+    "REVIEW_STATUS_CHANGED",
 ]
 WireReviewReason = Literal[
     "wrong_doc_type", "missing_attachment", "unreadable", "missing_value"
@@ -200,6 +202,8 @@ class Case(BaseModel):
 
     summary: str = ""
     lifecycle: Literal["new", "in_review", "resolved", "archived"] = "new"
+    assigned_to: str | None = None
+    review_status: Literal["unassigned", "assigned", "in_progress", "completed"] = "unassigned"
     pipeline_version: str = "dev"
     prompt_version: str = "v1"
     models: dict[str, str] = Field(default_factory=dict)

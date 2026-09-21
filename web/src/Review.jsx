@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import Bar from './Bar.jsx'
-import { offlineMode, getReview, resolveReview, retryReview, reviewerId } from './api.js'
+import {
+  offlineMode, getReview, resolveReview, retryReview, reviewerId, updateCaseWorkflow,
+} from './api.js'
 
 const TITLE = {
   MISSING_ATTACHMENT: 'Nothing attached to check',
@@ -27,6 +29,7 @@ export default function Review() {
   const [pending, setPending] = useState(null)
   const [notice, setNotice] = useState(null)
   const [correction, setCorrection] = useState(null)
+  const [sortBy, setSortBy] = useState('priority')
 
   useEffect(() => {
     getReview().then(d => setItems(d.items)).catch(e => setError(e.message))
@@ -71,10 +74,36 @@ export default function Review() {
     }
   }
 
+  async function updateWorkflow(item, status) {
+    setPending(item.id)
+    setError(null)
+    setNotice(null)
+    try {
+      await updateCaseWorkflow(item.email_id, {
+        assigned_to: item.assigned_to || reviewerId,
+        review_status: status,
+      })
+      setItems(current => current.map(value => value.id === item.id
+        ? { ...value, assigned_to: item.assigned_to || reviewerId, review_status: status }
+        : value))
+      setNotice(`${item.email_id} is ${status === 'in_progress' ? 'now in progress' : `assigned to ${item.assigned_to || reviewerId}`}.`)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setPending(null)
+    }
+  }
+
   if (error) return <Shell meta="needs a person"><div className="state">Could not reach the review service. {error}</div></Shell>
   if (!items) return <Shell meta="needs a person"><div className="state">Reading the queue.</div></Shell>
 
   const open = items.length
+  const ordered = [...items].sort((a, b) => {
+    if (sortBy === 'oldest') return new Date(a.created_at || 0) - new Date(b.created_at || 0)
+    if (sortBy === 'case_id') return a.email_id.localeCompare(b.email_id, undefined, { numeric: true })
+    return reviewPriority(a).rank - reviewPriority(b).rank
+      || new Date(a.created_at || 0) - new Date(b.created_at || 0)
+  })
 
   return (
     <Shell meta={open + ' open'}>
@@ -87,6 +116,14 @@ export default function Review() {
         <div className="chips">
           <a className="chip" href="#/"><span className="mk mk--none"></span>All emails</a>
           <span className="chip chip--on"><span className="mk mk--review"></span>Needs a person<span className="chip__count">{open}</span></span>
+          <label className="review-sort">
+            <span>Sort queue</span>
+            <select value={sortBy} onChange={event => setSortBy(event.target.value)}>
+              <option value="priority">Priority first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="case_id">Case ID</option>
+            </select>
+          </label>
         </div>
 
         {notice && <div className="reviewnotice" role="status">{notice}</div>}
@@ -95,16 +132,24 @@ export default function Review() {
           <div className="state">Nothing is waiting on a person.</div>
         ) : (
           <div className="cards">
-            {items.map(item => {
+            {ordered.map(item => {
               const [primary, secondary] = ACTIONS[item.reason] ?? ['Confirm', 'Correct']
               const hasEvidence = item.si_value || item.bl_value
+              const priority = reviewPriority(item)
               return (
                 <div className="card" key={item.id}>
-                  <span className="card__ref">{item.email_id}</span>
+                  <div className="card__topline">
+                    <span className="card__ref">{item.email_id}</span>
+                    <span className={'priority priority--' + priority.key}>{priority.label}</span>
+                  </div>
                   <a className="card__title" href={'#/case/' + item.email_id}>
                     {TITLE[item.reason] ?? 'Needs a person'}
                   </a>
                   <p className="card__body">{item.reason_detail}</p>
+                  <div className="card__workflow">
+                    <span>Owner <b>{item.assigned_to || 'Unassigned'}</b></span>
+                    <span>Status <b>{workflowWord(item.review_status)}</b></span>
+                  </div>
                   {hasEvidence && (
                     <div className="card__evidence">
                       <div><em>Instruction</em><span>{item.si_value ?? '—'}</span></div>
@@ -151,6 +196,16 @@ export default function Review() {
                   )}
                   <div className="card__actions">
                     <a className="btn btn--ghost btn--small" href={'#/case/' + item.email_id}>Open case</a>
+                    {!offlineMode && !item.assigned_to && (
+                      <button className="btn btn--ghost btn--small" type="button" disabled={pending === item.id} onClick={() => updateWorkflow(item, 'assigned')}>
+                        Assign to me
+                      </button>
+                    )}
+                    {!offlineMode && item.assigned_to && item.review_status !== 'in_progress' && (
+                      <button className="btn btn--ghost btn--small" type="button" disabled={pending === item.id} onClick={() => updateWorkflow(item, 'in_progress')}>
+                        Start review
+                      </button>
+                    )}
                     {!offlineMode && retryable(item.reason) && (
                       <button
                         className="btn btn--ghost btn--small"
@@ -207,6 +262,22 @@ export default function Review() {
 
 function retryable(reason) {
   return ['UNREADABLE_DOCUMENT', 'GROUNDING_FAILED', 'PROCESSING_ERROR'].includes(reason)
+}
+
+function reviewPriority(item) {
+  if (['MISSING_ATTACHMENT', 'UNREADABLE_DOCUMENT', 'WRONG_DOC_TYPE', 'PROCESSING_ERROR'].includes(item.reason)) {
+    return { key: 'urgent', label: 'Urgent', rank: 0 }
+  }
+  return { key: 'high', label: 'High', rank: 1 }
+}
+
+function workflowWord(value) {
+  return {
+    unassigned: 'Unassigned',
+    assigned: 'Assigned',
+    in_progress: 'In progress',
+    completed: 'Completed',
+  }[value] || 'Unassigned'
 }
 
 function Shell({ meta, children }) {
