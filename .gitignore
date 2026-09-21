@@ -17,6 +17,9 @@ eval/.cache/
 node_modules/
 dist/
 .serena/
+.codex-build/
+.chart-data-*/
+.tools/
 
 # The organisers' scoring package. Holds ground_truth.json and the dataset
 # generator, so it never belongs in a public repo. Keep it on disk to run the

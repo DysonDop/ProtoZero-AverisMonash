@@ -97,6 +97,12 @@ body{
 .thin__divider{ width: 1px; height: 18px; background: rgba(255,255,255,.24) }
 .thin__section{ font-size: var(--fs-small); color: var(--on-dark) }
 .thin__meta{ font-family: var(--mono); font-size: 12px; color: var(--on-dark-dim) }
+.thin__nav{ display: flex; align-self: stretch; align-items: center; gap: 2px; margin-left: 12px }
+.thin__nav a{ display: inline-flex; height: 100%; align-items: center; padding: 0 11px;
+              border-bottom: 2px solid transparent; color: var(--on-dark-dim);
+              font-size: var(--fs-small); text-decoration: none }
+.thin__nav a:hover{ color: var(--on-dark); background: rgba(255,255,255,.07) }
+.thin__nav a[aria-current="page"]{ border-bottom-color: var(--orange); color: var(--on-dark) }
 .thin__home{ display: flex; align-items: center; gap: 13px;
              color: inherit; text-decoration: none }
 .thin__actions{ margin-left: auto; display: flex; align-items: center }
@@ -135,6 +141,13 @@ body{
         max-width: calc(var(--case-content-max) + var(--case-gutter) + var(--case-gutter));
         padding: 28px var(--case-gutter) 42px;
         display: flex; flex-direction: column; gap: 18px }
+.amain{ width: 100%; max-width: calc(var(--case-content-max) + var(--case-gutter) + var(--case-gutter));
+        margin-inline: auto; padding: 30px var(--case-gutter) 48px }
+.analyticshero{ display: flex; align-items: flex-end; justify-content: space-between; gap: 24px;
+                margin-bottom: 18px }
+.analyticshero h1{ margin: 5px 0 5px; font-size: clamp(28px, 3vw, 42px); font-weight: 600;
+                   line-height: 1.08; letter-spacing: -.035em }
+.analyticshero p{ max-width: 720px; margin: 0; color: var(--muted) }
 .rmain{ width: 100%; margin-inline: auto; flex-grow: 1; min-height: 0;
         max-width: calc(var(--case-content-max) + var(--case-gutter) + var(--case-gutter));
         padding: 22px var(--case-gutter);
@@ -217,6 +230,10 @@ body{
 
 .ops{ overflow: hidden; background: var(--sheet);
       border: 1px solid var(--rule); border-radius: 12px }
+.ops--standalone{ overflow: visible; border: 0; background: transparent }
+.ops--standalone > .ops__summary{ display: none }
+.ops--standalone .ops__body{ padding: 0; background: transparent }
+.ops--standalone .ops__analytics, .ops--standalone .healthpanel{ box-shadow: 0 14px 34px rgba(16,26,36,.035) }
 .ops__summary{ position: relative; min-height: 68px; display: flex; align-items: center; gap: 20px;
                padding: 11px 18px; cursor: pointer; list-style: none }
 .ops__summary::-webkit-details-marker{ display: none }
@@ -251,6 +268,42 @@ body{
 .ops__period{ max-width: 50%; padding: 4px 8px; border: 1px solid var(--rule);
               border-radius: var(--r-pill); color: var(--muted); font-size: 9px;
               line-height: 1.35; text-align: right }
+.registerflow{ margin: 16px 0; padding: 16px; border: 1px solid var(--hair);
+               border-radius: 10px; background: #F8F6F1 }
+.registerflow > header{ display: flex; align-items: flex-start; justify-content: space-between; gap: 16px }
+.registerflow h3{ margin: 0; font-size: var(--fs-small); font-weight: 600 }
+.registerflow p, .registerflow header > span{ margin: 2px 0 0; color: var(--muted);
+                                             font-size: 9.5px }
+.registerflow__map{ display: grid; grid-template-columns: 140px 28px minmax(540px, 1fr) 150px;
+                    align-items: center; gap: 9px; margin-top: 14px }
+.flowline{ height: 1px; background: var(--rule) }
+.flowcard{ display: flex; min-width: 0; min-height: 96px; flex-direction: column;
+           align-items: flex-start; justify-content: center; padding: 12px;
+           border: 1px solid var(--rule); border-radius: 8px; background: var(--sheet);
+           color: var(--ink); font: inherit; text-align: left }
+button.flowcard{ cursor: pointer }
+button.flowcard:hover{ border-color: var(--blue); transform: translateY(-1px);
+                       box-shadow: 0 6px 14px rgba(16,26,36,.08) }
+.flowcard small{ color: var(--muted); font-size: 9px; font-weight: 600;
+                 letter-spacing: .08em; text-transform: uppercase }
+.flowcard strong{ margin-top: 3px; font-family: var(--mono); font-size: 23px; font-weight: 500 }
+.flowcard span{ color: var(--muted); font-size: 9.5px }
+.flowcard--source{ border-top: 3px solid var(--ink) }
+.flowcard--routed{ border-top: 3px solid var(--muted) }
+.flowbranch{ display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 9px }
+.flowoutcomes{ display: grid; grid-template-columns: repeat(3, minmax(108px, 1fr)); gap: 8px }
+.flowoutcome{ display: flex; min-width: 0; min-height: 96px; flex-direction: column;
+              align-items: center; justify-content: center; padding: 10px 8px;
+              border: 1px solid var(--rule); border-top-width: 3px; border-radius: 8px;
+              background: var(--sheet); color: var(--ink); font: inherit; cursor: pointer;
+              text-align: center }
+.flowoutcome:hover{ transform: translateY(-1px); box-shadow: 0 6px 14px rgba(16,26,36,.08) }
+.flowoutcome b{ font-family: var(--mono); font-size: 19px; font-weight: 500 }
+.flowoutcome span{ width: 100%; color: var(--muted); font-size: 9px; line-height: 1.3;
+                   overflow-wrap: normal; word-break: normal; white-space: normal }
+.flowoutcome--clear{ border-top-color: var(--clearmark) }
+.flowoutcome--wrong{ border-top-color: var(--wrong) }
+.flowoutcome--review{ border-top-color: var(--blue) }
 .metricgrid{ display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
              gap: 1px; margin: 15px 0; background: var(--rule) }
 .metricgrid > div{ display: flex; min-width: 0; flex-direction: column-reverse;
@@ -333,6 +386,17 @@ body{
 .healthalert b{ color: #8A4B0A; font-size: 10px; letter-spacing: .08em; text-transform: uppercase }
 .healthalert span, .healthpanel__empty{ color: var(--muted) }
 .healthpanel__empty{ font-size: var(--fs-small) }
+.workintro{ display: flex; align-items: center; justify-content: space-between; gap: 24px;
+            padding: 22px 24px; border: 1px solid var(--rule); border-left: 4px solid var(--orange);
+            border-radius: 12px; background: var(--sheet); box-shadow: 0 12px 28px rgba(16,26,36,.03) }
+.workintro h1{ margin: 4px 0 4px; font-size: clamp(25px, 2.6vw, 34px); font-weight: 600;
+               line-height: 1.12; letter-spacing: -.03em }
+.workintro p{ margin: 0; color: var(--muted); font-size: var(--fs-small) }
+.workintro__actions{ display: flex; flex: none; align-items: center; justify-content: center; gap: 12px }
+.workintro__actions .btn{ display: inline-flex; width: max-content; min-width: max-content;
+                          align-items: center; justify-content: center; text-align: center;
+                          white-space: nowrap }
+.inboxpulse__mode{ font-family: var(--sans) !important; font-size: var(--fs-body) !important }
 .workbench{ padding: 24px; background: var(--sheet); border: 1px solid var(--rule);
             border-radius: 14px; box-shadow: 0 14px 34px rgba(16,26,36,.035) }
 .listhead{ display: flex; align-items: flex-end; justify-content: space-between; gap: 24px }
@@ -368,7 +432,7 @@ body{
 .workexport{ display: inline-flex; flex: none; align-items: center; justify-content: center;
              min-height: 38px; white-space: nowrap; text-decoration: none }
 .inboxpulse{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
-             margin: 18px 0 0; border: 1px solid var(--rule); border-radius: 10px;
+             margin: 0; border: 1px solid var(--rule); border-radius: 10px;
              overflow: hidden; background: var(--sheet) }
 .inboxpulse > div{ min-width: 0; padding: 11px 14px; border-right: 1px solid var(--rule) }
 .inboxpulse > div:last-child{ border-right: 0 }
@@ -844,6 +908,11 @@ button.bx--flag:hover{ background: rgba(184,58,40,.10) }
                      border-radius: var(--r-control); background: var(--sheet);
                      color: var(--ink); font: inherit; font-size: var(--fs-small) }
 .workflow__actions{ display: flex; align-items: center; gap: 8px }
+.workflow__ownerstate{ display: inline-flex; min-height: 38px; align-items: center;
+                       padding: 0 11px; border: 1px solid rgba(46,125,110,.28);
+                       border-radius: var(--r-control); background: rgba(46,125,110,.08);
+                       color: var(--clear); font-size: var(--fs-meta); font-weight: 600;
+                       white-space: nowrap }
 .workflow__message{ margin: 9px 0 0; font-size: var(--fs-meta) }
 .workflow__message--ok{ color: var(--clear) }
 .workflow__message--error{ color: var(--wrong) }
@@ -971,6 +1040,9 @@ a.card__title:hover{ text-decoration: underline }
   .filtermenu__dates{ grid-column: 1 / -1; margin-left: 0; padding: 18px 0 0;
                       border-left: 0; border-top: 1px solid var(--rule) }
   .ops__body{ grid-template-columns: 1fr }
+  .registerflow__map{ grid-template-columns: 100px 20px minmax(0, 1fr) }
+  .flowcard--routed{ grid-column: 3; margin-top: 2px }
+  .flowbranch{ grid-template-columns: 110px minmax(0, 1fr) }
   .workflow__controls{ grid-template-columns: repeat(2, minmax(0, 1fr)) }
   .workflow__actions{ grid-column: 1 / -1; justify-content: flex-end }
   .casebanner{ grid-template-columns: 12px minmax(0, 1fr) }
@@ -987,6 +1059,13 @@ a.card__title:hover{ text-decoration: underline }
   .welcome{ gap: 22px; padding: 24px 20px }
   .listhead{ align-items: flex-start; flex-direction: column; gap: 5px }
   .workbench{ padding: 19px }
+  .workintro, .analyticshero{ align-items: flex-start; flex-direction: column }
+  .workintro__actions{ width: 100%; flex-wrap: wrap }
+  .registerflow > header{ flex-direction: column }
+  .registerflow__map{ grid-template-columns: 1fr }
+  .flowline{ width: 1px; height: 16px; margin-left: 22px }
+  .flowbranch{ grid-template-columns: 1fr }
+  .flowcard--routed{ grid-column: auto }
   .worktools{ width: 100% }
   .worksearch{ flex-grow: 1; min-width: 0 }
   .workexport-group{ min-width: 0 }
@@ -1026,6 +1105,8 @@ a.card__title:hover{ text-decoration: underline }
 
 @media (max-width: 480px){
   .thin__meta{ display: none }
+  .thin__nav{ margin-left: 0 }
+  .thin__nav a{ padding-inline: 8px; font-size: 11px }
   .thin__divider, .thin__section{ display: none }
   .thin__action-label{ position: absolute; width: 1px; height: 1px; overflow: hidden;
                        clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap }
@@ -1054,6 +1135,7 @@ a.card__title:hover{ text-decoration: underline }
   .casereport__head{ align-items: stretch; flex-direction: column }
   .casereport__actions{ justify-content: space-between }
   .wrow__id{ display: none }
+  .flowoutcomes{ grid-template-columns: 1fr }
 }
 
 /* Press feedback. 22 :hover rules and no :active meant a touch device got no
@@ -1065,6 +1147,10 @@ a.card__title:hover{ text-decoration: underline }
 .thin__audit, .thin__queue, .thin__back, .thin__home, button.bx,
 .ops__summary, .wrow--link, .chip{
   -webkit-tap-highlight-color: transparent;
+  transition: background-color .16s ease, border-color .16s ease, color .16s ease,
+              transform .16s ease, box-shadow .16s ease;
+}
+.flowcard, .flowoutcome, .thin__nav a{
   transition: background-color .16s ease, border-color .16s ease, color .16s ease,
               transform .16s ease, box-shadow .16s ease;
 }

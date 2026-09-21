@@ -301,7 +301,7 @@ function WorkflowPanel({ kase, onChanged }) {
         review_status: nextStatus,
       })
       await onChanged()
-      setMessage({ type: 'ok', text: 'Assignment saved and added to the audit trail.' })
+      setMessage({ type: 'ok', text: 'Owner and review status saved in the audit trail.' })
     } catch (error) {
       setMessage({ type: 'error', text: error.message })
     } finally {
@@ -315,26 +315,39 @@ function WorkflowPanel({ kase, onChanged }) {
     await save(reviewerId, 'assigned')
   }
 
+  function changeOwner(value) {
+    setAssignee(value)
+    if (!value.trim()) setStatus('unassigned')
+    else if (status === 'unassigned') setStatus('assigned')
+  }
+
+  function changeStatus(value) {
+    setStatus(value)
+    if (value === 'unassigned') setAssignee('')
+  }
+
   const unchanged = assignee.trim() === (kase.assigned_to || '')
     && status === (kase.review_status || 'unassigned')
+  const currentOwner = (kase.assigned_to || '').trim()
+  const ownedByMe = currentOwner === reviewerId
 
   return (
     <section className="workflow" aria-labelledby="workflow-title">
       <div className="workflow__head">
         <div>
           <span className="eyebrow">Review ownership</span>
-          <h2 id="workflow-title">Assign and track this case</h2>
+          <h2 id="workflow-title">Review ownership and status</h2>
         </div>
         <span className={'priority priority--' + priority.key} title={priority.reason}>{priority.label} priority</span>
       </div>
       <div className="workflow__controls">
         <label>
-          <span>Assigned to</span>
-          <input value={assignee} onChange={event => setAssignee(event.target.value)} placeholder="Reviewer name or team" />
+          <span>Owner</span>
+          <input value={assignee} onChange={event => changeOwner(event.target.value)} placeholder="Reviewer name or team" />
         </label>
         <label>
           <span>Review status</span>
-          <select value={status} onChange={event => setStatus(event.target.value)}>
+          <select value={status} onChange={event => changeStatus(event.target.value)}>
             {Object.entries(WORKFLOW_STATUS).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
             ))}
@@ -342,9 +355,15 @@ function WorkflowPanel({ kase, onChanged }) {
           </select>
         </label>
         <div className="workflow__actions">
-          <button className="btn btn--ghost btn--small" type="button" disabled={busy} onClick={assignToMe}>Assign to me</button>
+          {!currentOwner && (
+            <button className="btn btn--ghost btn--small" type="button" disabled={busy} onClick={assignToMe}>Assign to me</button>
+          )}
+          {ownedByMe && <span className="workflow__ownerstate">You are the owner</span>}
+          {currentOwner && !ownedByMe && (
+            <button className="btn btn--ghost btn--small" type="button" disabled={busy} onClick={assignToMe}>Take ownership</button>
+          )}
           <button className="btn btn--small" type="button" disabled={busy || unchanged} onClick={() => save()}>
-            {busy ? 'Saving…' : 'Save workflow'}
+            {busy ? 'Saving…' : 'Save changes'}
           </button>
         </div>
       </div>

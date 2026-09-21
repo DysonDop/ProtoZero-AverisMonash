@@ -11,6 +11,7 @@ export function useRoute() {
 
   const openCase = /^#\/case\/([A-Za-z0-9_-]+)/.exec(hash)
   if (openCase) return { name: 'case', id: openCase[1] }
+  if (hash.startsWith('#/analytics')) return { name: 'analytics' }
   if (hash.startsWith('#/review')) return { name: 'review' }
   return { name: 'worklist' }
 }
