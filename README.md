@@ -35,8 +35,9 @@ documents a parser cannot.
 
 1. **Classify** every email. Rules first; a model only sees what the rules could
    not match. Only genuine comparison requests continue.
-2. **Resolve and read** the two attachments across `.txt`, `.pdf`, `.docx`,
-   `.xlsx` and image-only scans.
+2. **Resolve and read** the two attachments across `.txt`, `.pdf`, `.docx` and
+   `.xlsx`. Image-only scans are read by Azure AI Document Intelligence and
+   held for a person to confirm.
 3. **Extract** the seven fields from each document, every value carrying the
    exact snippet it came from.
 4. **Compare** — plain, exact code. The model never decides whether two values
@@ -51,6 +52,44 @@ This is orchestration and deterministic document checking, not custom-model
 training. Optional AI services only assist when rules or parsers cannot finish;
 after repeated service failures a circuit breaker keeps the deterministic path
 running and says so in the interface.
+
+## Where the AI is
+
+Two Azure services sit at the edges of the pipeline. Neither ever decides
+whether two values match.
+
+**Azure OpenAI (`gpt-4.1-mini`) reads intent.** A comparison request that
+arrives with no attachments is ambiguous in a way no phrase list survives: the
+sender is either asking us to check documents that went missing, or asking us to
+issue a draft that doesn't exist yet. The first needs a person to chase the
+attachments; the second has nothing to check. The model reads which, and an
+unclear or low-confidence answer takes the cautious path and goes to a person.
+The same deployment classifies mail from sender domains the allowlist has never
+seen, because a new customer on day one looks exactly like an unknown domain,
+and binning a real request as spam is the worst mistake this system can make.
+Every call is temperature zero, constrained to a strict JSON schema, validated
+again with Pydantic, and cached, so the same email always gets the same answer.
+
+**Azure AI Document Intelligence reads scans.** A PDF with no text layer goes to
+the `prebuilt-layout` model, and its text runs through the same label scanner as
+every digital document, so a scan and a digital file are read by one set of
+rules. What the service adds is a measured per-word confidence, which feeds the
+confidence score, and bounding boxes, so evidence on a scan is highlighted like
+evidence anywhere else. A scanned case still does not close on the strength of
+an image read. The comparison runs so the reviewer sees every field side by
+side, but the case stays with a person until they confirm it, and any
+differences are shown as candidates rather than findings. A truncated or corrupt
+file is never sent: there is no image there for OCR to read.
+
+**When a service fails, the pipeline doesn't.** Every call runs through a
+circuit breaker. After repeated failures it opens, the interface says the system
+is running deterministic-only, and each decision falls back to the rule it
+replaced. Neither adapter loads at all without its credentials, so an
+unconfigured deployment is a supported mode rather than a stream of errors.
+
+On the sample inbox, the subject rules settle every classification, so the
+model's visible work is the intent read on the comparison emails that arrived
+without attachments, and Document Intelligence on the three scans.
 
 ## The interface
 
@@ -164,6 +203,17 @@ $env:VITE_API_BASE="http://127.0.0.1:8000/api"
 npm.cmd run dev
 ```
 
+To switch on the Azure services, set these before starting the API. Without
+them the pipeline runs deterministic-only.
+
+```
+AZURE_OPENAI_ENDPOINT              https://<resource>.cognitiveservices.azure.com/
+AZURE_OPENAI_API_KEY               (secret)
+AZURE_OPENAI_DEPLOYMENT_CLASSIFY   gpt-41-mini
+AZURE_DOCINTEL_ENDPOINT            https://<resource>.cognitiveservices.azure.com/
+AZURE_DOCINTEL_KEY                 (secret)
+```
+
 The live path enables document evidence, ordered audit activity, review retries
 and case decisions. The in-memory backend keeps changes until the API process
 restarts.
@@ -191,6 +241,10 @@ email or edits an uploaded document automatically.
 **21 September 2026.** The frontend and FastAPI backend run end to end against
 all 520 bundled cases. The worklist, review queue, case decisions, source
 evidence, retries and ordered audit activity are connected to live API routes.
+
+Azure OpenAI and Document Intelligence are wired through the circuit breaker
+and switched on in the deployed container by configuration. A reviewer cannot
+confirm a blank field as verified; they have to supply the value.
 
 Fixture mode remains available for frontend-only development. The production
 Dockerfile builds the frontend with `/api` as its data source and FastAPI serves

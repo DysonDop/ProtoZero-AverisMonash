@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Literal
@@ -20,6 +21,7 @@ from api.case_report_pdf import build_case_report_pdf
 from eval.run_eval import Inbox
 from pipeline.config import DEFAULT_SOURCE, PIPELINE_VERSION
 from pipeline.config import (
+    INGEST_WORKERS,
     ENABLE_DOCINTEL,
     ENABLE_LLM,
     azure_openai_configured,
@@ -56,8 +58,10 @@ AI_BREAKER = CircuitBreaker()
 # operating mode, not a boot failure.
 try:
     from pipeline.azure_llm import classify_with_llm as _classify_llm
+    from pipeline.azure_llm import intent_with_llm as _intent_llm
 except Exception:  # noqa: BLE001 - optional adapter absence must not block startup
     _classify_llm = None
+    _intent_llm = None
 
 try:
     from pipeline.azure_docintel import extract_with_docintel as _extract_fallback
@@ -198,7 +202,9 @@ def ingest(req: IngestRequest) -> dict:
         wanted = set(req.email_ids)
         emails = [e for e in emails if e["email_id"] in wanted]
 
-    for email in emails:
+    def run_one(email: dict):
+        # Read the breaker inside the worker: with the pool running, a state
+        # captured before the pool would belong to no case in particular.
         breaker_before = AI_BREAKER.state
         previous_case = STORE.get_case(email["email_id"])
         case, reviews = process_email(
@@ -207,8 +213,15 @@ def ingest(req: IngestRequest) -> dict:
             classify_llm=_classify_llm if ENABLE_LLM else None,
             extract_fallback=_extract_fallback if ENABLE_DOCINTEL else None,
             circuit_breaker=AI_BREAKER,
+            intent_llm=_intent_llm if ENABLE_LLM else None,
         )
         _preserve_workflow(case, previous_case)
+        return case, reviews, breaker_before
+
+    with ThreadPoolExecutor(max_workers=INGEST_WORKERS) as pool:
+        results = list(pool.map(run_one, emails))
+
+    for case, reviews, breaker_before in results:
         first_run = not STORE.list_events(case.email_id)
         STORE.put_case(case)
         STORE.replace_reviews(case.email_id, reviews)
@@ -594,6 +607,7 @@ def rerun(email_id: str) -> dict:
         classify_llm=_classify_llm if ENABLE_LLM else None,
         extract_fallback=_extract_fallback if ENABLE_DOCINTEL else None,
         circuit_breaker=AI_BREAKER,
+        intent_llm=_intent_llm if ENABLE_LLM else None,
     )
     _preserve_workflow(case, previous_case)
     STORE.put_case(case)
@@ -641,6 +655,15 @@ def resolve_review(review_id: str, req: ResolveReviewRequest) -> dict:
     if req.action == "correct" and field and not req.correct_value:
         raise HTTPException(
             422, {"code": "correct_value_required", "message": "A corrected field needs a value."}
+        )
+    if req.action == "confirm" and comparison is not None and comparison.verdict == "ABSENT":
+        raise HTTPException(
+            422,
+            {
+                "code": "value_required",
+                "message": "This field is blank in the document, so it can't be confirmed. "
+                "Enter the correct value instead.",
+            },
         )
 
     now = datetime.now(timezone.utc)
@@ -749,6 +772,7 @@ def retry_review(review_id: str, req: RetryReviewRequest) -> dict:
         classify_llm=_classify_llm if ENABLE_LLM else None,
         extract_fallback=_extract_fallback if ENABLE_DOCINTEL else None,
         circuit_breaker=AI_BREAKER,
+        intent_llm=_intent_llm if ENABLE_LLM else None,
     )
     _preserve_workflow(case, previous_case)
     STORE.put_case(case)
