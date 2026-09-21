@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRoute } from './route.js'
 import { getHealth, offlineMode } from './api.js'
 import Worklist from './Worklist.jsx'
+import Analytics from './Analytics.jsx'
 import Review from './Review.jsx'
 import CaseView from './CaseView.jsx'
 
@@ -44,6 +45,7 @@ export default function App() {
         </div>
       )}
       {route.name === 'worklist' && <Worklist health={health} />}
+      {route.name === 'analytics' && <Analytics health={health} />}
       {route.name === 'review' && <Review />}
       {route.name === 'case' && <CaseView id={route.id} />}
     </div>

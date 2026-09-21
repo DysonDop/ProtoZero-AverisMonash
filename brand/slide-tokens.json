@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "ProtoZero Slide System",
+  "version": "1.0.0",
+  "canvas": { "width": 1280, "height": 720, "aspectRatio": "16:9" },
+  "color": {
+    "ink": "#101A24",
+    "paper": "#EDEAE3",
+    "sheet": "#FFFFFF",
+    "softSheet": "#F8F6F1",
+    "muted": "#55606B",
+    "rule": "#D9DCE0",
+    "brandOrange": "#E78823",
+    "reviewBlue": "#006DAE",
+    "reviewBlueLift": "#5FB3E8",
+    "differenceRed": "#B83A28",
+    "clearGreen": "#2E7D6E"
+  },
+  "type": {
+    "display": { "family": "Archivo", "fallback": "Aptos", "weights": [500, 600] },
+    "evidence": { "family": "Azeret Mono", "fallback": "Aptos Mono", "weights": [400, 500, 600] },
+    "wordmark": { "family": "Lato", "zeroFamily": "JetBrains Mono", "weight": 700 },
+    "sizes": { "cover": 44, "section": 34, "title": 30, "body": 18, "caption": 13, "data": 26 }
+  },
+  "spacing": { "edge": 64, "section": 32, "component": 20, "compact": 12, "micro": 6 },
+  "radius": { "panel": 12, "control": 8, "pill": 999 },
+  "chart": {
+    "categoricalOrder": ["#101A24", "#006DAE", "#2E7D6E", "#E78823", "#B83A28"],
+    "status": { "cleared": "#2E7D6E", "difference": "#B83A28", "review": "#006DAE", "other": "#A7ADB3" },
+    "rules": ["Label values directly", "Start bars at zero", "Do not use 3D", "Do not rely on colour alone", "Make the decision or comparison visible in the title"]
+  }
+}

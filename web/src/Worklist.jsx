@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
 import Bar from './Bar.jsx'
-import Dashboard from './Dashboard.jsx'
-import Pipeline from './Pipeline.jsx'
 import { downloadUrl, getAllCasesExcelUrl, getCases } from './api.js'
 import { kindOf, FIELD_PLAIN, REASON_TITLE, priorityOf } from './status.js'
 
@@ -78,6 +76,19 @@ export default function Worklist({ health }) {
   }, [])
 
   useEffect(() => {
+    const queryString = window.location.hash.split('?')[1]
+    if (!queryString) return
+    const params = new URLSearchParams(queryString)
+    const kind = params.get('kind')
+    const value = params.get('value')
+    if (!kind || !value) return
+    setInboxView('all')
+    if (kind === 'result') setSelectedResults([value])
+    if (kind === 'category') setSelectedTypes([value])
+    if (kind === 'field' || kind === 'reason') setChartFilter({ kind, value })
+  }, [])
+
+  useEffect(() => {
     setPage(1)
   }, [inboxView, selectedResults, selectedTypes, dateFilter, dateFrom, dateTo, query,
     chartFilter, sortBy, exportPeriod, exportMonth, exportYear])
@@ -105,7 +116,6 @@ export default function Worklist({ health }) {
 
   const incomingItems = periodItems.filter(isIncoming)
   const historyItems = periodItems.filter(item => !isIncoming(item))
-  const addedToday = items.filter(item => isSameUtcDay(caseDate(item), reportNow)).length
   const actionNeeded = incomingItems.filter(item => ['wrong', 'review'].includes(kindOf(item))).length
   const typeCounts = Object.fromEntries(
     TYPE_OPTIONS.map(option => [option.value, periodItems.filter(item => item.category === option.value).length])
@@ -208,47 +218,27 @@ export default function Worklist({ health }) {
     })
   }
 
-  function drillDown(filter) {
-    setQuery('')
-    setInboxView('all')
-    setSelectedResults(filter.kind === 'result' ? [filter.value] : [])
-    setSelectedTypes(filter.kind === 'category' ? [filter.value] : [])
-    setChartFilter(['field', 'reason'].includes(filter.kind) ? filter : null)
-    setFiltersOpen(false)
-    window.requestAnimationFrame(() => {
-      document.getElementById('email-checks-heading')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    })
-  }
-
   return (
     <Shell meta={items.length + ' emails'} reviewCount={counts.review}>
       <div className="wmain">
-        <section className="welcome" aria-labelledby="welcome-title">
-          <div className="welcome__copy">
+        <section className="workintro" aria-labelledby="workintro-title">
+          <div>
             <span className="eyebrow">Shipping document control desk</span>
-            <h1 id="welcome-title">Document checks that show their work.</h1>
-            <p>
-              ProtoZero reads the request, compares the shipping instruction with the draft
-              bill of lading, and keeps the evidence behind every decision.
-            </p>
-            {workedExample && (
-              <a className="btn btn--small" href={'#/case/' + workedExample.email_id}>
-                Review first exception
-              </a>
-            )}
+            <h1 id="workintro-title">Start with what needs attention.</h1>
+            <p>Find, prioritise and resolve email checks while the evidence and audit trail stay attached.</p>
           </div>
-          <Pipeline items={periodItems} onSelect={value => {
-            setSelectedResults([value])
-            document.getElementById('email-checks-heading')?.scrollIntoView({ block: 'start' })
-          }} />
+          <div className="workintro__actions">
+            <a className="btn btn--ghost btn--small" href="#/analytics">View analytics</a>
+            {workedExample && <a className="btn btn--small" href={'#/case/' + workedExample.email_id}>Review first exception</a>}
+          </div>
         </section>
 
-        <Dashboard
-          health={health}
-          items={periodItems}
-          periodLabel={!hasDates || exportPeriod === 'all' ? 'Full register' : exportHelp}
-          onDrillDown={drillDown}
-        />
+        <dl className="inboxpulse" aria-label="Worklist snapshot">
+          <div><dt>Incoming</dt><dd>{incomingItems.length}</dd></div>
+          <div><dt>Needs action</dt><dd>{actionNeeded}</dd></div>
+          <div><dt>Automatically cleared</dt><dd>{counts.clear}</dd></div>
+          <div><dt>System mode</dt><dd className="inboxpulse__mode">{!health ? 'Unavailable' : health.mode === 'full' ? 'Full' : 'Deterministic'}</dd></div>
+        </dl>
 
         <section className="workbench" aria-labelledby="email-checks-heading">
           <div className="listhead">
@@ -571,7 +561,7 @@ function Shell({ meta, reviewCount, children }) {
   )
   return (
     <>
-      <Bar meta={meta} title="Email checks" action={reviewAction} />
+      <Bar meta={meta} title="Email checks" action={reviewAction} active="worklist" />
       {children}
     </>
   )

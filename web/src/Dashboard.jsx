@@ -31,7 +31,7 @@ const REVIEW_LABEL = {
   missing_value: 'Missing or uncertain field',
 }
 
-export default function Dashboard({ health, items, periodLabel = 'Full register', onDrillDown }) {
+export default function Dashboard({ health, items, periodLabel = 'Full register', onDrillDown, standalone = false }) {
   const comparisonCases = items.filter(item => item.category === 'BL_COMPARISON')
   const cleared = comparisonCases.filter(item => item.status === 'OK').length
   const mismatches = comparisonCases.filter(item => item.status === 'MISMATCH').length
@@ -57,7 +57,7 @@ export default function Dashboard({ health, items, periodLabel = 'Full register'
   ]
 
   return (
-    <details className="ops">
+    <details className={`ops${standalone ? ' ops--standalone' : ''}`} open={standalone || undefined}>
       <summary className="ops__summary">
         <span className="ops__summarycopy">
           <span className="eyebrow">Analytics</span>
@@ -82,6 +82,18 @@ export default function Dashboard({ health, items, periodLabel = 'Full register'
             </div>
             <span className="ops__period">{periodLabel}</span>
           </div>
+
+          {standalone && (
+            <RegisterFlow
+              total={items.length}
+              comparisons={comparisonCases.length}
+              routed={items.length - comparisonCases.length}
+              cleared={cleared}
+              mismatches={mismatches}
+              reviews={reviews}
+              onSelect={onDrillDown}
+            />
+          )}
 
           <dl className="metricgrid">
             <Metric label="Emails in period" value={items.length} />
@@ -128,6 +140,35 @@ export default function Dashboard({ health, items, periodLabel = 'Full register'
         <HealthPanel health={health} />
       </div>
     </details>
+  )
+}
+
+function RegisterFlow({ total, comparisons, routed, cleared, mismatches, reviews, onSelect }) {
+  return (
+    <section className="registerflow" aria-labelledby="register-flow-title">
+      <header>
+        <div>
+          <h3 id="register-flow-title">How email moves through ProtoZero</h3>
+          <p>A live register flow, not a decorative process diagram.</p>
+        </div>
+        <span>Select an outcome to inspect its cases</span>
+      </header>
+      <div className="registerflow__map">
+        <div className="flowcard flowcard--source"><small>Inbox</small><strong>{total}</strong><span>emails</span></div>
+        <span className="flowline" aria-hidden="true"></span>
+        <div className="flowbranch">
+          <button type="button" className="flowcard" onClick={() => onSelect?.({ kind: 'category', value: 'BL_COMPARISON' })}>
+            <small>Document checks</small><strong>{comparisons}</strong><span>{percent(comparisons, total)}</span>
+          </button>
+          <div className="flowoutcomes">
+            <button type="button" className="flowoutcome flowoutcome--clear" onClick={() => onSelect?.({ kind: 'result', value: 'clear' })}><b>{cleared}</b><span>Cleared</span></button>
+            <button type="button" className="flowoutcome flowoutcome--wrong" onClick={() => onSelect?.({ kind: 'result', value: 'wrong' })}><b>{mismatches}</b><span>Differences</span></button>
+            <button type="button" className="flowoutcome flowoutcome--review" onClick={() => onSelect?.({ kind: 'result', value: 'review' })}><b>{reviews}</b><span>Human review</span></button>
+          </div>
+        </div>
+        <div className="flowcard flowcard--routed"><small>Other email</small><strong>{routed}</strong><span>routed without comparison</span></div>
+      </div>
+    </section>
   )
 }
 

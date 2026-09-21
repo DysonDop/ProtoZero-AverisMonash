@@ -17,3 +17,6 @@ eval/.cache/
 node_modules/
 dist/
 .serena/
+.codex-build/
+.chart-data-*/
+.tools/

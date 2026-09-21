@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import logging
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from threading import Lock
 from typing import Literal
 
 from contextlib import asynccontextmanager
@@ -40,6 +42,11 @@ from pipeline.schemas import (
 from parsers.read import read as read_document
 
 logger = logging.getLogger("protozero.api")
+
+_EXPORT_CACHE_TTL_SECONDS = 300
+_EXPORT_CACHE_MAX_ITEMS = 8
+_EXPORT_CACHE: dict[tuple, tuple[float, bytes]] = {}
+_EXPORT_CACHE_LOCK = Lock()
 
 app = FastAPI(title="ProtoZero — Shipping Document Verification", version=PIPELINE_VERSION)
 app.add_middleware(
@@ -286,29 +293,41 @@ def export_all_cases_excel(
     cases, scope_label, date_range_label, filename_suffix = _export_period(
         cases, period, now, year=year, month=month
     )
-    case_ids = {case.email_id for case in cases}
-    content = build_all_cases_workbook(
-        cases,
-        {case.email_id: STORE.list_events(case.email_id) for case in cases},
-        [
-            review
-            for review in STORE.list_reviews(state=None, limit=10000)
-            if review.email_id in case_ids
-        ],
-        {
-            case.email_id: decision
-            for case in cases
-            if (decision := STORE.get_decision(case.email_id)) is not None
-        },
-        generated_at=now,
-        scope_label=scope_label,
-        date_range_label=date_range_label,
-    )
+    cache_key = (STORE.revision, period, year, month, now.date().isoformat())
+    cache_state = "MISS"
+    with _EXPORT_CACHE_LOCK:
+        cached = _EXPORT_CACHE.get(cache_key)
+        if cached and time.monotonic() - cached[0] < _EXPORT_CACHE_TTL_SECONDS:
+            content = cached[1]
+            cache_state = "HIT"
+        else:
+            case_ids = {case.email_id for case in cases}
+            content = build_all_cases_workbook(
+                cases,
+                {case.email_id: STORE.list_events(case.email_id) for case in cases},
+                [
+                    review
+                    for review in STORE.list_reviews(state=None, limit=10000)
+                    if review.email_id in case_ids
+                ],
+                {
+                    case.email_id: decision
+                    for case in cases
+                    if (decision := STORE.get_decision(case.email_id)) is not None
+                },
+                generated_at=now,
+                scope_label=scope_label,
+                date_range_label=date_range_label,
+            )
+            _EXPORT_CACHE[cache_key] = (time.monotonic(), content)
+            while len(_EXPORT_CACHE) > _EXPORT_CACHE_MAX_ITEMS:
+                _EXPORT_CACHE.pop(next(iter(_EXPORT_CACHE)))
     return Response(
         content=content,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={
-            "Content-Disposition": f'attachment; filename="protozero-cases-{filename_suffix}.xlsx"'
+            "Content-Disposition": f'attachment; filename="protozero-cases-{filename_suffix}.xlsx"',
+            "X-ProtoZero-Export-Cache": cache_state,
         },
     )
 
@@ -888,6 +907,7 @@ def _record_breaker_transition(case: Case, previous_state: str) -> None:
 # Keep this mount last so every explicit API and documentation route wins.
 # The Docker image always contains web/dist; local API-only development still
 # works when the frontend has not been built yet.
-WEB_DIST = Path(__file__).resolve().parents[1] / "web" / "dist"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+WEB_DIST = PROJECT_ROOT / "web" / "dist"
 if WEB_DIST.is_dir():
     app.mount("/", StaticFiles(directory=WEB_DIST, html=True), name="web")

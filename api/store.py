@@ -19,10 +19,20 @@ class MemoryStore:
         self.corrections: dict[str, Correction] = {}
         self.events: dict[str, list[AuditEvent]] = {}
         self.decisions: dict[str, CaseDecision] = {}
+        self._revision = 0
+
+    @property
+    def revision(self) -> int:
+        """Monotonic data version used to invalidate derived report caches."""
+        return self._revision
+
+    def _touch(self) -> None:
+        self._revision += 1
 
     # -- cases ------------------------------------------------------------
     def put_case(self, case: Case) -> None:
         self.cases[case.email_id] = case
+        self._touch()
 
     def get_case(self, email_id: str) -> Case | None:
         return self.cases.get(email_id)
@@ -50,6 +60,8 @@ class MemoryStore:
     def put_reviews(self, items: list[ReviewItem]) -> None:
         for item in items:
             self.reviews[item.id] = item
+        if items:
+            self._touch()
 
     def replace_reviews(self, email_id: str, items: list[ReviewItem]) -> None:
         self.reviews = {
@@ -58,6 +70,8 @@ class MemoryStore:
             if item.email_id != email_id
         }
         self.put_reviews(items)
+        if not items:
+            self._touch()
 
     def list_reviews(self, state: str | None = "open", limit: int = 50) -> list[ReviewItem]:
         items = [r for r in self.reviews.values() if state is None or r.state == state]
@@ -69,15 +83,19 @@ class MemoryStore:
 
     def put_review(self, item: ReviewItem) -> None:
         self.reviews[item.id] = item
+        self._touch()
 
     def delete_review(self, review_id: str) -> None:
-        self.reviews.pop(review_id, None)
+        if self.reviews.pop(review_id, None) is not None:
+            self._touch()
 
     def put_correction(self, correction: Correction) -> None:
         self.corrections[correction.id] = correction
+        self._touch()
 
     def add_event(self, event: AuditEvent) -> None:
         self.events.setdefault(event.email_id, []).append(event)
+        self._touch()
 
     def list_events(self, email_id: str) -> list[AuditEvent]:
         return sorted(self.events.get(email_id, []), key=lambda event: event.seq)
@@ -91,9 +109,11 @@ class MemoryStore:
 
     def put_decision(self, decision: CaseDecision) -> None:
         self.decisions[decision.email_id] = decision
+        self._touch()
 
     def delete_decision(self, email_id: str) -> None:
-        self.decisions.pop(email_id, None)
+        if self.decisions.pop(email_id, None) is not None:
+            self._touch()
 
     def open_count(self) -> int:
         return sum(1 for r in self.reviews.values() if r.state == "open")

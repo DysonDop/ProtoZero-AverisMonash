@@ -25,6 +25,12 @@ BLUE = "006DAE"
 WRONG = "B83A28"
 CLEAR = "1F6252"
 
+BODY_FONT = Font(name="Aptos", size=10, color=INK)
+BODY_ALIGNMENT = Alignment(vertical="top", wrap_text=True)
+HEADER_FONT = Font(name="Aptos", size=10, bold=True, color=WHITE)
+HEADER_ALIGNMENT = Alignment(vertical="center", wrap_text=True)
+HEADER_FILL = PatternFill("solid", fgColor=INK)
+
 FIELD_LABELS = {
     "shipper": "Shipper",
     "consignee": "Consignee",
@@ -55,6 +61,9 @@ def build_all_cases_workbook(
     workbook.properties.title = "ProtoZero all-cases export"
     workbook.properties.subject = "Shipping document verification cases"
     workbook.properties.creator = "ProtoZero"
+    normal_style = workbook._named_styles["Normal"]
+    normal_style.font = BODY_FONT
+    normal_style.alignment = BODY_ALIGNMENT
 
     all_cases = _build_all_cases_sheet(workbook, cases, decisions)
     _build_summary_sheet(
@@ -315,17 +324,10 @@ def _data_sheet(workbook, name, headers, rows, *, freeze, table_name):
     sheet.auto_filter.ref = sheet.dimensions
     header = sheet[1]
     for cell in header:
-        cell.fill = PatternFill("solid", fgColor=INK)
-        cell.font = Font(name="Aptos", size=10, bold=True, color=WHITE)
-        cell.alignment = Alignment(vertical="center", wrap_text=True)
+        cell.fill = HEADER_FILL
+        cell.font = HEADER_FONT
+        cell.alignment = HEADER_ALIGNMENT
     sheet.row_dimensions[1].height = 30
-    stripe = PatternFill("solid", fgColor="F7F9FA")
-    for row_number, row in enumerate(sheet.iter_rows(min_row=2), start=2):
-        for cell in row:
-            cell.font = Font(name="Aptos", size=10, color=INK)
-            cell.alignment = Alignment(vertical="top", wrap_text=True)
-            if row_number % 2 == 0:
-                cell.fill = stripe
     sheet.sheet_properties.pageSetUpPr.fitToPage = True
     sheet.page_setup.fitToWidth = 1
     sheet.page_setup.fitToHeight = 0
