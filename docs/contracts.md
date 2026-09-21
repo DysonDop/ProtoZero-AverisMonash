@@ -243,7 +243,10 @@ class CaseSummary(BaseModel):     # the list view — deliberately small
     has_defect: bool
     defect_fields: list[FieldName]
     lifecycle: str
-    updated_at: datetime
+    received_at: datetime | None
+    created_at: datetime | None
+    updated_at: datetime | None
+    category_confidence: float
 
 class Metrics(BaseModel):
     total_emails: int

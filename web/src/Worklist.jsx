@@ -2,11 +2,31 @@ import { useEffect, useState } from 'react'
 import Bar from './Bar.jsx'
 import Dashboard from './Dashboard.jsx'
 import { downloadUrl, getAllCasesExcelUrl, getCases } from './api.js'
-import { kindOf, KIND_WORD, FIELD_PLAIN, REASON_TITLE } from './status.js'
+import { kindOf, FIELD_PLAIN, REASON_TITLE } from './status.js'
 
 const FILTERS = ['wrong', 'review', 'clear', 'none']
 const RANK = { wrong: 0, review: 1, clear: 2, none: 3 }
 const PAGE_SIZE = 20
+const TYPE_OPTIONS = [
+  { value: 'BL_COMPARISON', label: 'Document comparison' },
+  { value: 'SI_REQUEST', label: 'Shipping instruction' },
+  { value: 'INVOICE_QUERY', label: 'Invoice query' },
+  { value: 'GENERAL', label: 'General email' },
+  { value: 'SPAM', label: 'Spam' },
+]
+const FILTER_WORD = {
+  wrong: 'Differences',
+  review: 'Needs review',
+  clear: 'Cleared',
+  none: 'Other email',
+}
+const DATE_OPTIONS = [
+  { value: 'all', label: 'Any date' },
+  { value: 'today', label: 'Today' },
+  { value: '7_days', label: 'Last 7 days' },
+  { value: '30_days', label: 'Last 30 days' },
+  { value: 'custom', label: 'Custom range' },
+]
 
 const reportNow = new Date()
 const reportYear = reportNow.getUTCFullYear()
@@ -29,8 +49,14 @@ const EXPORT_PERIODS = [
 export default function Worklist({ health }) {
   const [items, setItems] = useState(null)
   const [error, setError] = useState(null)
-  const [filter, setFilter] = useState(null)
   const [query, setQuery] = useState('')
+  const [inboxView, setInboxView] = useState('incoming')
+  const [selectedResults, setSelectedResults] = useState([])
+  const [selectedTypes, setSelectedTypes] = useState([])
+  const [dateFilter, setDateFilter] = useState('all')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [page, setPage] = useState(1)
   const [exportPeriod, setExportPeriod] = useState('all')
   const [exportMonth, setExportMonth] = useState(currentMonthValue)
@@ -50,7 +76,8 @@ export default function Worklist({ health }) {
 
   useEffect(() => {
     setPage(1)
-  }, [filter, query])
+  }, [inboxView, selectedResults, selectedTypes, dateFilter, dateFrom, dateTo, query,
+    exportPeriod, exportMonth, exportYear])
 
   if (error) return (
     <Shell meta="worklist">
@@ -63,17 +90,40 @@ export default function Worklist({ health }) {
   )
   if (!items) return <Shell meta="worklist"><div className="state">Reading the inbox and preparing the checks.</div></Shell>
 
+  const periodItems = items.filter(item => matchesReportPeriod(
+    item, exportPeriod, exportMonth, exportYear, reportNow
+  ))
   const counts = {}
-  for (const k of FILTERS) counts[k] = items.filter(c => kindOf(c) === k).length
+  for (const k of FILTERS) counts[k] = periodItems.filter(c => kindOf(c) === k).length
 
-  const ordered = [...items].sort((a, b) => RANK[kindOf(a)] - RANK[kindOf(b)])
+  const incomingItems = periodItems.filter(isIncoming)
+  const historyItems = periodItems.filter(item => !isIncoming(item))
+  const addedToday = items.filter(item => isSameUtcDay(caseDate(item), reportNow)).length
+  const actionNeeded = incomingItems.filter(item => ['wrong', 'review'].includes(kindOf(item))).length
+  const typeCounts = Object.fromEntries(
+    TYPE_OPTIONS.map(option => [option.value, periodItems.filter(item => item.category === option.value).length])
+  )
+  const ordered = [...periodItems].sort((a, b) => {
+    const rankDifference = RANK[kindOf(a)] - RANK[kindOf(b)]
+    return rankDifference || (caseDate(b)?.getTime() || 0) - (caseDate(a)?.getTime() || 0)
+  })
   const needle = query.trim().toLowerCase()
   const shown = ordered.filter(c => {
-    const matchesStatus = !filter || kindOf(c) === filter
-    const matchesQuery = !needle || [c.email_id, c.subject, c.from_addr, c.summary]
+    const matchesView = inboxView === 'all'
+      || (inboxView === 'incoming' ? isIncoming(c) : !isIncoming(c))
+    const matchesStatus = selectedResults.length === 0 || selectedResults.includes(kindOf(c))
+    const matchesType = selectedTypes.length === 0 || selectedTypes.includes(c.category)
+    const matchesWhen = matchesDate(c, dateFilter, dateFrom, dateTo, reportNow)
+    const matchesQuery = !needle || [
+      c.email_id, c.subject, c.from_addr, c.summary,
+      TYPE_OPTIONS.find(option => option.value === c.category)?.label,
+    ]
       .some(value => String(value || '').toLowerCase().includes(needle))
-    return matchesStatus && matchesQuery
+    return matchesView && matchesStatus && matchesType && matchesWhen && matchesQuery
   })
+  const activeFilterCount = selectedResults.length + selectedTypes.length
+    + (dateFilter === 'all' ? 0 : 1)
+  const hasSearchOrFilters = Boolean(query.trim()) || activeFilterCount > 0
   const pageCount = Math.max(1, Math.ceil(shown.length / PAGE_SIZE))
   const currentPage = Math.min(page, pageCount)
   const pageStart = (currentPage - 1) * PAGE_SIZE
@@ -104,6 +154,27 @@ export default function Worklist({ health }) {
     exportHelp = `${shortUtcDate(last30DaysStart)} to ${reportEnd} UTC.`
   }
   const excelExportUrl = getAllCasesExcelUrl(exportOptions)
+
+  function toggleSelection(value, selected, setter) {
+    setter(selected.includes(value)
+      ? selected.filter(item => item !== value)
+      : [...selected, value])
+  }
+
+  function clearWorklistFilters({ includeView = false } = {}) {
+    setQuery('')
+    setSelectedResults([])
+    setSelectedTypes([])
+    setDateFilter('all')
+    setDateFrom('')
+    setDateTo('')
+    if (includeView) setInboxView('all')
+  }
+
+  function showFullRegister() {
+    clearWorklistFilters({ includeView: true })
+    setExportPeriod('all')
+  }
 
   async function downloadExcel() {
     setExporting(true)
@@ -165,17 +236,17 @@ export default function Worklist({ health }) {
 
           <div className="worktools">
             <label className="worksearch">
-              <span>Find an email</span>
+              <span>Search by keyword</span>
               <input
                 type="search"
                 value={query}
-                placeholder="e.g. email_004 or sender@company.com"
+                placeholder="Case, subject, sender or booking reference"
                 onChange={event => setQuery(event.target.value)}
               />
-              <small>Case ID, subject, booking reference, sender or summary.</small>
+              <small>Searches the case ID, subject, sender, email type and summary.</small>
             </label>
             <div className="workexport-group">
-              <label htmlFor="export-period">Export case register</label>
+              <label htmlFor="export-period">Worklist period &amp; Excel export</label>
               <div className="workexport-row">
                 <div className={`workexport-options${exportPeriod === 'month' || exportPeriod === 'year' ? ' workexport-options--dated' : ''}`}>
                   <select
@@ -212,7 +283,7 @@ export default function Worklist({ health }) {
                 <small>
                   {exportError
                     ? exportError
-                    : `${exportHelp} Uses the received date, or first processed date when missing. Search and filters do not affect the download.`}
+                    : `${exportHelp} The worklist and workbook use this period. Search and advanced filters narrow the worklist only.`}
                 </small>
                 <button
                   className="btn btn--ghost btn--small workexport"
@@ -220,7 +291,7 @@ export default function Worklist({ health }) {
                   disabled={!excelExportUrl || exporting}
                   aria-busy={exporting}
                   onClick={downloadExcel}
-                  title="The export is independent of the worklist search, filters and current page"
+                  title="Downloads every case in the selected period; search and advanced filters are ignored"
                 >
                   {exporting ? 'Building the workbook…' : 'Download Excel'}
                 </button>
@@ -228,103 +299,198 @@ export default function Worklist({ health }) {
             </div>
           </div>
 
-          <div className="filterbar" aria-label="Filter emails by result">
-            <div className="filterbar__top">
-              <span className="filterbar__label">Result</span>
-              <span className="filterbar__count">
-                {shown.length === 0
-                  ? `Showing 0 of ${items.length} emails`
-                  : `Showing ${pageStart + 1}–${pageEnd} of ${shown.length}${shown.length !== items.length ? ' matching' : ''} emails`}
-              </span>
-              {(filter || query) && (
-                <button type="button" onClick={() => { setFilter(null); setQuery('') }}>Clear filters</button>
-              )}
+          <dl className="inboxpulse" aria-label="Email worklist summary">
+            <div>
+              <dt>{exportPeriod === 'all' ? 'Added today' : 'In selected period'}</dt>
+              <dd>{exportPeriod === 'all' ? addedToday : periodItems.length}</dd>
             </div>
-            <div className="chips">
-            <button
-              className="chip"
-              type="button"
-              aria-pressed={filter === null}
-              onClick={() => setFilter(null)}
-            >
-              All emails
-              <span className="chip__count">{items.length}</span>
-            </button>
-            {FILTERS.map(k => (
-              <button
-                className="chip"
-                key={k}
-                type="button"
-                aria-pressed={filter === k}
-                onClick={() => setFilter(filter === k ? null : k)}
-              >
-                <span className={'mk mk--' + k}></span>
-                {KIND_WORD[k]}
-                <span className="chip__count">{counts[k]}</span>
+            <div><dt>Incoming</dt><dd>{incomingItems.length}</dd></div>
+            <div><dt>Need action</dt><dd>{actionNeeded}</dd></div>
+            <div><dt>Currently showing</dt><dd>{shown.length}</dd></div>
+          </dl>
+
+          <div className="inboxnav">
+            <div className="inboxnav__tabs" role="tablist" aria-label="Choose email view">
+              <button type="button" role="tab" aria-selected={inboxView === 'incoming'} onClick={() => setInboxView('incoming')}>
+                Incoming <span>{incomingItems.length}</span>
               </button>
-            ))}
+              <button type="button" role="tab" aria-selected={inboxView === 'history'} onClick={() => setInboxView('history')}>
+                History <span>{historyItems.length}</span>
+              </button>
+              <button type="button" role="tab" aria-selected={inboxView === 'all'} onClick={() => setInboxView('all')}>
+                All records <span>{periodItems.length}</span>
+              </button>
+            </div>
+            <div className="inboxnav__summary" aria-live="polite">
+              {shown.length === 0
+                ? (periodItems.length === 0 ? 'No emails in this period' : 'No matching emails')
+                : `Showing ${pageStart + 1}-${pageEnd} of ${shown.length}`}
             </div>
           </div>
 
-          {shown.length === 0 ? (
-            <div className="empty">
-              <b>No emails match these filters.</b>
-              <span>Try another status, change the search, or return to the full worklist.</span>
-              <button
-                className="btn btn--ghost btn--small"
-                type="button"
-                onClick={() => { setFilter(null); setQuery('') }}
-              >
-                Clear filters
+          <div className="filtermenu" aria-label="Advanced email filters">
+            <div className="filtermenu__bar">
+              <button className="filtermenu__toggle" type="button" aria-expanded={filtersOpen} onClick={() => setFiltersOpen(!filtersOpen)}>
+                Filter emails
+                {activeFilterCount > 0 && <b>{activeFilterCount}</b>}
+                <i aria-hidden="true">{filtersOpen ? '−' : '+'}</i>
               </button>
+              <div className="filtermenu__active" aria-live="polite">
+                {activeFilterCount === 0
+                  ? <span>No advanced filters</span>
+                  : <>
+                      {selectedResults.length > 0 && <span>{selectedResults.length} result{selectedResults.length === 1 ? '' : 's'}</span>}
+                      {selectedTypes.length > 0 && <span>{selectedTypes.length} email type{selectedTypes.length === 1 ? '' : 's'}</span>}
+                      {dateFilter !== 'all' && <span>{DATE_OPTIONS.find(option => option.value === dateFilter)?.label}</span>}
+                    </>}
+              </div>
+              {hasSearchOrFilters && <button className="filtermenu__clear" type="button" onClick={() => clearWorklistFilters()}>Clear all</button>}
             </div>
-          ) : <>
-            <div className="wtable">
-            {visible.map(c => {
-              const k = kindOf(c)
-              return (
-                <a
-                  className={'wrow wrow--link' + (k === 'none' ? ' wrow--muted' : '')}
-                  key={c.email_id}
-                  href={'#/case/' + c.email_id}
-                >
-                  <span className={'mk mk--' + k}></span>
-                  <span className="wrow__body">
-                    <span className={'wrow__found wrow__found--' + k}>{headline(c)}</span>
-                    <span className="wrow__ref trunc">{c.subject} &nbsp;·&nbsp; {c.from_addr}</span>
-                  </span>
-                  <span className="wrow__id">{c.email_id}</span>
-                  <span className="wrow__open" aria-hidden="true">→</span>
-                </a>
-              )
-            })}
-            </div>
-            <nav className="pagination" aria-label="Email list pages">
-              <button
-                className="pagination__button"
-                type="button"
-                disabled={currentPage === 1}
-                onClick={() => changePage(currentPage - 1)}
-              >
-                <span aria-hidden="true">←</span> Previous
-              </button>
-              <span className="pagination__status">
-                Page <b>{currentPage}</b> of <b>{pageCount}</b>
-              </span>
-              <button
-                className="pagination__button"
-                type="button"
-                disabled={currentPage === pageCount}
-                onClick={() => changePage(currentPage + 1)}
-              >
-                Next <span aria-hidden="true">→</span>
-              </button>
-            </nav>
-          </>}
+
+            {filtersOpen && (
+              <div className="filtermenu__panel">
+                <fieldset>
+                  <legend>Result <small>Select multiple</small></legend>
+                  <div className="filtermenu__choices filtermenu__choices--results">
+                    {FILTERS.map(value => (
+                      <label key={value}>
+                        <input type="checkbox" checked={selectedResults.includes(value)} onChange={() => toggleSelection(value, selectedResults, setSelectedResults)} />
+                        <span className={'mk mk--' + value} aria-hidden="true"></span>
+                        <span>{FILTER_WORD[value]}</span><b>{counts[value]}</b>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                <fieldset>
+                  <legend>Email type <small>Select multiple</small></legend>
+                  <div className="filtermenu__choices">
+                    {TYPE_OPTIONS.map(option => (
+                      <label key={option.value}>
+                        <input type="checkbox" checked={selectedTypes.includes(option.value)} onChange={() => toggleSelection(option.value, selectedTypes, setSelectedTypes)} />
+                        <span>{option.label}</span><b>{typeCounts[option.value]}</b>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                <div className="filtermenu__dates">
+                  <label htmlFor="email-date-filter">Received date</label>
+                  <select id="email-date-filter" value={dateFilter} onChange={event => setDateFilter(event.target.value)}>
+                    {DATE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  </select>
+                  {dateFilter === 'custom' && (
+                    <div className="filtermenu__range">
+                      <label>From<input type="date" value={dateFrom} onChange={event => setDateFrom(event.target.value)} /></label>
+                      <label>To<input type="date" value={dateTo} onChange={event => setDateTo(event.target.value)} /></label>
+                    </div>
+                  )}
+                  <small>Uses the received date, or first processed date when missing.</small>
+                </div>
+                <div className="filtermenu__actions">
+                  <button type="button" disabled={!hasSearchOrFilters} onClick={() => clearWorklistFilters()}>Reset filters</button>
+                  <button type="button" onClick={() => setFiltersOpen(false)}>Done</button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="worklist-results">
+              {shown.length === 0 ? (
+                <div className="empty">
+                  <b>{periodItems.length === 0 ? 'No emails in this reporting period.' : 'No emails match this view.'}</b>
+                  <span>{periodItems.length === 0
+                    ? 'Choose another month or year, or return to the full register.'
+                    : 'Clear the filters or open all records to see this whole reporting period.'}</span>
+                  <button className="btn btn--ghost btn--small" type="button" onClick={showFullRegister}>Show full register</button>
+                </div>
+              ) : <>
+                <div className="wtable">
+                {visible.map(c => {
+                  const k = kindOf(c)
+                  return (
+                    <a className={'wrow wrow--link' + (k === 'none' ? ' wrow--muted' : '')} key={c.email_id} href={'#/case/' + c.email_id}>
+                      <span className={'mk mk--' + k}></span>
+                      <span className="wrow__body">
+                        <span className={'wrow__found wrow__found--' + k}>{headline(c)}</span>
+                        <span className="wrow__ref trunc">{c.subject} &nbsp;&middot;&nbsp; {c.from_addr}</span>
+                      </span>
+                      <span className="wrow__time">{formatInboxDate(caseDate(c), reportNow)}</span>
+                      <span className="wrow__id">{c.email_id}</span>
+                      <span className="wrow__open" aria-hidden="true">&rarr;</span>
+                    </a>
+                  )
+                })}
+                </div>
+                <nav className="pagination" aria-label="Email list pages">
+                  <button className="pagination__button" type="button" disabled={currentPage === 1} onClick={() => changePage(currentPage - 1)}>
+                    <span aria-hidden="true">&larr;</span> Previous
+                  </button>
+                  <span className="pagination__status">Page <b>{currentPage}</b> of <b>{pageCount}</b></span>
+                  <button className="pagination__button" type="button" disabled={currentPage === pageCount} onClick={() => changePage(currentPage + 1)}>
+                    Next <span aria-hidden="true">&rarr;</span>
+                  </button>
+                </nav>
+              </>}
+          </div>
         </section>
       </div>
     </Shell>
   )
+}
+
+function caseDate(item) {
+  const value = item.received_at || item.created_at || item.updated_at
+  if (!value) return null
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+function isIncoming(item) {
+  return !item.lifecycle || item.lifecycle === 'new' || item.lifecycle === 'in_review'
+}
+
+function isSameUtcDay(left, right) {
+  if (!left || !right) return false
+  return left.getUTCFullYear() === right.getUTCFullYear()
+    && left.getUTCMonth() === right.getUTCMonth()
+    && left.getUTCDate() === right.getUTCDate()
+}
+
+function matchesReportPeriod(item, period, monthValue, yearValue, now) {
+  if (period === 'all') return true
+  const date = caseDate(item)
+  if (!date) return false
+  if (period === 'month') {
+    const [year, month] = monthValue.split('-').map(Number)
+    return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1
+  }
+  if (period === 'year') return date.getUTCFullYear() === Number(yearValue)
+  const start = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000))
+  return date >= start && date <= now
+}
+
+function matchesDate(item, filter, from, to, now) {
+  if (filter === 'all') return true
+  const date = caseDate(item)
+  if (!date) return false
+  if (filter === 'today') return isSameUtcDay(date, now)
+  if (filter === '7_days' || filter === '30_days') {
+    const days = filter === '7_days' ? 7 : 30
+    return date >= new Date(now.getTime() - (days * 24 * 60 * 60 * 1000)) && date <= now
+  }
+  const start = from ? new Date(`${from}T00:00:00Z`) : null
+  const end = to ? new Date(`${to}T23:59:59.999Z`) : null
+  return (!start || date >= start) && (!end || date <= end)
+}
+
+function formatInboxDate(date, now) {
+  if (!date) return 'Date unavailable'
+  if (isSameUtcDay(date, now)) return 'Today'
+  return date.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    ...(date.getUTCFullYear() === now.getUTCFullYear() ? {} : { year: 'numeric' }),
+    timeZone: 'UTC',
+  })
 }
 
 // The row leads with what we concluded, not the email subject. Subjects in this

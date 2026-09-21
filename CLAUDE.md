@@ -120,9 +120,9 @@ If they disagree, one is a bug — say so rather than patching around it.
   word. Desaturated, the three status colours land on nearly the same grey.
 - **Mono means "this is what the document said".** Anything we wrote is Archivo;
   source values and operational identifiers use Azeret Mono.
-- **One 50px bar is the whole shell.** No sidebar, no search box, no density
-  switcher. Navigation is filter chips above the list. Adding a second
-  navigation surface is a deliberate decision, not a habit.
+- **One 50px bar is the whole shell.** The worklist may use its contained,
+  expandable filter panel for operational filtering, but it is not global
+  navigation. It collapses by default and must never cover or narrow the list.
 - **Say each thing once.** A rejected build announced every problem four times
   (pill, chip row, marked box, margin card). If a fact is already on screen,
   it does not get a second home.

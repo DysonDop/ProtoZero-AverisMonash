@@ -30,6 +30,8 @@ def test_live_frontend_contract() -> None:
         second_page = client.get("/api/cases?limit=500&offset=500")
         assert second_page.status_code == 200
         assert len(second_page.json()["items"]) == 20
+        assert "created_at" in second_page.json()["items"][0]
+        assert "category_confidence" in second_page.json()["items"][0]
 
         excel = client.get("/api/cases/export.xlsx")
         assert excel.status_code == 200

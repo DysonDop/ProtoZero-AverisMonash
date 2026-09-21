@@ -362,9 +362,10 @@ looks like a bug.
 
 ### Screen one, the worklist
 
-Filtered table over everything processed. Sidebar filters by category, status
-and lifecycle. Important, but it is the least technically risky thing here,
-which is why it is third.
+An inbox-oriented table separates incoming work, completed history and the full
+record. A contained panel filters by result, email type and date and allows
+multiple selections. It expands below the work-view tabs, preserving the full
+list width and avoiding an overlay over operational records.
 
 Consider showing the open review count on load, so triage is the first thing
 seen rather than something to navigate to.
@@ -473,3 +474,8 @@ component covers all three.
   shortened the welcome content, grouped search/reporting/filters with the case
   register, and replaced IBM Plex Sans + JetBrains Mono with Archivo + Azeret
   Mono. The evidence-versus-interface type distinction remains unchanged.
+- **v7, 21 Sep 2026** — added Incoming, History and All records work views, a
+  quick-look inbox summary, combined keyword/date/type/result filtering, and a
+  responsive expandable filter panel that never overlaps the case list. The
+  reporting-period control scopes both the visible worklist and Excel export;
+  keyword and advanced filters remain screen-only refinements.

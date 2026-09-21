@@ -252,6 +252,10 @@ def list_cases(
                 "wire_review_reason": c.wire_review_reason,
                 "summary": c.summary,
                 "lifecycle": c.lifecycle,
+                "received_at": c.received_at,
+                "created_at": c.created_at,
+                "updated_at": c.updated_at,
+                "category_confidence": c.category_confidence,
             }
             for c in items
         ],

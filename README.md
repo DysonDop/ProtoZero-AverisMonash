@@ -68,10 +68,18 @@ plain language; one click opens both source excerpts with the compared text
 highlighted. The audit drawer exposes every event's trace ID, timestamp, actor,
 action, previous value, new value and reason.
 
-The worklist has an **Export cases** period selector and **Download Excel** action.
-Reports can cover all cases, any selected calendar month or year, or the rolling
-last 30 days. The selected dates are shown before download. Downloads
-are independent of worklist search, result filters and pagination. Each workbook
+For day-to-day triage, the worklist separates **Incoming**, **History** and
+**All records**, shows a compact added-today/action-needed summary, and provides
+a contained expandable filter panel. Results and email types support multiple
+selections; date presets, custom date ranges and keyword search can be combined.
+The panel opens below the tabs without covering or narrowing the case list.
+
+The worklist has a shared **Worklist period & Excel export** selector and
+**Download Excel** action. Reports can cover all cases, any selected calendar
+month or year, or the rolling last 30 days. Changing the period updates the
+visible worklist, tab totals, filter counts and workbook together. Keyword and
+advanced filters refine the screen only; each workbook still contains every
+case in the selected period. Each workbook
 states its reporting scope and includes separate sheets for summary, cases,
 comparisons, document evidence, audit events and the review queue.
 Period reports use the email received timestamp when available and otherwise use

@@ -291,6 +291,108 @@ body{
 .workexport-group small{ padding-top: 3px; color: var(--muted); font-size: 10px; line-height: 1.35 }
 .workexport{ display: inline-flex; flex: none; align-items: center; justify-content: center;
              min-height: 38px; white-space: nowrap; text-decoration: none }
+.inboxpulse{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+             margin: 18px 0 0; border: 1px solid var(--rule); border-radius: 10px;
+             overflow: hidden; background: var(--sheet) }
+.inboxpulse > div{ min-width: 0; padding: 11px 14px; border-right: 1px solid var(--rule) }
+.inboxpulse > div:last-child{ border-right: 0 }
+.inboxpulse dt{ color: var(--muted); font-size: 9px; font-weight: 600;
+                letter-spacing: .08em; text-transform: uppercase }
+.inboxpulse dd{ margin: 3px 0 0; color: var(--ink); font-family: var(--mono);
+                font-size: 19px; font-weight: 500 }
+.inboxnav{ display: flex; align-items: flex-end; justify-content: space-between; gap: 18px;
+           margin-top: 18px; border-bottom: 1px solid var(--rule) }
+.inboxnav__tabs{ display: flex; align-items: flex-end; gap: 4px }
+.inboxnav__tabs button{ display: inline-flex; min-height: 42px; align-items: center; gap: 8px;
+                        padding: 0 13px; border: 0; border-bottom: 3px solid transparent;
+                        background: transparent; color: var(--muted); font: inherit;
+                        font-size: var(--fs-small); cursor: pointer }
+.inboxnav__tabs button:hover{ color: var(--ink) }
+.inboxnav__tabs button[aria-selected="true"]{ border-bottom-color: var(--blue); color: var(--ink); font-weight: 600 }
+.inboxnav__tabs button span{ color: var(--muted); font-family: var(--mono); font-size: 10px; font-weight: 400 }
+.inboxnav__summary{ display: flex; align-items: center; gap: 12px; padding-bottom: 11px;
+                    color: var(--muted); font-family: var(--mono); font-size: 10px }
+.filtermenu{ margin-top: 12px; border: 1px solid var(--rule); border-radius: 10px;
+             background: #F8F6F1; overflow: hidden }
+.filtermenu__bar{ min-height: 48px; display: flex; align-items: center; gap: 12px; padding: 6px 9px }
+.filtermenu__toggle{ display: inline-flex; min-height: 36px; align-items: center; gap: 8px;
+                     padding: 0 11px; border: 1px solid rgba(16,26,36,.24);
+                     border-radius: var(--r-control); background: var(--sheet); color: var(--ink);
+                     font: inherit; font-size: 11px; font-weight: 600; cursor: pointer;
+                     transition: border-color .16s ease, color .16s ease,
+                                 transform .16s ease, box-shadow .16s ease }
+.filtermenu__toggle:hover, .filtermenu__toggle[aria-expanded="true"]{ border-color: var(--blue); color: var(--blue) }
+.filtermenu__toggle:hover{ transform: translateY(-1px); box-shadow: 0 4px 10px rgba(16,26,36,.08) }
+.filtermenu__toggle b{ display: inline-flex; min-width: 18px; height: 18px; align-items: center;
+                        justify-content: center; padding: 0 5px; border-radius: 9px;
+                        background: var(--blue); color: white; font-family: var(--mono);
+                        font-size: 9px; font-weight: 500 }
+.filtermenu__toggle i{ color: var(--muted); font-family: var(--mono); font-size: 13px; font-style: normal }
+.filtermenu__active{ display: flex; min-width: 0; align-items: center; gap: 6px; flex: 1; overflow: hidden }
+.filtermenu__active > span{ flex: none; padding: 4px 8px; border-radius: 12px;
+                            background: rgba(0,109,174,.08); color: var(--blue);
+                            font-size: 9px; white-space: nowrap }
+.filtermenu__active > span:only-child{ padding-left: 0; background: transparent; color: var(--muted) }
+.filtermenu__clear{ flex: none; padding: 0; border: 0; border-bottom: 1px solid currentColor;
+                    background: transparent; color: var(--blue); font: inherit;
+                    font-size: 10px; cursor: pointer }
+.filtermenu__panel{ display: grid; grid-template-columns: minmax(260px, .95fr) minmax(340px, 1.25fr) minmax(240px, .9fr);
+                    gap: 0; padding: 17px 18px 15px; border-top: 1px solid var(--rule);
+                    background: var(--sheet); transform-origin: top;
+                    animation: filter-reveal .16s ease both }
+@keyframes filter-reveal{
+  from{ opacity: 0; transform: translateY(-4px) }
+  to{ opacity: 1; transform: translateY(0) }
+}
+.filtermenu fieldset{ min-width: 0; margin: 0; padding: 0; border: 0 }
+.filtermenu__panel > fieldset:nth-child(2), .filtermenu__dates{
+                    margin-left: 20px; padding-left: 20px; border-left: 1px solid var(--rule) }
+.filtermenu legend{ display: flex; align-items: baseline; justify-content: space-between; gap: 10px }
+.filtermenu legend, .filtermenu__dates > label{ width: 100%; padding: 0 0 9px; color: var(--ink);
+                    font-size: 10px; font-weight: 600; letter-spacing: .07em;
+                    text-transform: uppercase }
+.filtermenu legend small{ flex: none; color: var(--muted); font-size: 9px;
+                           font-weight: 400; letter-spacing: 0; text-transform: none }
+.filtermenu__choices{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px }
+.filtermenu__choices--results{ grid-template-columns: minmax(0, 1fr) }
+.filtermenu__choices label{ display: grid; grid-template-columns: 16px minmax(0, 1fr) auto;
+                            align-items: center; column-gap: 9px; min-height: 38px; padding: 0 10px;
+                            border: 1px solid var(--rule); border-radius: 7px;
+                            background: #FCFBF8; color: var(--ink); font-size: 10px; cursor: pointer;
+                            transition: border-color .16s ease, background .16s ease,
+                                        transform .16s ease, box-shadow .16s ease }
+.filtermenu__choices--results label{ grid-template-columns: 16px 10px minmax(0, 1fr) auto }
+.filtermenu__choices label:hover{ border-color: rgba(0,109,174,.5); background: rgba(0,109,174,.035);
+                                  transform: translateY(-1px); box-shadow: 0 4px 10px rgba(16,26,36,.055) }
+.filtermenu__choices label:has(input:focus-visible){ border-color: var(--blue); box-shadow: 0 0 0 2px rgba(0,109,174,.12) }
+.filtermenu__choices label:has(input:checked){ border-color: rgba(0,109,174,.55); background: rgba(0,109,174,.05) }
+.filtermenu input[type="checkbox"]{ width: 14px; height: 14px; margin: 0; accent-color: var(--blue) }
+.filtermenu__choices label > span:not(.mk){ min-width: 0; line-height: 1.25;
+                                            overflow-wrap: normal; word-break: normal }
+.filtermenu__choices label > b{ min-width: 24px; padding-left: 5px; color: var(--muted);
+                                font-family: var(--mono); font-size: 9px; font-weight: 400;
+                                text-align: right }
+.filtermenu__dates{ min-width: 0 }
+.filtermenu__dates > label{ display: block }
+.filtermenu__dates select, .filtermenu__range input{ width: 100%; min-height: 38px;
+                    padding: 0 10px; border: 1px solid rgba(16,26,36,.25);
+                    border-radius: var(--r-control); background: var(--sheet);
+                    color: var(--ink); font: inherit; font-size: 11px }
+.filtermenu__dates > small{ display: block; margin-top: 7px; color: var(--muted); font-size: 9px; line-height: 1.4 }
+.filtermenu__range{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 8px }
+.filtermenu__range label{ color: var(--muted); font-size: 9px }
+.filtermenu__range input{ display: block; margin-top: 4px; padding-inline: 7px }
+.filtermenu__actions{ grid-column: 1 / -1; display: flex; align-items: center;
+                      justify-content: flex-end; gap: 8px; padding-top: 14px }
+.filtermenu__actions button{ min-height: 34px; padding: 0 12px; border: 1px solid rgba(16,26,36,.24);
+                             border-radius: var(--r-control); background: var(--sheet);
+                             color: var(--ink); font: inherit; font-size: 10px; cursor: pointer;
+                             transition: border-color .16s ease, background .16s ease,
+                                         transform .16s ease, box-shadow .16s ease }
+.filtermenu__actions button:hover:not(:disabled){ transform: translateY(-1px); box-shadow: 0 4px 10px rgba(16,26,36,.08) }
+.filtermenu__actions button:last-child{ border-color: var(--ink); background: var(--ink); color: var(--on-dark) }
+.filtermenu__actions button:disabled{ cursor: not-allowed; opacity: .45 }
+.worklist-results{ min-width: 0; margin-top: 12px }
 .filterbar{ display: flex; flex-direction: column; align-items: flex-start; gap: 9px;
             margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--rule) }
 .filterbar__top{ display: flex; align-items: baseline; gap: 10px; width: 100% }
@@ -381,7 +483,10 @@ body{
   background: var(--orange); color: #FFFFFF;
   font-family: inherit; font-size: var(--fs-body); font-weight: 500;
   padding: 0 20px; min-height: var(--tap); cursor: pointer;
+  transition: border-color .16s ease, background .16s ease,
+              transform .16s ease, box-shadow .16s ease;
 }
+.btn:hover:not(:disabled){ transform: translateY(-1px); box-shadow: 0 5px 12px rgba(16,26,36,.1) }
 .btn--ghost{
   background: transparent; color: var(--ink);
   border: 1px solid rgba(16,26,36,.25);
@@ -740,6 +845,9 @@ a.card__title:hover{ text-decoration: underline }
   .app .wmain, .app .rmain{ padding: 18px 20px }
   .welcome{ grid-template-columns: 1fr }
   .worktools{ grid-template-columns: 1fr }
+  .filtermenu__panel{ grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 18px }
+  .filtermenu__dates{ grid-column: 1 / -1; margin-left: 0; padding: 18px 0 0;
+                      border-left: 0; border-top: 1px solid var(--rule) }
   .ops__body{ grid-template-columns: 1fr }
   .casebanner{ grid-template-columns: 12px 1fr }
   .casebanner__meta{ grid-column: 2; display: flex; gap: 16px }
@@ -758,6 +866,17 @@ a.card__title:hover{ text-decoration: underline }
   .worktools{ width: 100% }
   .worksearch{ flex-grow: 1; min-width: 0 }
   .workexport-group{ min-width: 0 }
+  .inboxpulse{ grid-template-columns: repeat(2, minmax(0, 1fr)) }
+  .inboxpulse > div:nth-child(2){ border-right: 0 }
+  .inboxpulse > div:nth-child(-n+2){ border-bottom: 1px solid var(--rule) }
+  .inboxnav{ align-items: flex-start; flex-direction: column; gap: 5px }
+  .inboxnav__tabs{ width: 100%; overflow-x: auto }
+  .inboxnav__tabs button{ flex: none }
+  .inboxnav__summary{ padding: 0 0 10px }
+  .filtermenu__panel{ grid-template-columns: minmax(0, 1fr) }
+  .filtermenu__dates{ grid-column: auto }
+  .filtermenu__panel > fieldset:nth-child(2){ margin-left: 0; padding: 18px 0 0;
+                                              border-left: 0; border-top: 1px solid var(--rule) }
   .casebanner{ padding: 13px 18px }
   .sheet__grid{ grid-template-columns: 1fr }
   .bx{ border-right: 0 }
@@ -786,6 +905,9 @@ a.card__title:hover{ text-decoration: underline }
                        clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap }
   .workexport-options--dated, .workexport-foot{ grid-template-columns: 1fr }
   .workexport{ width: 100% }
+  .filtermenu__bar{ align-items: flex-start; flex-wrap: wrap }
+  .filtermenu__active{ order: 3; width: 100%; flex-basis: 100%; overflow-x: auto }
+  .filtermenu__choices, .filtermenu__choices--results, .filtermenu__range{ grid-template-columns: 1fr }
   .filterbar__top{ align-items: flex-start; flex-wrap: wrap }
   .filterbar__top button{ margin-left: 0 }
   .pagination{ justify-content: space-between; gap: 8px }
