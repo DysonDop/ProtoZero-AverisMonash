@@ -62,11 +62,15 @@ Three screens, one for each person who uses it.
 | Review queue | What did it refuse to decide, and can I settle it in one click? |
 | Case | What did we read, did it match, and how far do we trust our own reading? |
 
-The worklist also carries a measured operations snapshot and live component
-health. Flagged fields explain the two values, similarity and review status in
-plain language; one click opens both source excerpts with the compared text
-highlighted. The audit drawer exposes every event's trace ID, timestamp, actor,
-action, previous value, new value and reason.
+The worklist also carries an expandable, period-aware analytics dashboard and
+live component health. It reports workload by email type, outcomes for genuine
+document-comparison cases, fields with differences and the primary reasons for
+human review. Every chart includes its counts and explains its scope; the
+month, year, last-30-days and full-history selector updates the dashboard,
+worklist and workbook together. Flagged fields explain the two values,
+similarity and review status in plain language; one click opens both source
+excerpts with the compared text highlighted. The audit drawer exposes every
+event's trace ID, timestamp, actor, action, previous value, new value and reason.
 
 For day-to-day triage, the worklist separates **Incoming**, **History** and
 **All records**, shows a compact added-today/action-needed summary, and provides

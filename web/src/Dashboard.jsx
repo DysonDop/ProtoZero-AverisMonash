@@ -1,6 +1,3 @@
-import { useEffect, useState } from 'react'
-import { getMetrics } from './api.js'
-
 const COMPONENT_LABEL = {
   classifier: 'AI classifier',
   extraction: 'AI extraction',
@@ -9,34 +6,66 @@ const COMPONENT_LABEL = {
   audit_log: 'Audit logging',
 }
 
-export default function Dashboard({ health, items }) {
-  const [metrics, setMetrics] = useState(null)
+const CATEGORY_LABEL = {
+  BL_COMPARISON: 'Document comparison',
+  SI_REQUEST: 'Shipping instruction',
+  INVOICE_QUERY: 'Invoice question',
+  GENERAL: 'General email',
+  SPAM: 'Spam',
+}
 
-  useEffect(() => {
-    let live = true
-    getMetrics().then(value => { if (live) setMetrics(value) }).catch(() => {})
-    return () => { live = false }
-  }, [])
+const FIELD_LABEL = {
+  shipper: 'Shipper',
+  consignee: 'Consignee',
+  notify_party: 'Notify party',
+  port_of_loading: 'Port of loading',
+  port_of_discharge: 'Port of discharge',
+  container_count: 'Container count',
+  gross_weight_kg: 'Gross weight',
+}
 
+const REVIEW_LABEL = {
+  missing_attachment: 'Missing attachment',
+  wrong_doc_type: 'Wrong document type',
+  unreadable: 'Unreadable document',
+  missing_value: 'Missing or uncertain field',
+}
+
+export default function Dashboard({ health, items, periodLabel = 'Full register' }) {
   const comparisonCases = items.filter(item => item.category === 'BL_COMPARISON')
-  const values = {
-    processed: metrics?.total_emails ?? items.length,
-    cleared: metrics?.automatically_cleared ?? comparisonCases.filter(item => item.status === 'OK').length,
-    reviews: metrics?.human_reviews ?? comparisonCases.filter(item => item.status === 'NEEDS_REVIEW').length,
-    rejected: metrics?.rejected ?? 0,
-  }
-  const issues = metrics?.top_flagged_issues || fallbackIssues(items)
+  const cleared = comparisonCases.filter(item => item.status === 'OK').length
+  const mismatches = comparisonCases.filter(item => item.status === 'MISMATCH').length
+  const reviews = comparisonCases.filter(item => item.status === 'NEEDS_REVIEW').length
+  const needAction = mismatches + reviews
+  const averageConfidence = average(
+    items.map(item => item.category_confidence).filter(Number.isFinite)
+  )
+
+  const workload = countRows(items, item => item.category, CATEGORY_LABEL)
+  const mismatchFields = countOccurrences(
+    comparisonCases.flatMap(item => item.defect_fields || []), FIELD_LABEL
+  )
+  const reviewReasons = countRows(
+    comparisonCases.filter(item => item.status === 'NEEDS_REVIEW'),
+    item => item.wire_review_reason,
+    REVIEW_LABEL
+  )
+  const outcomes = [
+    { label: 'Cleared', value: cleared, tone: 'clear' },
+    { label: 'Differences', value: mismatches, tone: 'wrong' },
+    { label: 'Human review', value: reviews, tone: 'review' },
+  ]
 
   return (
     <details className="ops">
       <summary className="ops__summary">
         <span className="ops__summarycopy">
-          <span className="eyebrow">Operations</span>
-          <strong>Processing and system health</strong>
+          <span className="eyebrow">Analytics</span>
+          <strong>Workload and system health</strong>
         </span>
         <span className="ops__quick" aria-label="Current operational summary">
-          <span><b>{values.processed}</b> processed</span>
-          <span><b>{values.reviews}</b> need review</span>
+          <span><b>{items.length}</b> in period</span>
+          <span><b>{needAction}</b> need action</span>
           <span className={'ops__health ops__health--' + healthTone(health)}>
             <i aria-hidden="true"></i>{healthWord(health)}
           </span>
@@ -45,43 +74,49 @@ export default function Dashboard({ health, items }) {
       </summary>
 
       <div className="ops__body">
-        <div className="ops__analytics">
+        <section className="ops__analytics" aria-labelledby="ops-title">
           <div className="ops__head">
             <div>
-              <span className="eyebrow">Current processing run</span>
-              <h2 id="ops-title">Operations snapshot</h2>
+              <span className="eyebrow">Quick-look dashboard</span>
+              <h2 id="ops-title">Register analytics</h2>
             </div>
+            <span className="ops__period">{periodLabel}</span>
           </div>
 
           <dl className="metricgrid">
-            <Metric label="Emails processed" value={values.processed} />
-            <Metric label="Automatically cleared" value={values.cleared} />
-            <Metric label="Human reviews" value={values.reviews} />
-            <Metric label="Rejected by reviewer" value={values.rejected} />
+            <Metric label="Emails in period" value={items.length} />
+            <Metric label="Document comparisons" value={comparisonCases.length} />
+            <Metric label="Automatically cleared" value={cleared} />
+            <Metric label="Need action" value={needAction} />
+            <Metric
+              label="Classification confidence"
+              value={Number.isFinite(averageConfidence) ? `${Math.round(averageConfidence * 100)}%` : '—'}
+            />
           </dl>
 
-          <div className="ops__lower">
-            <div>
-              <span className="ops__label">Processing</span>
-              <p>
-                <b>{formatPercent(metrics?.parser_pct)}</b> deterministic document coverage
-                <span>{formatDuration(metrics?.avg_processing_ms)} average per email</span>
-              </p>
-            </div>
-            <div>
-              <span className="ops__label">Top flagged issues</span>
-              {issues.length > 0
-                ? <ol className="issuebars">
-                    {issues.slice(0, 5).map(issue => (
-                      <li key={issue.label}>
-                        <span>{issue.label}</span><b>{issue.count}</b>
-                      </li>
-                    ))}
-                  </ol>
-                : <p className="ops__empty">No issue breakdown in this data source.</p>}
-            </div>
+          <div className="analyticsgrid">
+            <BarChart
+              title="Email workload"
+              subtitle="What arrived in the selected period"
+              rows={workload}
+              tone="neutral"
+              total={items.length}
+            />
+            <OutcomeChart rows={outcomes} total={comparisonCases.length} />
+            <BarChart
+              title="Fields with differences"
+              subtitle="One case can contain more than one difference"
+              rows={mismatchFields}
+              tone="wrong"
+            />
+            <BarChart
+              title="Why a person is needed"
+              subtitle="Primary reason for each human-review case"
+              rows={reviewReasons}
+              tone="review"
+            />
           </div>
-        </div>
+        </section>
 
         <HealthPanel health={health} />
       </div>
@@ -91,6 +126,80 @@ export default function Dashboard({ health, items }) {
 
 function Metric({ label, value }) {
   return <div><dt>{label}</dt><dd>{value}</dd></div>
+}
+
+function BarChart({ title, subtitle, rows, tone, total }) {
+  const largest = Math.max(0, ...rows.map(row => row.value))
+  const scale = total > 0 ? total : largest
+
+  return (
+    <section className="chartpanel">
+      <header className="chartpanel__head">
+        <h3>{title}</h3>
+        <p>{subtitle}</p>
+      </header>
+      {rows.length > 0
+        ? <ol className="chartbars" aria-label={`${title}: ${rows.map(row => `${row.label} ${row.value}`).join(', ')}`}>
+            {rows.map(row => (
+              <li key={row.label}>
+                <div className="chartbars__label">
+                  <span>{row.label}</span>
+                  <span className="chartbars__value">
+                    <b>{row.value}</b>
+                    {total > 0 && <small>{percent(row.value, total)}</small>}
+                  </span>
+                </div>
+                <span className="chartbars__track" aria-hidden="true">
+                  <i
+                    className={'chartbars__fill chartbars__fill--' + tone}
+                    style={{ width: `${scale > 0 ? Math.max(3, row.value / scale * 100) : 0}%` }}
+                  ></i>
+                </span>
+              </li>
+            ))}
+          </ol>
+        : <p className="chartpanel__empty">No data for this period.</p>}
+    </section>
+  )
+}
+
+function OutcomeChart({ rows, total }) {
+  return (
+    <section className="chartpanel">
+      <header className="chartpanel__head">
+        <h3>Comparison outcomes</h3>
+        <p>Results for document-comparison emails only</p>
+      </header>
+      {total > 0
+        ? <>
+            <div
+              className="outcomebar"
+              role="img"
+              aria-label={rows.map(row => `${row.label} ${row.value}, ${percent(row.value, total)}`).join('; ')}
+            >
+              {rows.filter(row => row.value > 0).map(row => (
+                <span
+                  key={row.label}
+                  className={'outcomebar__segment outcomebar__segment--' + row.tone}
+                  style={{ width: `${row.value / total * 100}%` }}
+                  title={`${row.label}: ${row.value} (${percent(row.value, total)})`}
+                ></span>
+              ))}
+            </div>
+            <ul className="outcomelegend">
+              {rows.map(row => (
+                <li key={row.label}>
+                  <i className={'outcomelegend__mark outcomelegend__mark--' + row.tone} aria-hidden="true"></i>
+                  <span>{row.label}</span>
+                  <b>{row.value}</b>
+                  <small>{percent(row.value, total)}</small>
+                </li>
+              ))}
+            </ul>
+          </>
+        : <p className="chartpanel__empty">No document comparisons in this period.</p>}
+    </section>
+  )
 }
 
 function HealthPanel({ health }) {
@@ -117,8 +226,7 @@ function HealthPanel({ health }) {
           <li key={component.name}>
             <span>{COMPONENT_LABEL[component.name] || component.name}</span>
             <b className={'healthstate healthstate--' + component.state}>
-              <i aria-hidden="true"></i>{component.state}
-            </b>
+              <i aria-hidden="true"></i>{component.state}</b>
           </li>
         ))}
       </ul>
@@ -136,29 +244,27 @@ function HealthPanel({ health }) {
   )
 }
 
-function fallbackIssues(items) {
+function countRows(items, getKey, labels) {
   const counts = new Map()
-  const add = label => counts.set(label, (counts.get(label) || 0) + 1)
   for (const item of items) {
-    if (item.wire_review_reason === 'missing_attachment') add('Missing attachment')
-    if (item.wire_review_reason === 'wrong_doc_type') add('Wrong document type')
-    if (item.wire_review_reason === 'unreadable') add('Unreadable document')
-    if (item.wire_review_reason === 'missing_value') add('Missing or uncertain field')
-    if ((item.defect_fields || []).some(field => ['shipper', 'consignee', 'notify_party'].includes(field))) {
-      add('Party mismatch')
-    }
+    const key = getKey(item)
+    if (labels[key]) counts.set(key, (counts.get(key) || 0) + 1)
   }
-  return [...counts].map(([label, count]) => ({ label, count })).sort((a, b) => b.count - a.count)
+  return [...counts]
+    .map(([key, value]) => ({ label: labels[key], value }))
+    .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label))
 }
 
-function formatPercent(value) {
-  return Number.isFinite(value) ? `${Math.round(value * 100)}%` : '—'
+function countOccurrences(values, labels) {
+  return countRows(values, value => value, labels)
 }
 
-function formatDuration(value) {
-  if (!Number.isFinite(value)) return 'Not recorded'
-  if (value < 1000) return `${Math.max(1, Math.round(value))} ms`
-  return `${(value / 1000).toFixed(1)} sec`
+function average(values) {
+  return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null
+}
+
+function percent(value, total) {
+  return total > 0 ? `${(value / total * 100).toFixed(value === total ? 0 : 1)}%` : '0%'
 }
 
 function healthTone(health) {

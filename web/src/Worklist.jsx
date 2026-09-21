@@ -222,7 +222,11 @@ export default function Worklist({ health }) {
           </div>
         </section>
 
-        <Dashboard health={health} items={items} />
+        <Dashboard
+          health={health}
+          items={periodItems}
+          periodLabel={exportPeriod === 'all' ? 'Full register' : exportHelp}
+        />
 
         <section className="workbench" aria-labelledby="email-checks-heading">
           <div className="listhead">

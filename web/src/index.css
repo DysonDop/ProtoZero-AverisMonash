@@ -198,34 +198,59 @@ body{
 .ops__chevron{ flex: none; color: var(--muted); font-size: 20px; line-height: 1;
                 transition: transform .15s ease }
 .ops[open] .ops__chevron{ transform: rotate(180deg) }
-.ops__body{ display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(300px, .8fr);
-            gap: var(--gap-md); padding: 14px; background: rgba(16,26,36,.025) }
+.ops__body{ display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 290px);
+            align-items: start; gap: var(--gap-md); padding: 14px;
+            background: rgba(16,26,36,.025) }
 .ops__analytics, .healthpanel{ min-width: 0; padding: 18px 20px;
                               background: var(--sheet); border: 1px solid var(--rule);
                               border-radius: var(--r-panel) }
 .ops__head, .healthpanel__head{ display: flex; align-items: flex-start;
                                 justify-content: space-between; gap: var(--gap-md) }
 .ops__head h2, .healthpanel h2{ margin: 3px 0 0; font-size: var(--fs-head); font-weight: 500 }
-.metricgrid{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+.ops__period{ max-width: 50%; padding: 4px 8px; border: 1px solid var(--rule);
+              border-radius: var(--r-pill); color: var(--muted); font-size: 9px;
+              line-height: 1.35; text-align: right }
+.metricgrid{ display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
              gap: 1px; margin: 15px 0; background: var(--rule) }
 .metricgrid > div{ display: flex; min-width: 0; flex-direction: column-reverse;
                    gap: 3px; padding: 12px; background: var(--sheet) }
 .metricgrid dt{ color: var(--muted); font-size: var(--fs-meta); line-height: 1.3 }
 .metricgrid dd{ margin: 0; font-family: var(--mono); font-size: 24px; line-height: 1 }
-.ops__lower{ display: grid; grid-template-columns: minmax(180px, .75fr) minmax(240px, 1.25fr);
-             gap: 22px; border-top: 1px solid var(--hair); padding-top: 13px }
-.ops__label{ color: var(--muted); font-size: var(--fs-label); font-weight: 600;
-             letter-spacing: .1em; text-transform: uppercase }
-.ops__lower p{ display: flex; flex-direction: column; gap: 3px; margin: 8px 0 0;
-               color: var(--muted); font-size: var(--fs-meta) }
-.ops__lower p b{ color: var(--ink); font-family: var(--mono); font-size: 17px; font-weight: 500 }
-.issuebars{ margin: 7px 0 0; padding: 0; list-style: none }
-.issuebars li{ display: flex; align-items: baseline; gap: 10px;
-               padding: 3px 0; border-bottom: 1px solid var(--hair);
-               font-size: var(--fs-meta) }
-.issuebars li span{ flex-grow: 1 }
-.issuebars li b{ font-family: var(--mono); font-weight: 500 }
-.ops__empty{ color: var(--muted); font-size: var(--fs-meta) }
+.analyticsgrid{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px }
+.chartpanel{ min-width: 0; min-height: 228px; padding: 14px;
+             border: 1px solid var(--hair); border-radius: 9px; background: #FCFBF8 }
+.chartpanel__head h3{ margin: 0; font-size: var(--fs-small); font-weight: 600 }
+.chartpanel__head p{ margin: 2px 0 0; color: var(--muted); font-size: 9.5px; line-height: 1.4 }
+.chartpanel__empty{ margin: 28px 0 0; color: var(--muted); font-size: var(--fs-meta) }
+.chartbars{ display: flex; flex-direction: column; gap: 8px; margin: 13px 0 0;
+            padding: 0; list-style: none }
+.chartbars__label{ display: flex; min-width: 0; align-items: baseline; gap: 10px;
+                   margin-bottom: 3px; font-size: 10px }
+.chartbars__label > span:first-child{ min-width: 0; flex: 1; overflow-wrap: anywhere }
+.chartbars__value{ display: inline-flex; flex: none; align-items: baseline; gap: 6px }
+.chartbars__value b{ font-family: var(--mono); font-size: 10px; font-weight: 600 }
+.chartbars__value small{ min-width: 36px; color: var(--muted); font-family: var(--mono);
+                         font-size: 8.5px; text-align: right }
+.chartbars__track{ display: block; width: 100%; height: 6px; overflow: hidden;
+                   border-radius: var(--r-pill); background: rgba(16,26,36,.07) }
+.chartbars__fill{ display: block; height: 100%; border-radius: inherit; background: var(--ink) }
+.chartbars__fill--wrong{ background: var(--wrong) }
+.chartbars__fill--review{ background: var(--blue) }
+.outcomebar{ display: flex; width: 100%; height: 16px; overflow: hidden; margin-top: 17px;
+             border-radius: 4px; background: rgba(16,26,36,.07) }
+.outcomebar__segment{ height: 100% }
+.outcomebar__segment--clear, .outcomelegend__mark--clear{ background: var(--clearmark) }
+.outcomebar__segment--wrong, .outcomelegend__mark--wrong{ background: var(--wrong) }
+.outcomebar__segment--review, .outcomelegend__mark--review{ background: var(--blue) }
+.outcomelegend{ display: flex; flex-direction: column; gap: 0; margin: 12px 0 0;
+                padding: 0; list-style: none }
+.outcomelegend li{ display: grid; grid-template-columns: 8px minmax(0, 1fr) 30px 42px;
+                   align-items: center; gap: 8px; min-height: 29px;
+                   border-bottom: 1px solid var(--hair); font-size: 10px }
+.outcomelegend__mark{ width: 8px; height: 8px; border-radius: 2px }
+.outcomelegend b, .outcomelegend small{ font-family: var(--mono); font-size: 9px;
+                                       font-weight: 500; text-align: right }
+.outcomelegend small{ color: var(--muted) }
 .healthpanel{ border-top: 3px solid var(--blue) }
 .healthpanel__mode{ flex: none; padding: 3px 7px; border-radius: var(--r-pill);
                     font-size: 9px; font-weight: 600; letter-spacing: .08em;
@@ -891,7 +916,7 @@ a.card__title:hover{ text-decoration: underline }
   .doccompare{ margin-bottom: 16px }
   .doccompare__grid{ grid-template-columns: 1fr }
   .metricgrid{ grid-template-columns: repeat(2, minmax(0, 1fr)) }
-  .ops__lower{ grid-template-columns: 1fr }
+  .analyticsgrid{ grid-template-columns: 1fr }
   .ops__summary{ align-items: flex-start; flex-wrap: wrap; gap: 6px 14px }
   .ops__summarycopy{ flex-grow: 1 }
   .ops__quick{ width: 100%; justify-content: flex-start; flex-wrap: wrap }
@@ -905,6 +930,8 @@ a.card__title:hover{ text-decoration: underline }
                        clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap }
   .workexport-options--dated, .workexport-foot{ grid-template-columns: 1fr }
   .workexport{ width: 100% }
+  .ops__head{ align-items: stretch; flex-direction: column }
+  .ops__period{ max-width: none; text-align: left }
   .filtermenu__bar{ align-items: flex-start; flex-wrap: wrap }
   .filtermenu__active{ order: 3; width: 100%; flex-basis: 100%; overflow-x: auto }
   .filtermenu__choices, .filtermenu__choices--results, .filtermenu__range{ grid-template-columns: 1fr }

@@ -372,8 +372,11 @@ seen rather than something to navigate to.
 
 ### Screen four, the dashboard
 
-Build last or not at all. Counts, mismatch rate, queue depth, and defects by
-field. Use the Monash utility subset from §2.4 for the bars.
+The expandable dashboard uses the same reporting period as the worklist and
+Excel register. It shows scoped counts, email workload, document-comparison
+outcomes, defects by field and human-review reasons. Counts remain visible next
+to every bar so colour or relative length is never the only way to read a
+result. Non-comparison email is not counted as automatically cleared.
 
 **The time-saved figure stays bracketed until Averis gives us a real number.** If
 a judge asks where it came from and the answer is that we invented it, we lose
